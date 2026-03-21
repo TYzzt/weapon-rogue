@@ -110,6 +110,8 @@ const WEAPONS = [
     { name: '暴风之刃', damage: 42, rarity: 'rare', color: '#87CEEB' },
     { name: '雷神之锤', damage: 43, rarity: 'rare', color: '#B0C4DE' },
     { name: '海神三叉戟', damage: 44, rarity: 'rare', color: '#20B2AA' },
+    // 新增的传说级武器
+    { name: '时空裂隙刃', damage: 60, rarity: 'epic', color: '#9932CC' },
 
     // Epic weapons (史诗)
     { name: '暗影匕首', damage: 35, rarity: 'epic', color: '#8b00ff' },
@@ -164,6 +166,8 @@ const POTIONS = [
     { name: '速度药水', effect: 'speed', duration: 6, value: 2, color: '#00BFFF' }, // 增加移动速度
     { name: '回复药水', effect: 'regen', duration: 10, value: 5, color: '#32CD32' }, // 持续回血
     { name: '反击药水', effect: 'counter', duration: 7, value: 15, color: '#FF6347' }, // 受伤时反击
+    // 新增的新药水类型
+    { name: '净化药水', effect: 'purge_negative', value: 1, color: '#98FB98' }, // 清除负面状态
 ];
 
 // 遗物系统
@@ -581,13 +585,15 @@ class Player {
 
 // 定义敌人类型
 const ENEMY_TYPES = {
-    MELEE: { name: '近战', speed: 1.5, hp: 0.8, damage: 1, size: 1, behavior: 'melee' },  // 降低近战敌人血量
-    RANGED: { name: '远程', speed: 0.8, hp: 0.6, damage: 1.2, size: 0.8, behavior: 'ranged' },  // 降低远程敌人血量和伤害
-    ELITE: { name: '精英', speed: 1.2, hp: 1.5, damage: 1.5, size: 1.5, behavior: 'melee' },  // 降低精英敌人血量和伤害
-    SUPPORT: { name: '支援', speed: 1.0, hp: 0.9, damage: 0.6, size: 1.2, behavior: 'support' }, // 支援型敌人，伤害较低
-    TANK: { name: '坦克', speed: 0.4, hp: 3.5, damage: 2.0, size: 2.0, behavior: 'melee' }, // 坦克型敌人，血厚但移动缓慢
-    BOSS: { name: 'Boss', speed: 0.6, hp: 2.5, damage: 1.8, size: 1.8, behavior: 'mixed' }, // 显著降低Boss的血量和伤害
-    ARCHER: { name: '弓箭手', speed: 0.7, hp: 0.9, damage: 2.2, size: 1.1, behavior: 'ranged' }, // 新增弓箭手敌人，高伤害远程单位
+    MELEE: { name: '近战', speed: 1.5, hp: 0.6, damage: 0.8, size: 1, behavior: 'melee' },  // 降低近战敌人血量和伤害
+    RANGED: { name: '远程', speed: 0.8, hp: 0.5, damage: 1.0, size: 0.8, behavior: 'ranged' },  // 降低远程敌人血量和伤害
+    ELITE: { name: '精英', speed: 1.2, hp: 1.2, damage: 1.2, size: 1.5, behavior: 'melee' },  // 降低精英敌人血量和伤害
+    SUPPORT: { name: '支援', speed: 1.0, hp: 0.7, damage: 0.5, size: 1.2, behavior: 'support' }, // 支援型敌人，伤害较低
+    TANK: { name: '坦克', speed: 0.3, hp: 2.5, damage: 1.5, size: 2.0, behavior: 'melee' }, // 坦克型敌人，血厚但移动缓慢且伤害降低
+    BOSS: { name: 'Boss', speed: 0.5, hp: 2.0, damage: 1.5, size: 1.8, behavior: 'mixed' }, // 进一步降低Boss的血量和伤害
+    ARCHER: { name: '弓箭手', speed: 0.7, hp: 0.6, damage: 1.5, size: 1.1, behavior: 'ranged' }, // 弓箭手敌人，降低伤害
+    // 新增法师敌人，远程魔法攻击
+    MAGE: { name: '法师', speed: 0.6, hp: 0.7, damage: 1.8, size: 1.2, behavior: 'ranged' },
 };
 
 class Enemy {
@@ -605,10 +611,12 @@ class Enemy {
                 type = 'SUPPORT'; // 新增支援型敌人
             } else if (level < 15 && rand < 0.96) {
                 type = 'ARCHER'; // 新增弓箭手敌人
-            } else if (rand < 0.98) {
+            } else if (level < 20 && rand < 0.98) {
+                type = 'MAGE'; // 新增法师敌人
+            } else if (rand < 0.99) {
                 type = 'BOSS';
             } else {
-                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT', 'TANK', 'ARCHER'][randomInt(0, 5)]; // 添加弓箭手
+                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT', 'TANK', 'ARCHER', 'MAGE'][randomInt(0, 6)]; // 添加法师
             }
         }
 
@@ -619,9 +627,9 @@ class Enemy {
         this.x = Math.random() < 0.5 ? -this.size : canvas.width + this.size;
         this.y = randomInt(0, canvas.height);
         this.speed = randomFloat(0.5 + this.config.speed, 1.5 + this.config.speed + level * 0.1);
-        this.hp = Math.floor((20 + level * 8) * this.config.hp);
+        this.hp = Math.floor((15 + level * 6) * this.config.hp); // 调整基础血量，使游戏整体难度更平衡
         this.maxHp = this.hp;
-        this.damage = Math.floor((5 + level * 1.5) * this.config.damage);
+        this.damage = Math.floor((3 + level * 1.2) * this.config.damage); // 调整基础伤害，使游戏整体难度更平衡
         this.color = this.getEnemyColor();
         this.weapon = generateWeapon();
 
@@ -637,6 +645,7 @@ class Enemy {
             case 'ELITE': return `hsl(${randomInt(270, 330)}, 70%, 50%)`; // 紫色系
             case 'BOSS': return `hsl(${randomInt(330, 360)}, 80%, 45%)`; // 红色系
             case 'ARCHER': return `hsl(${randomInt(30, 90)}, 70%, 50%)`; // 黄色/绿色系 - 弓箭手
+            case 'MAGE': return `hsl(${randomInt(240, 280)}, 80%, 60%)`; // 深蓝色系 - 法师
             default: return `hsl(${randomInt(0, 60)}, 70%, 50%)`;
         }
     }
@@ -673,6 +682,23 @@ class Enemy {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size/2, 0, Math.PI * 2);
                 ctx.fill();
+            }
+
+            // 为法师敌人添加魔法光环效果
+            if (this.type === 'MAGE') {
+                // 绘制一个紫色的魔法光环
+                const alpha = 0.3 + Math.sin(Date.now()/200) * 0.2; // 淡入淡出效果
+                ctx.strokeStyle = `rgba(147, 112, 219, ${alpha})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size + 8, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // 内部还有一个较小的光环
+                ctx.strokeStyle = `rgba(123, 104, 238, ${alpha * 0.7})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size + 4, 0, Math.PI * 2);
+                ctx.stroke();
             }
         } else {
             // 如果图像未加载，则回退到原来的绘制方式
@@ -740,11 +766,15 @@ class Enemy {
         }
 
         // 远程敌人射击逻辑
-        if (this.config.behavior === 'ranged' || this.config.behavior === 'mixed') {
+        if (this.config.behavior === 'ranged' || this.config.behavior === 'mixed' || this.type === 'MAGE') {
             this.shootCooldown--;
             if (this.shootCooldown <= 0 && dist < 200) {
-                this.shootAtPlayer();
-                this.shootCooldown = 60; // 每秒射击一次
+                if (this.type === 'MAGE') {
+                    this.castMagicSpell(); // 法师施放魔法
+                } else {
+                    this.shootAtPlayer();
+                }
+                this.shootCooldown = this.type === 'MAGE' ? 90 : 60; // 法师攻击频率稍低但威力更强
             }
         }
     }
@@ -794,6 +824,42 @@ class Enemy {
         };
 
         gameState.projectiles.push(projectile);
+    }
+
+    // 法师施放魔法技能
+    castMagicSpell() {
+        // 创建向玩家发射的魔法弹
+        const angle = Math.atan2(
+            gameState.player.y - this.y,
+            gameState.player.x - this.x
+        );
+
+        // 创建多个魔法弹形成扇形攻击
+        for (let i = -1; i <= 1; i++) {
+            const spreadAngle = angle + i * 0.3; // 30度扩散
+
+            const projectile = {
+                x: this.x,
+                y: this.y,
+                speed: this.projectileSpeed * 0.8, // 稍慢一点以显示魔法特性
+                dx: Math.cos(spreadAngle) * this.projectileSpeed * 0.8,
+                dy: Math.sin(spreadAngle) * this.projectileSpeed * 0.8,
+                size: 8, // 更大的魔法弹
+                color: this.color,
+                damage: Math.floor(this.damage * 0.6), // 法术伤害稍高
+                type: 'magic' // 标记为魔法类型
+            };
+
+            gameState.projectiles.push(projectile);
+        }
+
+        // 生成魔法粒子效果
+        createMagicParticles(this.x, this.y, this.color, 6);
+
+        // 偶尔产生声音反馈效果
+        if (Math.random() < 0.3) {
+            createParticles(this.x, this.y, this.color, 5, 'sparkle');
+        }
     }
 }
 
@@ -895,6 +961,17 @@ class Particle {
                 this.decay = randomFloat(0.02, 0.05);
                 this.gravity = 0.02;
                 break;
+            case 'magic':
+                this.size = randomInt(3, 6);
+                this.speedX = randomFloat(-2, 2);
+                this.speedY = randomFloat(-2, 2);
+                this.life = 1;
+                this.decay = randomFloat(0.005, 0.02);
+                this.gravity = 0;
+                this.oscillation = randomFloat(0.02, 0.05); // 振荡效果
+                this.angle = randomFloat(0, Math.PI * 2);
+                this.oscillationSpeed = randomFloat(0.05, 0.1);
+                break;
             case 'standard':
             default:
                 this.size = randomInt(3, 8);
@@ -961,6 +1038,34 @@ class Particle {
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
                 break;
+            case 'magic':
+                // 绘制魔法效果，带有振荡运动
+                ctx.globalAlpha = this.life * 0.7;
+
+                // 计算振荡位置
+                const offsetX = Math.cos(this.angle) * 5 * (this.life * 10);
+                const offsetY = Math.sin(this.angle) * 5 * (this.life * 10);
+
+                // 绘制发光魔法球
+                const magicGradient = ctx.createRadialGradient(
+                    this.x + offsetX, this.y + offsetY, 0,
+                    this.x + offsetX, this.y + offsetY, this.size
+                );
+                magicGradient.addColorStop(0, lightenColor(this.color, 30));
+                magicGradient.addColorStop(0.5, this.color);
+                magicGradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = magicGradient;
+                ctx.beginPath();
+                ctx.arc(this.x + offsetX, this.y + offsetY, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 更新振荡角度
+                this.angle += this.oscillationSpeed;
+
+                // 恢复全局透明度
+                ctx.globalAlpha = this.life;
+                break;
             case 'standard':
             default:
                 ctx.beginPath();
@@ -1003,6 +1108,13 @@ function lightenColor(color, percent) {
 function createParticles(x, y, color, count, type = 'standard') {
     for (let i = 0; i < count; i++) {
         gameState.particles.push(new Particle(x, y, color, type));
+    }
+}
+
+// 创建魔法粒子效果
+function createMagicParticles(x, y, color, count = 8) {
+    for (let i = 0; i < count; i++) {
+        gameState.particles.push(new Particle(x, y, color, 'magic'));
     }
 }
 
@@ -1133,6 +1245,22 @@ function usePotion(potion) {
             // 反击效果 - 受伤时反击
             gameState.buffs.push({ effect: 'counter', duration: potion.duration, value: potion.value });
             showCombatLog(`⚔️ 使用 ${potion.name}，获得反击能力！`, 'weapon-get');
+            break;
+
+        case 'purge_negative':
+            // 净化效果 - 清除负面状态
+            const negativeEffects = ['poison', 'slow', 'curse']; // 假设这些是负面效果
+            const originalBuffCount = gameState.buffs.length;
+
+            // 过滤掉负面状态
+            gameState.buffs = gameState.buffs.filter(buff => !negativeEffects.includes(buff.effect));
+
+            const removedCount = originalBuffCount - gameState.buffs.length;
+            if (removedCount > 0) {
+                showCombatLog(`🧪 使用 ${potion.name}，清除了 ${removedCount} 个负面状态！`, 'weapon-get');
+            } else {
+                showCombatLog(`🧪 使用 ${potion.name}，没有负面状态可清除`, 'weapon-get');
+            }
             break;
     }
     updateUI();
@@ -1266,8 +1394,8 @@ function attackEnemies() {
             enemy.hp -= damage;
             hitCount++;
 
-            // 创建击中粒子效果
-            createParticles(enemy.x, enemy.y, '#FFD700', 5);
+            // 创建增强的击中粒子效果（根据当前武器类型）
+            enhancedAttackEffect(enemy.x, enemy.y, damage, gameState.player.weapon);
 
             // 如果敌人死亡
             if (enemy.hp <= 0) {
@@ -1334,6 +1462,37 @@ function attackEnemies() {
     } else {
         // 错过攻击，重置连击
         resetCombo();
+    }
+}
+
+// 增强的攻击效果
+function enhancedAttackEffect(x, y, damage, weaponType) {
+    // 基础伤害效果
+    createParticles(x, y, '#FFD700', 5 + Math.floor(damage/10));
+
+    // 根据武器稀有度创建不同颜色的粒子
+    let particleColor = '#FFD700'; // 默认金色
+    if (weaponType) {
+        switch(weaponType.rarity) {
+            case 'common': particleColor = '#888888'; break; // 灰色
+            case 'uncommon': particleColor = '#4CAF50'; break; // 绿色
+            case 'rare': particleColor = '#2196F3'; break; // 蓝色
+            case 'epic': particleColor = '#9C27B0'; break; // 紫色
+            case 'legendary': particleColor = '#FF9800'; break; // 橙色
+            case 'mythic': particleColor = '#E91E63'; break; // 粉色
+        }
+
+        // 创建与武器稀有度匹配的粒子
+        createParticles(x, y, particleColor, 8 + Math.floor(damage/5));
+    }
+
+    // 如果是史诗及以上级别的武器，创建额外的光环效果
+    if (weaponType && (weaponType.rarity === 'epic' || weaponType.rarity === 'legendary' || weaponType.rarity === 'mythic')) {
+        // 创建一个更大的光环效果
+        createParticles(x, y, particleColor, 12 + Math.floor(damage/4), 'explosion');
+
+        // 增加屏幕震动
+        gameState.screenShake = Math.min(15, 5 + Math.floor(damage/10)); // 最大震动15
     }
 }
 
