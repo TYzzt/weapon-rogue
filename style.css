@@ -44,6 +44,7 @@ body {
     border: 2px solid #4a4a6a;
     font-size: 14px;
     line-height: 1.8;
+    min-width: 180px; /* 增加最小宽度以容纳新元素 */
 }
 
 #inventory {

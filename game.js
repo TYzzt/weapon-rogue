@@ -135,6 +135,7 @@ const WEAPONS = [
     // Mythic weapons (神话)
     { name: '开发者之剑', damage: 999, rarity: 'mythic', color: '#ff00ff' },
     { name: '元神之剑', damage: 500, rarity: 'mythic', color: '#FF1493' },
+    { name: '平衡之锤', damage: 150, rarity: 'mythic', color: '#7B68EE' },
 ];
 
 const RARITY_WEIGHTS = {
@@ -429,7 +430,30 @@ function generateWeapon() {
     return { ...weapon, id: Date.now() + Math.random() };
 }
 
-// ==================== 实体类 ====================
+// ==================== 音效管理器 ====================
+const AudioManager = {
+    sounds: {},
+
+    // 初始化音效对象（仅作为预留接口）
+    init() {
+        // 在这里可以加载各种音效
+        console.log('音效系统已初始化');
+    },
+
+    // 播放音效的占位函数
+    playSound(soundName) {
+        // 预留接口，未来可以集成Web Audio API
+        // 例如: this.sounds[soundName]?.play();
+
+        // 临时使用简单的振动反馈（在支持的设备上）
+        if (navigator.vibrate) {
+            navigator.vibrate(10); // 轻微震动10ms作为反馈
+        }
+    }
+};
+
+// 初始化音效系统
+AudioManager.init();
 
 class Player {
     constructor() {
@@ -453,18 +477,32 @@ class Player {
                 // 根据鼠标位置确定武器角度
                 const angle = Math.atan2(mouseY - this.y, mouseX - this.x);
 
+                // 添加攻击动画效果
+                let weaponScale = 1.0;
+                if (gameState.player.attackCooldown > 0) {
+                    // 攻击时武器放大效果
+                    weaponScale = 1.2 + (gameState.player.attackCooldown / 15) * 0.3;
+                }
+
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(angle);
 
-                // 绘制武器精灵
-                ctx.drawImage(weaponImg, 15, -8, 40, 16);
+                // 绘制武器精灵，带缩放效果
+                const scaledSize = 40 * weaponScale;
+                const scaledHeight = 16 * weaponScale;
+                ctx.drawImage(weaponImg, 15, -8, scaledSize, scaledHeight);
 
                 ctx.restore();
-            } else {
-                // 如果图像未加载，则回退到原来的绘制方式
+            }
+
+            // 绘制武器名称标签（在攻击时更明显）
+            if (gameState.player.attackCooldown > 0) {
                 ctx.fillStyle = gameState.player.weapon.color;
-                ctx.fillRect(this.x + 20, this.y - 5, 25, 8);
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(gameState.player.weapon.name, this.x, this.y - this.size - 10);
+                ctx.textAlign = 'left';
             }
         }
     }
@@ -501,6 +539,7 @@ const ENEMY_TYPES = {
     RANGED: { name: '远程', speed: 0.8, hp: 0.7, damage: 1.5, size: 0.8, behavior: 'ranged' },
     ELITE: { name: '精英', speed: 1.2, hp: 2, damage: 1.8, size: 1.5, behavior: 'melee' },
     SUPPORT: { name: '支援', speed: 1.0, hp: 1.2, damage: 0.8, size: 1.2, behavior: 'support' }, // 新增支援型敌人
+    TANK: { name: '坦克', speed: 0.5, hp: 5, damage: 2.5, size: 2.0, behavior: 'melee' }, // 新增坦克型敌人
     BOSS: { name: 'Boss', speed: 0.8, hp: 3.5, damage: 2.0, size: 1.8, behavior: 'mixed' }, // 降低了Boss的生命值和伤害
 };
 
@@ -520,7 +559,7 @@ class Enemy {
             } else if (rand < 0.97) {
                 type = 'BOSS';
             } else {
-                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT'][randomInt(0, 3)]; // 添加支援型
+                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT', 'TANK'][randomInt(0, 4)]; // 添加支援型和坦克型
             }
         }
 
@@ -970,6 +1009,9 @@ function collectDrop(drop) {
         collectRelic(drop.item);
     }
 
+    // 播放收集物品音效
+    AudioManager.playSound('collect');
+
     createParticles(drop.x, drop.y, drop.item.color || '#fff', 15, 'sparkle');
 }
 
@@ -1081,7 +1123,7 @@ function spawnEnemy() {
     gameState.enemies.push(new Enemy(gameState.level));
 
     // 随着关卡提高，生成速度加快（调整为更平缓的增长）
-    const spawnRate = Math.max(800, 3000 - gameState.level * 80);
+    const spawnRate = Math.max(1000, 4000 - gameState.level * 60);
     setTimeout(spawnEnemy, spawnRate);
 }
 
@@ -1107,6 +1149,7 @@ function updateUI() {
     document.getElementById('hp').textContent = gameState.player.hp;
     document.getElementById('weapon').textContent = gameState.player.weapon?.name || '无';
     document.getElementById('level').textContent = gameState.level;
+    document.getElementById('goal').textContent = `击杀${Math.min(20, 5 + gameState.level * 2)}敌升级`;
     document.getElementById('kills').textContent = gameState.kills;
     document.getElementById('combo').textContent = gameState.player.combo;
     document.getElementById('score').textContent = gameState.player.score;
@@ -1157,6 +1200,7 @@ function attackEnemies() {
                     case 'MELEE': enemyScore += 10; break;
                     case 'RANGED': enemyScore += 20; break;
                     case 'ELITE': enemyScore += 50; break;
+                    case 'TANK': enemyScore += 75; break; // 为新增的坦克类型添加分数
                     case 'BOSS': enemyScore += 100; break;
                 }
 
@@ -1285,6 +1329,9 @@ function checkCollisions() {
                 }
             }
 
+            // 播放受伤音效
+            AudioManager.playSound('hurt');
+
             gameState.player.hp -= damage;
             createParticles(gameState.player.x, gameState.player.y, '#ff0000', 15, 'explosion');
 
@@ -1358,6 +1405,12 @@ document.addEventListener('keydown', (e) => {
 
 function gameLoop() {
     if (!gameState.isPlaying) return;
+
+    // 检查胜利条件：达到第50关
+    if (gameState.level >= 50) {
+        winGame();
+        return;
+    }
 
     // 应用屏幕震动
     if (gameState.screenShake > 0) {
@@ -1545,6 +1598,9 @@ function gameOver() {
     gameState.isPlaying = false;
     gameState.isGameOver = true;
 
+    // 播放游戏结束音效
+    AudioManager.playSound('gameOver');
+
     // 创建大量爆炸粒子效果
     for (let i = 0; i < 100; i++) {
         createParticles(gameState.player.x, gameState.player.y, '#ff0000', 1, 'explosion');
@@ -1557,6 +1613,37 @@ function gameOver() {
     document.getElementById('final-kills').textContent = gameState.kills;
     document.getElementById('final-score').textContent = gameState.player.score; // 需要在HTML中添加此元素
     document.getElementById('game-over').classList.remove('hidden');
+}
+
+function winGame() {
+    // 播放胜利音效
+    AudioManager.playSound('victory');
+
+    // 创建大量庆祝粒子效果
+    for (let i = 0; i < 200; i++) {
+        createParticles(gameState.player.x, gameState.player.y,
+                       `hsl(${Math.random() * 360}, 100%, 50%)`, 3, 'sparkle');
+    }
+
+    // 巨大的屏幕震动
+    gameState.screenShake = 50;
+
+    // 显示胜利信息
+    showCombatLog(`🎊 恭喜通关！达到第 ${gameState.level} 关！`, 'weapon-get');
+
+    // 更新UI并显示游戏结束界面（胜利）
+    document.getElementById('final-level').textContent = gameState.level;
+    document.getElementById('final-kills').textContent = gameState.kills;
+    document.getElementById('final-score').textContent = gameState.player.score;
+    document.getElementById('game-over').classList.remove('hidden');
+
+    // 修改标题为"获胜"
+    setTimeout(() => {
+        document.querySelector('#game-over h2').textContent = '🎉 胜利!';
+    }, 100);
+
+    gameState.isPlaying = false;
+    gameState.isGameOver = true;
 }
 
 // 按钮事件
