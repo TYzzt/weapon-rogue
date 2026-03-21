@@ -72,6 +72,18 @@ const WEAPONS = [
     { name: '玻璃片', damage: 7, rarity: 'common', color: '#00CED1' },
     { name: '破碗碎片', damage: 5, rarity: 'common', color: '#F5DEB3' },
 
+    // 新增普通武器
+    { name: '钝剑', damage: 8, rarity: 'common', color: '#C0C0C0' },
+    { name: '破旧的锤子', damage: 7, rarity: 'common', color: '#A9A9A9' },
+    { name: '木棒', damage: 4, rarity: 'common', color: '#8B4513' },
+    { name: '破损的镰刀', damage: 6, rarity: 'common', color: '#696969' },
+    { name: '旧匕首', damage: 5, rarity: 'common', color: '#708090' },
+    { name: '断掉的剑', damage: 3, rarity: 'common', color: '#808080' },
+    { name: '生锈的镰刀', damage: 6, rarity: 'common', color: '#2F4F4F' },
+    { name: '粗糙的短斧', damage: 7, rarity: 'common', color: '#666666' },
+    { name: '废弃的钩爪', damage: 5, rarity: 'common', color: '#A9A9A9' },
+    { name: '木制长矛', damage: 6, rarity: 'common', color: '#8B4513' },
+
     // Uncommon weapons (不常见)
     { name: '铁剑', damage: 10, rarity: 'uncommon', color: '#silver' },
     { name: '钢斧', damage: 15, rarity: 'uncommon', color: '#666' },
@@ -89,6 +101,18 @@ const WEAPONS = [
     { name: '铁齿狼牙棒', damage: 16, rarity: 'uncommon', color: '#708090' },
     { name: '硬化骨刀', damage: 12, rarity: 'uncommon', color: '#F5F5DC' },
 
+    // 新增不常见武器
+    { name: '镀银短剑', damage: 18, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '精灵长弓', damage: 17, rarity: 'uncommon', color: '#228B22' },
+    { name: '附魔战斧', damage: 19, rarity: 'uncommon', color: '#8B4513' },
+    { name: '轻型重剑', damage: 16, rarity: 'uncommon', color: '#696969' },
+    { name: '淬毒匕首', damage: 15, rarity: 'uncommon', color: '#32CD32' },
+    { name: '秘银锤', damage: 18, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '符文长矛', damage: 20, rarity: 'uncommon', color: '#800080' },
+    { name: '炼金法杖', damage: 17, rarity: 'uncommon', color: '#FFD700' },
+    { name: '烈焰之刃', damage: 22, rarity: 'uncommon', color: '#FF4500' },
+    { name: '寒冰战斧', damage: 20, rarity: 'uncommon', color: '#87CEEB' },
+
     // Rare weapons (稀有)
     { name: '秘银剑', damage: 25, rarity: 'rare', color: '#00ffff' },
     { name: '火焰之刃', damage: 30, rarity: 'rare', color: '#ff4500' },
@@ -105,6 +129,18 @@ const WEAPONS = [
     { name: '紫金权杖', damage: 33, rarity: 'rare', color: '#DA70D6' },
     { name: '极地之矛', damage: 35, rarity: 'rare', color: '#E0FFFF' },
     { name: '熔岩巨剑', damage: 39, rarity: 'rare', color: '#FF4500' },
+
+    // 新增稀有武器
+    { name: '星尘法杖', damage: 40, rarity: 'rare', color: '#FF69B4' },
+    { name: '凤凰之羽扇', damage: 42, rarity: 'rare', color: '#FF6347' },
+    { name: '雷电鞭', damage: 44, rarity: 'rare', color: '#00BFFF' },
+    { name: '暗夜匕首', damage: 45, rarity: 'rare', color: '#000080' },
+    { name: '圣洁之锤', damage: 43, rarity: 'rare', color: '#FFFFE0' },
+    { name: '月光短剑', damage: 41, rarity: 'rare', color: '#ADD8E6' },
+    { name: '荆棘长鞭', damage: 38, rarity: 'rare', color: '#228B22' },
+    { name: '水晶战斧', damage: 46, rarity: 'rare', color: '#B0E0E6' },
+    { name: '虚空之刃', damage: 47, rarity: 'rare', color: '#4B0082' },
+    { name: '时光沙漏剑', damage: 48, rarity: 'rare', color: '#DAA520' },
 
     // 新增高级稀有武器，作为稀有和史诗之间的过渡
     { name: '暴风之刃', damage: 42, rarity: 'rare', color: '#87CEEB' },
@@ -124,6 +160,18 @@ const WEAPONS = [
     { name: '彩虹魔杖', damage: 52, rarity: 'epic', color: '#FF69B4' },
     { name: '混沌之刃', damage: 55, rarity: 'epic', color: '#663399' },
     { name: '创世之斧', damage: 53, rarity: 'epic', color: '#8B4513' },
+
+    // 新增史诗武器
+    { name: '天罚之剑', damage: 58, rarity: 'epic', color: '#FFD700' },
+    { name: '深渊之触', damage: 56, rarity: 'epic', color: '#483D8B' },
+    { name: '永恒之火', damage: 60, rarity: 'epic', color: '#FF4500' },
+    { name: '冰封王座', damage: 57, rarity: 'epic', color: '#87CEEB' },
+    { name: '风暴之眼', damage: 62, rarity: 'epic', color: '#7CFC00' },
+    { name: '灵魂收割者', damage: 65, rarity: 'epic', color: '#2F4F4F' },
+    { name: '破晓之光', damage: 63, rarity: 'epic', color: '#FFFF00' },
+    { name: '暮光之刃', damage: 61, rarity: 'epic', color: '#8A2BE2' },
+    { name: '创世纪元', damage: 68, rarity: 'epic', color: '#FF1493' },
+    { name: '宇宙法则', damage: 66, rarity: 'epic', color: '#9370DB' },
 
     // 新增史诗+级别武器，填补史诗和传说之间的差距
     { name: '龙王之怒', damage: 60, rarity: 'epic', color: '#FF4500' },
@@ -905,6 +953,18 @@ const ENEMY_TYPES = {
     ARCHER: { name: '弓箭手', speed: 0.7, hp: 0.6, damage: 1.5, size: 1.1, behavior: 'ranged' }, // 弓箭手敌人，降低伤害
     // 新增法师敌人，远程魔法攻击
     MAGE: { name: '法师', speed: 0.6, hp: 0.7, damage: 1.8, size: 1.2, behavior: 'ranged' },
+
+    // 新增更多敌人类型
+    ASSASSIN: { name: '刺客', speed: 2.0, hp: 0.8, damage: 2.0, size: 0.9, behavior: 'melee' }, // 高速高伤害低血量
+    GOLEM: { name: '石像鬼', speed: 0.4, hp: 3.0, damage: 1.0, size: 2.2, behavior: 'melee' }, // 极高血量低伤害
+    NECROMANCER: { name: '亡灵法师', speed: 0.5, hp: 1.0, damage: 2.2, size: 1.3, behavior: 'ranged' }, // 召唤亡灵单位
+    DRAGON: { name: '幼龙', speed: 0.9, hp: 2.2, damage: 1.8, size: 2.0, behavior: 'ranged' }, // 飞行单位，高血高伤害
+    UNDEAD: { name: '亡灵战士', speed: 0.7, hp: 1.5, damage: 1.3, size: 1.1, behavior: 'melee' }, // 亡灵单位，有一定抗性
+    BEAST: { name: '野兽', speed: 1.8, hp: 0.9, damage: 1.4, size: 1.0, behavior: 'melee' }, // 高速野兽，具有突袭能力
+    ELEMENTAL: { name: '元素生物', speed: 1.0, hp: 1.1, damage: 1.6, size: 1.1, behavior: 'ranged' }, // 随机元素攻击
+    SKELETON: { name: '骷髅', speed: 0.9, hp: 0.8, damage: 0.9, size: 0.9, behavior: 'melee' }, // 基础亡灵单位
+    DEMON: { name: '小恶魔', speed: 1.3, hp: 1.0, damage: 1.7, size: 1.2, behavior: 'melee' }, // 火属性伤害
+    ORC: { name: '兽人', speed: 1.1, hp: 1.8, damage: 1.6, size: 1.6, behavior: 'melee' }, // 高血高伤害近战
 };
 
 class Enemy {
@@ -912,22 +972,38 @@ class Enemy {
         if (type === null) {
             // 随机选择敌人类型，越到后面精英和Boss出现几率越高
             const rand = Math.random();
-            if (level < 3 && rand < 0.6) {
+            if (level < 3 && rand < 0.4) {
                 type = 'MELEE';
-            } else if (level < 5 && rand < 0.75) {
+            } else if (level < 5 && rand < 0.6) {
                 type = 'RANGED';
-            } else if (level < 8 && rand < 0.88) {
+            } else if (level < 8 && rand < 0.75) {
                 type = 'ELITE';
-            } else if (level < 12 && rand < 0.93) {
+            } else if (level < 10 && rand < 0.8) {
                 type = 'SUPPORT'; // 新增支援型敌人
-            } else if (level < 15 && rand < 0.96) {
+            } else if (level < 12 && rand < 0.85) {
                 type = 'ARCHER'; // 新增弓箭手敌人
-            } else if (level < 20 && rand < 0.98) {
+            } else if (level < 14 && rand < 0.88) {
                 type = 'MAGE'; // 新增法师敌人
-            } else if (rand < 0.99) {
+            } else if (level < 16 && rand < 0.90) {
+                type = 'ASSASSIN'; // 新增刺客敌人
+            } else if (level < 18 && rand < 0.92) {
+                type = 'UNDEAD'; // 新增亡灵敌人
+            } else if (level < 20 && rand < 0.94) {
+                type = 'BEAST'; // 新增野兽敌人
+            } else if (level < 22 && rand < 0.96) {
+                type = 'SKELETON'; // 新增骷髅敌人
+            } else if (level < 24 && rand < 0.97) {
+                type = 'DRAGON'; // 新增龙类敌人
+            } else if (level < 26 && rand < 0.98) {
+                type = 'GOLEM'; // 新增石像鬼敌人
+            } else if (level < 28 && rand < 0.99) {
+                type = 'NECROMANCER'; // 新增亡灵法师敌人
+            } else if (rand < 0.995) {
                 type = 'BOSS';
+            } else if (rand < 0.998) {
+                type = 'DEMON'; // 小恶魔
             } else {
-                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT', 'TANK', 'ARCHER', 'MAGE'][randomInt(0, 6)]; // 添加法师
+                type = 'ELEMENTAL'; // 元素生物
             }
         }
 
@@ -957,6 +1033,16 @@ class Enemy {
             case 'BOSS': return `hsl(${randomInt(330, 360)}, 80%, 45%)`; // 红色系
             case 'ARCHER': return `hsl(${randomInt(30, 90)}, 70%, 50%)`; // 黄色/绿色系 - 弓箭手
             case 'MAGE': return `hsl(${randomInt(240, 280)}, 80%, 60%)`; // 深蓝色系 - 法师
+            case 'ASSASSIN': return `hsl(${randomInt(0, 30)}, 80%, 30%)`; // 深棕色系 - 刺客
+            case 'GOLEM': return `hsl(${randomInt(180, 220)}, 50%, 40%)`; // 灰蓝系 - 石像鬼
+            case 'NECROMANCER': return `hsl(${randomInt(300, 330)}, 70%, 40%)`; // 暗紫色系 - 亡灵法师
+            case 'DRAGON': return `hsl(${randomInt(0, 30)}, 70%, 45%)`; // 暗红系 - 龙
+            case 'UNDEAD': return `hsl(${randomInt(60, 120)}, 40%, 35%)`; // 暗绿系 - 亡灵
+            case 'BEAST': return `hsl(${randomInt(30, 60)}, 70%, 50%)`; // 棕色系 - 野兽
+            case 'ELEMENTAL': return `hsl(${randomInt(180, 240)}, 80%, 60%)`; // 水蓝系 - 元素
+            case 'SKELETON': return `hsl(${randomInt(120, 180)}, 20%, 70%)`; // 灰白系 - 骷髅
+            case 'DEMON': return `hsl(${randomInt(0, 15)}, 80%, 45%)`; // 红色系 - 恶魔
+            case 'ORC': return `hsl(${randomInt(120, 160)}, 60%, 40%)`; // 绿色系 - 兽人
             default: return `hsl(${randomInt(0, 60)}, 70%, 50%)`;
         }
     }
@@ -1632,8 +1718,8 @@ function spawnEnemy() {
 
     gameState.enemies.push(new Enemy(gameState.level));
 
-    // 随着关卡提高，生成速度加快（调整为更平缓的增长）
-    const spawnRate = Math.max(2000, 5000 - gameState.level * 80); // 降低生成频率
+    // 随着关卡提高，生成速度加快（调整为更平缓的增长，使游戏体验更好）
+    const spawnRate = Math.max(1500, 5000 - gameState.level * 120); // 增加随等级增长的速度，使游戏更具有挑战性
     setTimeout(spawnEnemy, spawnRate);
 }
 
@@ -1764,8 +1850,10 @@ function attackEnemies() {
 
                 gameState.kills++;
 
-                // 每 10 杀升级
-                if (gameState.kills % 10 === 0) {
+                // 根据当前关卡决定升级所需的击杀数，使其与UI显示一致
+                const killsNeededForLevel = Math.min(20, 5 + gameState.level * 2);
+
+                if (gameState.kills % killsNeededForLevel === 0) {
                     gameState.level++;
                     showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
                 }
@@ -2210,8 +2298,8 @@ function initGame() {
         player: {
             x: canvas.width / 2,  // 添加玩家坐标
             y: canvas.height / 2, // 添加玩家坐标
-            hp: 120,  // 增加玩家初始生命值
-            maxHp: 120,  // 同步最大生命值
+            hp: 150,  // 提高玩家初始生命值以增强生存能力
+            maxHp: 150,  // 同步最大生命值
             weapon: null,
             weapons: [],
             lastWeapon: null,
