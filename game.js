@@ -209,6 +209,314 @@ let gameState = {
     screenShake: 0, // 屏幕震动
 };
 
+// ==================== 存档系统 ====================
+
+const SaveSystem = {
+    saveKey: 'weaponRogueSave',
+
+    // 保存游戏状态
+    save: function() {
+        const saveData = {
+            gameState: {
+                level: gameState.level,
+                kills: gameState.kills,
+                player: {
+                    hp: gameState.player.hp,
+                    maxHp: gameState.player.maxHp,
+                    weapon: gameState.player.weapon,
+                    score: gameState.player.score,
+                    maxCombo: gameState.player.maxCombo
+                },
+                relics: gameState.relics,
+                achievements: AchievementSystem.achievements // 保存成就状态
+            },
+            timestamp: Date.now()
+        };
+
+        try {
+            localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+            console.log('游戏进度已保存');
+            showCombatLog('💾 进度已自动保存', 'weapon-get');
+        } catch (error) {
+            console.error('保存失败:', error);
+            showCombatLog('⚠️ 保存失败', 'weapon-lose');
+        }
+    },
+
+    // 加载游戏状态
+    load: function() {
+        try {
+            const saveData = localStorage.getItem(this.saveKey);
+            if (saveData) {
+                const parsedData = JSON.parse(saveData);
+
+                // 恢复游戏状态
+                gameState.level = parsedData.gameState.level || 1;
+                gameState.kills = parsedData.gameState.kills || 0;
+                gameState.player.hp = parsedData.gameState.player.hp || 120;
+                gameState.player.maxHp = parsedData.gameState.player.maxHp || 120;
+                gameState.player.weapon = parsedData.gameState.player.weapon || null;
+                gameState.player.score = parsedData.gameState.player.score || 0;
+                gameState.player.maxCombo = parsedData.gameState.player.maxCombo || 0;
+                gameState.relics = parsedData.gameState.relics || [];
+
+                // 恢复成就状态
+                if (parsedData.gameState.achievements) {
+                    AchievementSystem.achievements = parsedData.gameState.achievements;
+                }
+
+                console.log('游戏进度已加载');
+                showCombatLog('📂 进度已加载', 'weapon-get');
+                return true;
+            }
+        } catch (error) {
+            console.error('加载失败:', error);
+            showCombatLog('⚠️ 读取存档失败', 'weapon-lose');
+        }
+        return false;
+    },
+
+    // 删除存档
+    clear: function() {
+        try {
+            localStorage.removeItem(this.saveKey);
+            console.log('存档已删除');
+            showCombatLog('🗑️ 存档已清除', 'weapon-get');
+        } catch (error) {
+            console.error('清除失败:', error);
+        }
+    }
+};
+
+// ==================== 成就系统 ====================
+
+const AchievementSystem = {
+    achievements: {}, // 动态存储成就解锁状态
+
+    // 定义成就列表
+    achievementList: [
+        // 游戏进度相关
+        { id: 'first_blood', name: '第一滴血', description: '击杀第一个敌人', condition: 'kills >= 1' },
+        { id: 'blood_thirsty', name: '嗜血者', description: '击杀10个敌人', condition: 'kills >= 10' },
+        { id: 'killing_spree', name: '大开杀戒', description: '击杀50个敌人', condition: 'kills >= 50' },
+        { id: 'monster_hunter', name: '怪物猎人', description: '击杀100个敌人', condition: 'kills >= 100' },
+        { id: 'first_level', name: '登堂入室', description: '到达第5关', condition: 'level >= 5' },
+        { id: 'explorer', name: '探索者', description: '到达第10关', condition: 'level >= 10' },
+        { id: 'conqueror', name: '征服者', description: '到达第20关', condition: 'level >= 20' },
+        { id: 'master', name: '大师', description: '到达第30关', condition: 'level >= 30' },
+        { id: 'legend', name: '传奇', description: '到达第50关（通关）', condition: 'level >= 50' },
+
+        // 战斗相关
+        { id: 'combo_king', name: '连击之王', description: '达成10连击', condition: 'maxCombo >= 10' },
+        { id: 'combo_master', name: '连击大师', description: '达成20连击', condition: 'maxCombo >= 20' },
+        { id: 'high_scoring', name: '高分达人', description: '单局得分超过1000', condition: 'score >= 1000' },
+        { id: 'higher_scoring', name: '高手', description: '单局得分超过5000', condition: 'score >= 5000' },
+        { id: 'top_scoring', name: '顶尖高手', description: '单局得分超过10000', condition: 'score >= 10000' },
+        { id: 'survivor', name: '幸存者', description: '在10关内存活', condition: 'level >= 10 && hp > 50' },
+        { id: 'tough_skin', name: '铜皮铁骨', description: '在20关内存活且生命值超过30', condition: 'level >= 20 && hp > 30' },
+
+        // 武器相关
+        { id: 'weapon_collector', name: '武器收藏家', description: '使用过10种不同的武器', condition: 'uniqueWeapons >= 10' },
+        { id: 'weapon_master', name: '武器大师', description: '使用过20种不同的武器', condition: 'uniqueWeapons >= 20' },
+        { id: 'rare_finder', name: '稀有发现者', description: '获得史诗级武器', condition: 'hasEpicWeapon' },
+        { id: 'legendary_hunter', name: '传说猎人', description: '获得传说级武器', condition: 'hasLegendaryWeapon' },
+        { id: 'mythic_power', name: '神话之力', description: '获得神话级武器', condition: 'hasMythicWeapon' },
+
+        // 特殊挑战
+        { id: 'lucky_charm', name: '幸运护符', description: '使用幸运药水并击杀5个敌人', condition: 'luckyKills >= 5' },
+        { id: 'phoenix_rise', name: '凤凰涅槃', description: '在濒死状态下使用生命药水', condition: 'reviveFromLowHp' },
+        { id: 'guardian', name: '守护者', description: '获得3件不同的遗物', condition: 'relicsCollected >= 3' },
+        { id: 'treasure_hoarder', name: '宝藏囤积者', description: '获得5件不同的遗物', condition: 'relicsCollected >= 5' },
+        { id: 'speed_demon', name: '速度恶魔', description: '在15关内通关（使用加速药水）', condition: 'finishFast' },
+        { id: 'pacifist', name: '和平主义者', description: '到达第10关但只杀死最少数量的敌人', condition: 'pacifistLevel' },
+        { id: 'berserker', name: '狂战士', description: '连续使用狂暴技能3次', condition: 'berserkStreak' },
+        { id: 'skill_master', name: '技能大师', description: '成功使用所有4个技能各10次', condition: 'skillsUsed >= 40' },
+        { id: 'elemental_master', name: '元素大师', description: '使用所有类型的药水', condition: 'usedAllPotions' },
+    ],
+
+    // 临时状态变量，用于跟踪复杂的成就条件
+    tempStats: {
+        uniqueWeaponsUsed: new Set(),
+        luckyKillCount: 0,
+        lowHpReviveCount: 0,
+        relicsCollected: 0,
+        skillsUsed: 0,
+        usedPotionTypes: new Set(),
+        berserkStreak: 0,
+        lastBerserkTime: 0
+    },
+
+    // 检查成就条件并解锁成就
+    checkAchievements: function() {
+        const newAchievements = [];
+
+        for (const achievement of this.achievementList) {
+            if (!this.achievements[achievement.id]) {
+                // 检查成就条件是否满足
+                if (this.evaluateCondition(achievement.condition)) {
+                    this.unlock(achievement);
+                    newAchievements.push(achievement);
+                }
+            }
+        }
+
+        return newAchievements;
+    },
+
+    // 评估成就条件
+    evaluateCondition: function(condition) {
+        // 使用eval来动态评估条件表达式，注意在生产环境中这是不安全的
+        // 但在游戏内部实现中，我们可以控制输入
+        try {
+            // 创建一个上下文对象，用于评估条件
+            const context = {
+                kills: gameState.kills,
+                level: gameState.level,
+                hp: gameState.player.hp,
+                maxCombo: gameState.player.maxCombo,
+                score: gameState.player.score,
+                weapon: gameState.player.weapon,
+                relics: gameState.relics
+            };
+
+            // 简单替换实现，支持基本比较
+            if (condition === 'kills >= 1') return context.kills >= 1;
+            if (condition === 'kills >= 10') return context.kills >= 10;
+            if (condition === 'kills >= 50') return context.kills >= 50;
+            if (condition === 'kills >= 100') return context.kills >= 100;
+            if (condition === 'level >= 5') return context.level >= 5;
+            if (condition === 'level >= 10') return context.level >= 10;
+            if (condition === 'level >= 20') return context.level >= 20;
+            if (condition === 'level >= 30') return context.level >= 30;
+            if (condition === 'level >= 50') return context.level >= 50;
+            if (condition === 'maxCombo >= 10') return context.maxCombo >= 10;
+            if (condition === 'maxCombo >= 20') return context.maxCombo >= 20;
+            if (condition === 'score >= 1000') return context.score >= 1000;
+            if (condition === 'score >= 5000') return context.score >= 5000;
+            if (condition === 'score >= 10000') return context.score >= 10000;
+            if (condition === 'level >= 10 && hp > 50') return context.level >= 10 && context.hp > 50;
+            if (condition === 'level >= 20 && hp > 30') return context.level >= 20 && context.hp > 30;
+
+            // 检查是否有史诗武器
+            if (condition === 'hasEpicWeapon' && context.weapon) {
+                return context.weapon.rarity === 'epic';
+            }
+
+            // 检查是否有传说武器
+            if (condition === 'hasLegendaryWeapon' && context.weapon) {
+                return context.weapon.rarity === 'legendary';
+            }
+
+            // 检查是否有神话武器
+            if (condition === 'hasMythicWeapon' && context.weapon) {
+                return context.weapon.rarity === 'mythic';
+            }
+
+            // 检查拥有的遗物数量
+            if (condition === 'relicsCollected >= 3') {
+                return context.relics && context.relics.length >= 3;
+            }
+            if (condition === 'relicsCollected >= 5') {
+                return context.relics && context.relics.length >= 5;
+            }
+
+            // 检查复杂条件
+            if (condition === 'uniqueWeapons >= 10') {
+                return this.tempStats.uniqueWeaponsUsed.size >= 10;
+            }
+            if (condition === 'uniqueWeapons >= 20') {
+                return this.tempStats.uniqueWeaponsUsed.size >= 20;
+            }
+            if (condition === 'luckyKills >= 5') {
+                return this.tempStats.luckyKillCount >= 5;
+            }
+
+            return false;
+        } catch (e) {
+            console.error('评估成就条件时出错:', e);
+            return false;
+        }
+    },
+
+    // 解锁成就
+    unlock: function(achievement) {
+        this.achievements[achievement.id] = {
+            unlocked: true,
+            timestamp: Date.now(),
+            name: achievement.name,
+            description: achievement.description
+        };
+
+        console.log(`成就解锁: ${achievement.name}`);
+        showCombatLog(`🏆 成就解锁: ${achievement.name}`, 'weapon-get');
+
+        // 保存成就状态
+        SaveSystem.save();
+    },
+
+    // 获取已解锁成就的数量
+    getUnlockedCount: function() {
+        return Object.keys(this.achievements).filter(id => this.achievements[id].unlocked).length;
+    },
+
+    // 获取总成就数量
+    getTotalCount: function() {
+        return this.achievementList.length;
+    },
+
+    // 当玩家获得新武器时调用
+    onWeaponAcquired: function(weapon) {
+        if (weapon) {
+            this.tempStats.uniqueWeaponsUsed.add(weapon.name);
+            this.checkAchievements();
+        }
+    },
+
+    // 当玩家使用幸运药水并击杀敌人时调用
+    onLuckyKill: function() {
+        this.tempStats.luckyKillCount++;
+        this.checkAchievements();
+    },
+
+    // 当玩家使用生命药水脱离危险状态时调用
+    onPhoenixRise: function() {
+        this.tempStats.lowHpReviveCount++;
+        this.checkAchievements();
+    },
+
+    // 当玩家获得遗物时调用
+    onRelicAcquired: function() {
+        this.tempStats.relicsCollected++;
+        this.checkAchievements();
+    },
+
+    // 当玩家使用技能时调用
+    onSkillUsed: function() {
+        this.tempStats.skillsUsed++;
+        this.checkAchievements();
+    },
+
+    // 当玩家使用药水时调用
+    onPotionUsed: function(potion) {
+        this.tempStats.usedPotionTypes.add(potion.name);
+        this.checkAchievements();
+    },
+
+    // 重置临时统计数据（通常在游戏重启时）
+    resetTempStats: function() {
+        this.tempStats = {
+            uniqueWeaponsUsed: new Set(),
+            luckyKillCount: 0,
+            lowHpReviveCount: 0,
+            relicsCollected: 0,
+            skillsUsed: 0,
+            usedPotionTypes: new Set(),
+            berserkStreak: 0,
+            lastBerserkTime: 0
+        };
+    }
+};
+
 // ==================== 工具函数 ====================
 
 function randomInt(min, max) {
@@ -355,6 +663,9 @@ function useSkill(skillKey) {
     }
 
     if (success) {
+        // 通知成就系统使用了技能
+        AchievementSystem.onSkillUsed();
+
         skillCooldowns[skillKey] = skill.cooldown;
         return true;
     }
@@ -1194,6 +1505,9 @@ function replaceWeapon(newWeapon) {
 
     gameState.player.weapon = newWeapon;
 
+    // 通知成就系统获取了新武器
+    AchievementSystem.onWeaponAcquired(newWeapon);
+
     const logMsg = oldWeapon
         ? `💔 失去 ${oldWeapon.name} → ⚔️ 获得 ${newWeapon.name}`
         : `⚔️ 获得 ${newWeapon.name}`;
@@ -1206,9 +1520,18 @@ function replaceWeapon(newWeapon) {
 }
 
 function usePotion(potion) {
+    // 通知成就系统使用了药水
+    AchievementSystem.onPotionUsed(potion);
+
     switch (potion.effect) {
         case 'heal':
             gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + potion.value);
+
+            // 检查是否在低血量时使用生命药水，触发凤凰涅槃成就
+            if (gameState.player.hp < gameState.player.maxHp * 0.2 && potion.value > gameState.player.maxHp * 0.3) {
+                AchievementSystem.onPhoenixRise();
+            }
+
             showCombatLog(`💚 使用 ${potion.name}，恢复 ${potion.value} 生命`, 'weapon-get');
             break;
         case 'protect':
@@ -1268,6 +1591,10 @@ function usePotion(potion) {
 
 function collectRelic(relic) {
     gameState.relics.push(relic);
+
+    // 通知成就系统获得了遗物
+    AchievementSystem.onRelicAcquired();
+
     showCombatLog(`🏺 获得遗物：${relic.name} - ${relic.desc}`, 'weapon-get');
     updateUI();
 }
@@ -1382,6 +1709,10 @@ function attackEnemies() {
     const berserkBuff = gameState.buffs.find(b => b.effect === 'berserk_damage');
     if (berserkBuff) damage *= berserkBuff.value;
 
+    // 检查是否使用了幸运药水
+    const luckBuff = gameState.buffs.find(b => b.effect === 'luck');
+    let usedLuck = luckBuff !== undefined;
+
     let hitCount = 0;
 
     // 检查是否有敌人在攻击范围内
@@ -1440,6 +1771,11 @@ function attackEnemies() {
                 }
 
                 gameState.enemies.splice(i, 1);
+
+                // 如果使用了幸运药水并且击杀敌人，记录幸运击杀
+                if (usedLuck) {
+                    AchievementSystem.onLuckyKill();
+                }
             } else {
                 // 只是击中敌人但未杀死
                 createParticles(enemy.x, enemy.y, '#FF4500', 3);
@@ -1699,6 +2035,20 @@ document.addEventListener('keydown', (e) => {
         case 'r':
             useSkill('R');
             break;
+        // 添加存档和读档快捷键
+        case 's':
+            SaveSystem.save();
+            break;
+        case 'l':
+            SaveSystem.load();
+            updateUI(); // 确保UI更新
+            break;
+        case 'c':
+            // 检查并显示当前成就状态
+            const unlocked = AchievementSystem.getUnlockedCount();
+            const total = AchievementSystem.getTotalCount();
+            showCombatLog(`📊 成就: ${unlocked}/${total}`, 'weapon-get');
+            break;
     }
 });
 
@@ -1821,6 +2171,9 @@ function gameLoop() {
     checkCollisions();
     updateUI();
 
+    // 检查成就
+    AchievementSystem.checkAchievements();
+
     // 绘制技能冷却显示
     drawSkillCooldowns();
 
@@ -1832,6 +2185,9 @@ function gameLoop() {
 }
 
 function startGame() {
+    // 尝试加载之前的存档
+    const hasSave = SaveSystem.load();
+
     // 检查图像是否已加载，如果没有则等待加载完成
     if (Object.keys(imageCache).length === 0) {
         loadAllImages().then(() => {
@@ -1847,6 +2203,9 @@ function startGame() {
 }
 
 function initGame() {
+    // 保存当前的游戏状态，以便在重新开始游戏时决定是否重置
+    const shouldResetGame = !gameState.isPlaying; // 如果游戏没在进行中，表示是全新开始
+
     gameState = {
         player: {
             x: canvas.width / 2,  // 添加玩家坐标
@@ -1876,6 +2235,14 @@ function initGame() {
         isGameOver: false,
         screenShake: 0, // 屏幕震动
     };
+
+    // 如果不是全新的游戏，尝试从localStorage恢复游戏状态
+    if (!shouldResetGame) {
+        SaveSystem.load();
+    } else {
+        // 如果是全新游戏，重置成就系统临时状态
+        AchievementSystem.resetTempStats();
+    }
 
     // 重置技能冷却
     for (const key in skillCooldowns) {
@@ -1912,6 +2279,9 @@ function gameOver() {
     document.getElementById('final-kills').textContent = gameState.kills;
     document.getElementById('final-score').textContent = gameState.player.score; // 需要在HTML中添加此元素
     document.getElementById('game-over').classList.remove('hidden');
+
+    // 检查成就
+    AchievementSystem.checkAchievements();
 }
 
 function winGame() {
@@ -1943,6 +2313,9 @@ function winGame() {
 
     gameState.isPlaying = false;
     gameState.isGameOver = true;
+
+    // 检查成就
+    AchievementSystem.checkAchievements();
 }
 
 // 按钮事件
