@@ -7,6 +7,50 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
+// ==================== 图像资源加载系统 ====================
+
+// 预加载所有精灵图像
+const imageCache = {};
+
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        if (imageCache[src]) {
+            resolve(imageCache[src]);
+            return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+            imageCache[src] = img;
+            resolve(img);
+        };
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+async function loadAllImages() {
+    const imagesToLoad = [
+        'assets/sprites/weapon_sword.png',
+        'assets/sprites/enemy_slime.png',
+        'assets/sprites/enemies.png',
+        'assets/sprites/potions.png'
+    ];
+
+    const promises = imagesToLoad.map(src => loadImage(src));
+    await Promise.all(promises);
+}
+
+// 预加载图像后开始游戏
+loadAllImages().then(() => {
+    console.log('所有游戏图像加载完成');
+    // 如果需要的话，可以在图像加载完成后自动启动游戏
+    // 或者显示准备就绪的状态
+}).catch(err => {
+    console.error('图像加载失败:', err);
+    // 即使图像加载失败也继续，因为我们会提供回退机制
+});
+
 // ==================== 游戏数据 ====================
 
 // 武器库 - 从垃圾到神器
@@ -392,10 +436,26 @@ class Player {
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // 绘制当前武器
+        // 绘制当前武器（使用精灵图）
         if (gameState.player.weapon) {
-            ctx.fillStyle = gameState.player.weapon.color;
-            ctx.fillRect(this.x + 20, this.y - 5, 25, 8);
+            const weaponImg = imageCache['assets/sprites/weapon_sword.png'];
+            if (weaponImg) {
+                // 根据鼠标位置确定武器角度
+                const angle = Math.atan2(mouseY - this.y, mouseX - this.x);
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(angle);
+
+                // 绘制武器精灵
+                ctx.drawImage(weaponImg, 15, -8, 40, 16);
+
+                ctx.restore();
+            } else {
+                // 如果图像未加载，则回退到原来的绘制方式
+                ctx.fillStyle = gameState.player.weapon.color;
+                ctx.fillRect(this.x + 20, this.y - 5, 25, 8);
+            }
         }
     }
     
@@ -471,40 +531,47 @@ class Enemy {
     }
 
     draw() {
-        // 绘制敌人主体
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 绘制边框
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // 绘制敌人类型标识
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#fff';
-        let typeSymbol = '?';
-        switch(this.type) {
-            case 'MELEE': typeSymbol = '⚔️'; break;
-            case 'RANGED': typeSymbol = '🏹'; break;
-            case 'ELITE': typeSymbol = '👑'; break;
-            case 'BOSS': typeSymbol = '👹'; break;
+        // 绘制敌人（使用精灵图）
+        let enemyImg;
+        if (this.type === 'MELEE') {
+            // 如果是史莱姆类型的敌人，使用史莱姆精灵
+            enemyImg = imageCache['assets/sprites/enemy_slime.png'];
+        } else {
+            // 其他敌人类型使用通用敌人精灵
+            enemyImg = imageCache['assets/sprites/enemies.png'];
         }
-        ctx.fillText(typeSymbol, this.x, this.y + 4);
 
-        // 血条
+        if (enemyImg) {
+            // 根据敌人类型和大小调整绘制尺寸
+            const drawWidth = this.size * 2 * 0.8; // 缩小一些使其适应原来圆形大小
+            const drawHeight = this.size * 2 * 0.8;
+
+            ctx.drawImage(enemyImg, this.x - drawWidth/2, this.y - drawHeight/2, drawWidth, drawHeight);
+        } else {
+            // 如果图像未加载，则回退到原来的绘制方式
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 绘制边框
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // 绘制血条（无论使用哪种绘制方式都需要）
         const hpPercent = this.hp / this.maxHp;
         ctx.fillStyle = '#333';
         ctx.fillRect(this.x - 25, this.y - this.size - 15, 50, 8);
         ctx.fillStyle = hpPercent > 0.5 ? '#0f0' : hpPercent > 0.25 ? '#ff0' : '#f00';
         ctx.fillRect(this.x - 25, this.y - this.size - 15, 50 * hpPercent, 8);
 
-        // 武器指示
-        ctx.fillStyle = this.weapon.color;
-        ctx.fillRect(this.x - 15, this.y + this.size + 8, 30, 6);
+        // 武器指示（只在没有精灵图时显示）
+        if (!enemyImg) {
+            ctx.fillStyle = this.weapon.color;
+            ctx.fillRect(this.x - 15, this.y + this.size + 8, 30, 6);
+        }
     }
 
     update() {
@@ -567,17 +634,56 @@ class Drop {
     draw() {
         this.bobOffset += 0.1;
         const bobY = Math.sin(this.bobOffset) * 5;
-        
-        ctx.fillStyle = this.type === 'weapon' ? this.item.color : 
-                       this.type === 'potion' ? '#ff0000' : '#ffd700';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y + bobY, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 发光效果
-        ctx.strokeStyle = ctx.fillStyle;
-        ctx.lineWidth = 2;
-        ctx.stroke();
+
+        // 绘制掉落物（使用精灵图）
+        if (this.type === 'potion') {
+            const potionImg = imageCache['assets/sprites/potions.png'];
+            if (potionImg) {
+                ctx.save();
+                ctx.translate(this.x, this.y + bobY);
+
+                // 根据药水类型选择精灵图的不同部分（如果有多张药水图）
+                ctx.drawImage(potionImg, -this.size, -this.size, this.size * 2, this.size * 2);
+
+                ctx.restore();
+            } else {
+                // 回退到原来的绘制方式
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y + bobY, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (this.type === 'weapon') {
+            // 武器掉落物也可以有特殊图标
+            const weaponImg = imageCache['assets/sprites/weapon_sword.png'];
+            if (weaponImg) {
+                ctx.save();
+                ctx.translate(this.x, this.y + bobY);
+
+                // 绘制武器精灵
+                ctx.drawImage(weaponImg, -this.size, -this.size, this.size * 2, this.size * 2);
+
+                ctx.restore();
+            } else {
+                // 回退到原来的绘制方式
+                ctx.fillStyle = this.item.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y + bobY, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else {
+            // 其他类型（如遗物）
+            ctx.fillStyle = this.type === 'weapon' ? this.item.color :
+                           this.type === 'potion' ? '#ff0000' : '#ffd700';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y + bobY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 发光效果
+            ctx.strokeStyle = ctx.fillStyle;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
     }
 }
 
@@ -1160,10 +1266,23 @@ function gameLoop() {
     player.draw();
     gameState.enemies.forEach(enemy => enemy.draw());
     gameState.projectiles.forEach(proj => {
-        ctx.fillStyle = proj.color;
-        ctx.beginPath();
-        ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI * 2);
-        ctx.fill();
+        // 使用自定义精灵绘制射弹（如果有对应图像）
+        // 否则使用原始的圆形绘制
+        const enemyImg = imageCache['assets/sprites/enemies.png'];
+        if (enemyImg) {
+            // 尝试使用敌人精灵的一个小部分作为射弹
+            ctx.save();
+            ctx.translate(proj.x, proj.y);
+            // 使用缩放比例使精灵适合射弹大小
+            ctx.drawImage(enemyImg, -proj.size, -proj.size, proj.size*2, proj.size*2);
+            ctx.restore();
+        } else {
+            // 回退到原来的绘制方式
+            ctx.fillStyle = proj.color;
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
     });
 
     checkCollisions();
@@ -1180,6 +1299,21 @@ function gameLoop() {
 }
 
 function startGame() {
+    // 检查图像是否已加载，如果没有则等待加载完成
+    if (Object.keys(imageCache).length === 0) {
+        loadAllImages().then(() => {
+            console.log('延迟加载的游戏图像完成');
+            initGame();
+        }).catch(err => {
+            console.error('延迟图像加载失败:', err);
+            initGame(); // 即使失败也要继续
+        });
+    } else {
+        initGame();
+    }
+}
+
+function initGame() {
     gameState = {
         player: {
             x: canvas.width / 2,  // 添加玩家坐标
