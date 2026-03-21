@@ -253,7 +253,7 @@ function useSkill(skillKey) {
             // 治疗光环
             const healAmount = Math.floor(gameState.player.maxHp * 0.3);
             gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
-            createParticles(player.x, player.y, '#00FF00', 20);
+            createParticles(gameState.player.x, gameState.player.y, '#00FF00', 20);
             showCombatLog(`💚 ${skill.name} 恢复 ${healAmount} 生命!`, 'weapon-get');
             success = true;
             break;
@@ -263,15 +263,15 @@ function useSkill(skillKey) {
             const distance = getDistance(player, {x: mouseX, y: mouseY});
             const teleportDistance = Math.min(distance, 150); // 最大传送距离
 
-            const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
-            player.x += Math.cos(angle) * teleportDistance;
-            player.y += Math.sin(angle) * teleportDistance;
+            const angle = Math.atan2(mouseY - gameState.player.y, mouseX - gameState.player.x);
+            gameState.player.x += Math.cos(angle) * teleportDistance;
+            gameState.player.y += Math.sin(angle) * teleportDistance;
 
             // 边界检查
-            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
-            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+            gameState.player.x = Math.max(player.size, Math.min(canvas.width - player.size, gameState.player.x));
+            gameState.player.y = Math.max(player.size, Math.min(canvas.height - player.size, gameState.player.y));
 
-            createParticles(player.x, player.y, '#8A2BE2', 15);
+            createParticles(gameState.player.x, gameState.player.y, '#8A2BE2', 15);
             showCombatLog(`✨ ${skill.name} 成功传送!`, 'weapon-get');
             success = true;
             break;
@@ -283,7 +283,7 @@ function useSkill(skillKey) {
                 duration: 5, // 5秒
                 value: gameState.player.weapon ? gameState.player.weapon.damage : 10
             });
-            createParticles(player.x, player.y, '#FF0000', 25);
+            createParticles(gameState.player.x, gameState.player.y, '#FF0000', 25);
             showCombatLog(`😠 ${skill.name} 开启，伤害翻倍!`, 'weapon-get');
             success = true;
             break;
@@ -371,32 +371,32 @@ class Player {
     }
     
     draw() {
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = player.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(gameState.player.x, gameState.player.y, player.size, 0, Math.PI * 2);
         ctx.fill();
-        
+
         // 绘制当前武器
         if (gameState.player.weapon) {
             ctx.fillStyle = gameState.player.weapon.color;
-            ctx.fillRect(this.x + 20, this.y - 5, 25, 8);
+            ctx.fillRect(gameState.player.x + 20, gameState.player.y - 5, 25, 8);
         }
     }
     
     update() {
         // 玩家跟随鼠标
-        const dx = mouseX - this.x;
-        const dy = mouseY - this.y;
+        const dx = mouseX - gameState.player.x;
+        const dy = mouseY - gameState.player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        
+
         if (dist > 5) {
-            this.x += (dx / dist) * this.speed;
-            this.y += (dy / dist) * this.speed;
+            gameState.player.x += (dx / dist) * player.speed;
+            gameState.player.y += (dy / dist) * player.speed;
         }
-        
+
         // 边界限制
-        this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
-        this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
+        gameState.player.x = Math.max(player.size, Math.min(canvas.width - player.size, gameState.player.x));
+        gameState.player.y = Math.max(player.size, Math.min(canvas.height - player.size, gameState.player.y));
     }
 }
 
@@ -739,7 +739,7 @@ canvas.addEventListener('click', () => {
     let clickedOnItem = false;
     for (let i = gameState.drops.length - 1; i >= 0; i--) {
         const drop = gameState.drops[i];
-        if (getDistance(player, drop) < player.size + drop.size) {
+        if (getDistance({x: gameState.player.x, y: gameState.player.y}, drop) < player.size + drop.size) {
             collectDrop(drop);
             gameState.drops.splice(i, 1);
             clickedOnItem = true;
@@ -821,11 +821,6 @@ function collectRelic(relic) {
     updateUI();
 }
 
-function createParticles(x, y, color, count) {
-    for (let i = 0; i < count; i++) {
-        gameState.particles.push(new Particle(x, y, color));
-    }
-}
 
 function showCombatLog(text, className) {
     let logEl = document.getElementById('combat-log');
@@ -918,10 +913,13 @@ function attackEnemies() {
             // 如果敌人死亡
             if (enemy.hp <= 0) {
                 // 增加得分
-                let enemyScore = Math.floor(enemy.maxHp / 10) + enemy.type === 'MELEE' ? 10 :
-                                enemy.type === 'RANGED' ? 20 :
-                                enemy.type === 'ELITE' ? 50 :
-                                enemy.type === 'BOSS' ? 100 : 10;
+                let enemyScore = Math.floor(enemy.maxHp / 10);
+                switch(enemy.type) {
+                    case 'MELEE': enemyScore += 10; break;
+                    case 'RANGED': enemyScore += 20; break;
+                    case 'ELITE': enemyScore += 50; break;
+                    case 'BOSS': enemyScore += 100; break;
+                }
 
                 gameState.player.score += enemyScore;
 
@@ -1014,7 +1012,7 @@ function resetCombo() {
 function checkCollisions() {
     // 玩家与敌人碰撞
     for (const enemy of gameState.enemies) {
-        if (getDistance(player, enemy) < player.size + enemy.size) {
+        if (getDistance({x: gameState.player.x, y: gameState.player.y}, enemy) < player.size + enemy.size) {
             // 计算伤害
             let damage = enemy.damage;
             if (gameState.player.weapon) {
@@ -1039,7 +1037,7 @@ function checkCollisions() {
     // 玩家与敌人射弹碰撞
     for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
         const proj = gameState.projectiles[i];
-        if (getDistance(player, proj) < player.size + proj.size) {
+        if (getDistance({x: gameState.player.x, y: gameState.player.y}, proj) < player.size + proj.size) {
             gameState.player.hp -= proj.damage;
             createParticles(proj.x, proj.y, proj.color, 12, 'explosion');
             gameState.projectiles.splice(i, 1);
@@ -1090,6 +1088,9 @@ function gameLoop() {
 
     // 更新
     player.update();
+    // 同步 player 位置到 gameState
+    gameState.player.x = player.x;
+    gameState.player.y = player.y;
     updateBuffs();
     updateSkillCooldowns(); // 更新技能冷却
     updateComboTimer(); // 更新连击计时器
@@ -1195,6 +1196,10 @@ function startGame() {
     for (const key in skillCooldowns) {
         skillCooldowns[key] = 0;
     }
+
+    // 重新初始化玩家对象
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
 
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('game-over').classList.add('hidden');
