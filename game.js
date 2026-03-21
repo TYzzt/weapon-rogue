@@ -212,7 +212,7 @@ function useSkill(skillKey) {
 
             for (let i = gameState.enemies.length - 1; i >= 0; i--) {
                 const enemy = gameState.enemies[i];
-                const distance = getDistance(player, enemy);
+                const distance = getDistance(gameState.player, enemy);
 
                 if (distance <= aoeRadius) {
                     enemy.hp -= weaponDamage * 2; // 2倍武器伤害
@@ -260,7 +260,7 @@ function useSkill(skillKey) {
 
         case 'teleport':
             // 闪现到鼠标位置
-            const distance = getDistance(player, {x: mouseX, y: mouseY});
+            const distance = getDistance(gameState.player, {x: mouseX, y: mouseY});
             const teleportDistance = Math.min(distance, 150); // 最大传送距离
 
             const angle = Math.atan2(mouseY - gameState.player.y, mouseX - gameState.player.x);
@@ -351,6 +351,22 @@ function drawSkillCooldowns() {
     }
 }
 
+// 获取随机稀有度
+function getRandomRarity() {
+    const totalWeight = Object.values(RARITY_WEIGHTS).reduce((sum, weight) => sum + weight, 0);
+    let random = Math.random() * totalWeight;
+
+    for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
+        random -= weight;
+        if (random <= 0) {
+            return rarity;
+        }
+    }
+
+    // 如果随机值超出预期范围，默认返回common
+    return 'common';
+}
+
 // 生成随机武器
 function generateWeapon() {
     const rarity = getRandomRarity();
@@ -371,32 +387,32 @@ class Player {
     }
     
     draw() {
-        ctx.fillStyle = player.color;
+        ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(gameState.player.x, gameState.player.y, player.size, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
 
         // 绘制当前武器
         if (gameState.player.weapon) {
             ctx.fillStyle = gameState.player.weapon.color;
-            ctx.fillRect(gameState.player.x + 20, gameState.player.y - 5, 25, 8);
+            ctx.fillRect(this.x + 20, this.y - 5, 25, 8);
         }
     }
     
     update() {
         // 玩家跟随鼠标
-        const dx = mouseX - gameState.player.x;
-        const dy = mouseY - gameState.player.y;
+        const dx = mouseX - this.x;
+        const dy = mouseY - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist > 5) {
-            gameState.player.x += (dx / dist) * player.speed;
-            gameState.player.y += (dy / dist) * player.speed;
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
         }
 
         // 边界限制
-        gameState.player.x = Math.max(player.size, Math.min(canvas.width - player.size, gameState.player.x));
-        gameState.player.y = Math.max(player.size, Math.min(canvas.height - player.size, gameState.player.y));
+        this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
+        this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
     }
 }
 
@@ -739,7 +755,7 @@ canvas.addEventListener('click', () => {
     let clickedOnItem = false;
     for (let i = gameState.drops.length - 1; i >= 0; i--) {
         const drop = gameState.drops[i];
-        if (getDistance({x: gameState.player.x, y: gameState.player.y}, drop) < player.size + drop.size) {
+        if (getDistance(gameState.player, drop) < player.size + drop.size) {
             collectDrop(drop);
             gameState.drops.splice(i, 1);
             clickedOnItem = true;
@@ -900,7 +916,7 @@ function attackEnemies() {
     // 检查是否有敌人在攻击范围内
     for (let i = gameState.enemies.length - 1; i >= 0; i--) {
         const enemy = gameState.enemies[i];
-        const distance = getDistance(player, enemy);
+        const distance = getDistance(gameState.player, enemy);
 
         if (distance <= player.size + enemy.size + gameState.player.attackRange) {
             // 击中敌人
@@ -1012,7 +1028,7 @@ function resetCombo() {
 function checkCollisions() {
     // 玩家与敌人碰撞
     for (const enemy of gameState.enemies) {
-        if (getDistance({x: gameState.player.x, y: gameState.player.y}, enemy) < player.size + enemy.size) {
+        if (getDistance(gameState.player, enemy) < player.size + enemy.size) {
             // 计算伤害
             let damage = enemy.damage;
             if (gameState.player.weapon) {
@@ -1023,7 +1039,7 @@ function checkCollisions() {
             }
 
             gameState.player.hp -= damage;
-            createParticles(player.x, player.y, '#ff0000', 15, 'explosion');
+            createParticles(gameState.player.x, gameState.player.y, '#ff0000', 15, 'explosion');
 
             // 屏幕震动效果
             gameState.screenShake = Math.min(15, damage);
@@ -1037,7 +1053,7 @@ function checkCollisions() {
     // 玩家与敌人射弹碰撞
     for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
         const proj = gameState.projectiles[i];
-        if (getDistance({x: gameState.player.x, y: gameState.player.y}, proj) < player.size + proj.size) {
+        if (getDistance(gameState.player, proj) < player.size + proj.size) {
             gameState.player.hp -= proj.damage;
             createParticles(proj.x, proj.y, proj.color, 12, 'explosion');
             gameState.projectiles.splice(i, 1);
@@ -1166,6 +1182,8 @@ function gameLoop() {
 function startGame() {
     gameState = {
         player: {
+            x: canvas.width / 2,  // 添加玩家坐标
+            y: canvas.height / 2, // 添加玩家坐标
             hp: 100,
             maxHp: 100,
             weapon: null,
@@ -1214,7 +1232,7 @@ function gameOver() {
 
     // 创建大量爆炸粒子效果
     for (let i = 0; i < 100; i++) {
-        createParticles(player.x, player.y, '#ff0000', 1, 'explosion');
+        createParticles(gameState.player.x, gameState.player.y, '#ff0000', 1, 'explosion');
     }
 
     // 强烈的屏幕震动
