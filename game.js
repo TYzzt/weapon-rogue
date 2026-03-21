@@ -123,6 +123,11 @@ const WEAPONS = [
     { name: '混沌之刃', damage: 55, rarity: 'epic', color: '#663399' },
     { name: '创世之斧', damage: 53, rarity: 'epic', color: '#8B4513' },
 
+    // 新增史诗+级别武器，填补史诗和传说之间的差距
+    { name: '龙王之怒', damage: 60, rarity: 'epic', color: '#FF4500' },
+    { name: '风暴使者', damage: 65, rarity: 'epic', color: '#87CEEB' },
+    { name: '时光守护者', damage: 70, rarity: 'epic', color: '#9370DB' },
+
     // Legendary weapons (传说)
     { name: '龙息巨剑', damage: 50, rarity: 'legendary', color: '#ff0000' },
     { name: '神之刃', damage: 100, rarity: 'legendary', color: '#ffffff' },
@@ -158,6 +163,7 @@ const POTIONS = [
     { name: '护盾药水', effect: 'shield', duration: 8, value: 20, color: '#8A2BE2' }, // 获得护盾
     { name: '速度药水', effect: 'speed', duration: 6, value: 2, color: '#00BFFF' }, // 增加移动速度
     { name: '回复药水', effect: 'regen', duration: 10, value: 5, color: '#32CD32' }, // 持续回血
+    { name: '反击药水', effect: 'counter', duration: 7, value: 15, color: '#FF6347' }, // 受伤时反击
 ];
 
 // 遗物系统
@@ -173,8 +179,8 @@ const RELICS = [
 
 let gameState = {
     player: {
-        hp: 100,
-        maxHp: 100,
+        hp: 120,  // 增加玩家初始生命值
+        maxHp: 120,  // 同步最大生命值
         weapon: null,
         weapons: [], // 双持时用
         lastWeapon: null, // 记忆水晶用
@@ -491,8 +497,48 @@ class Player {
                 // 绘制武器精灵，带缩放效果
                 const scaledSize = 40 * weaponScale;
                 const scaledHeight = 16 * weaponScale;
-                ctx.drawImage(weaponImg, 15, -8, scaledSize, scaledHeight);
 
+                // 根据武器稀有度设置不同色调
+                ctx.save();
+                const weaponImg = imageCache['assets/sprites/weapon_sword.png'];
+
+                // 创建一个临时画布用于给武器染色
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = weaponImg.width;
+                tempCanvas.height = weaponImg.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(weaponImg, 0, 0);
+
+                // 获取图像数据
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+
+                // 根据武器稀有度修改颜色
+                const rarityColors = {
+                    'common': [200, 200, 200],      // 灰色
+                    'uncommon': [34, 139, 34],     // 绿色
+                    'rare': [0, 191, 255],        // 蓝色
+                    'epic': [138, 43, 226],       // 紫色
+                    'legendary': [255, 215, 0],    // 金色
+                    'mythic': [255, 0, 255]       // 粉色
+                };
+
+                const colors = rarityColors[gameState.player.weapon.rarity] || [255, 255, 255]; // 默认白色
+
+                // 修改像素颜色
+                for (let i = 0; i < data.length; i += 4) {
+                    // 只处理非透明像素
+                    if (data[i + 3] > 0) {  // Alpha通道大于0
+                        data[i] = colors[0];     // Red
+                        data[i + 1] = colors[1]; // Green
+                        data[i + 2] = colors[2]; // Blue
+                    }
+                }
+
+                tempCtx.putImageData(imageData, 0, 0);
+
+                // 绘制修改后的武器
+                ctx.drawImage(tempCanvas, 15, -8, scaledSize, scaledHeight);
                 ctx.restore();
             }
 
@@ -535,12 +581,13 @@ class Player {
 
 // 定义敌人类型
 const ENEMY_TYPES = {
-    MELEE: { name: '近战', speed: 1.5, hp: 1, damage: 1, size: 1, behavior: 'melee' },
-    RANGED: { name: '远程', speed: 0.8, hp: 0.7, damage: 1.5, size: 0.8, behavior: 'ranged' },
-    ELITE: { name: '精英', speed: 1.2, hp: 2, damage: 1.8, size: 1.5, behavior: 'melee' },
-    SUPPORT: { name: '支援', speed: 1.0, hp: 1.2, damage: 0.8, size: 1.2, behavior: 'support' }, // 新增支援型敌人
-    TANK: { name: '坦克', speed: 0.5, hp: 5, damage: 2.5, size: 2.0, behavior: 'melee' }, // 新增坦克型敌人
-    BOSS: { name: 'Boss', speed: 0.8, hp: 3.5, damage: 2.0, size: 1.8, behavior: 'mixed' }, // 降低了Boss的生命值和伤害
+    MELEE: { name: '近战', speed: 1.5, hp: 0.8, damage: 1, size: 1, behavior: 'melee' },  // 降低近战敌人血量
+    RANGED: { name: '远程', speed: 0.8, hp: 0.6, damage: 1.2, size: 0.8, behavior: 'ranged' },  // 降低远程敌人血量和伤害
+    ELITE: { name: '精英', speed: 1.2, hp: 1.5, damage: 1.5, size: 1.5, behavior: 'melee' },  // 降低精英敌人血量和伤害
+    SUPPORT: { name: '支援', speed: 1.0, hp: 0.9, damage: 0.6, size: 1.2, behavior: 'support' }, // 支援型敌人，伤害较低
+    TANK: { name: '坦克', speed: 0.4, hp: 3.5, damage: 2.0, size: 2.0, behavior: 'melee' }, // 坦克型敌人，血厚但移动缓慢
+    BOSS: { name: 'Boss', speed: 0.6, hp: 2.5, damage: 1.8, size: 1.8, behavior: 'mixed' }, // 显著降低Boss的血量和伤害
+    ARCHER: { name: '弓箭手', speed: 0.7, hp: 0.9, damage: 2.2, size: 1.1, behavior: 'ranged' }, // 新增弓箭手敌人，高伤害远程单位
 };
 
 class Enemy {
@@ -556,10 +603,12 @@ class Enemy {
                 type = 'ELITE';
             } else if (level < 12 && rand < 0.93) {
                 type = 'SUPPORT'; // 新增支援型敌人
-            } else if (rand < 0.97) {
+            } else if (level < 15 && rand < 0.96) {
+                type = 'ARCHER'; // 新增弓箭手敌人
+            } else if (rand < 0.98) {
                 type = 'BOSS';
             } else {
-                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT', 'TANK'][randomInt(0, 4)]; // 添加支援型和坦克型
+                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT', 'TANK', 'ARCHER'][randomInt(0, 5)]; // 添加弓箭手
             }
         }
 
@@ -587,6 +636,7 @@ class Enemy {
             case 'RANGED': return `hsl(${randomInt(200, 260)}, 70%, 50%)`; // 蓝色系
             case 'ELITE': return `hsl(${randomInt(270, 330)}, 70%, 50%)`; // 紫色系
             case 'BOSS': return `hsl(${randomInt(330, 360)}, 80%, 45%)`; // 红色系
+            case 'ARCHER': return `hsl(${randomInt(30, 90)}, 70%, 50%)`; // 黄色/绿色系 - 弓箭手
             default: return `hsl(${randomInt(0, 60)}, 70%, 50%)`;
         }
     }
@@ -956,14 +1006,13 @@ function createParticles(x, y, color, count, type = 'standard') {
     }
 }
 
-// 增强的屏幕震动功能
+// 增强的屏幕震动功能 - 修正版本
 function shakeScreen(intensity, duration) {
-    gameState.screenShake = intensity;
-    // 在duration毫秒后逐渐减少震动
+    gameState.screenShake = Math.max(gameState.screenShake, intensity);
+    // 使用更平滑的震动衰减
     setTimeout(() => {
-        if (gameState.screenShake > 0) {
-            gameState.screenShake = Math.max(0, gameState.screenShake - 1);
-        }
+        // 震动会在duration时间内平滑衰减到0
+        // 在这里我们不会立即设置为0，而是依赖主循环中的自然衰减
     }, duration);
 }
 
@@ -1079,6 +1128,12 @@ function usePotion(potion) {
             gameState.buffs.push({ effect: 'regen', duration: potion.duration, value: potion.value });
             showCombatLog(`🌿 使用 ${potion.name}，持续回血！`, 'weapon-get');
             break;
+
+        case 'counter':
+            // 反击效果 - 受伤时反击
+            gameState.buffs.push({ effect: 'counter', duration: potion.duration, value: potion.value });
+            showCombatLog(`⚔️ 使用 ${potion.name}，获得反击能力！`, 'weapon-get');
+            break;
     }
     updateUI();
 }
@@ -1123,7 +1178,7 @@ function spawnEnemy() {
     gameState.enemies.push(new Enemy(gameState.level));
 
     // 随着关卡提高，生成速度加快（调整为更平缓的增长）
-    const spawnRate = Math.max(1000, 4000 - gameState.level * 60);
+    const spawnRate = Math.max(2000, 5000 - gameState.level * 80); // 降低生成频率
     setTimeout(spawnEnemy, spawnRate);
 }
 
@@ -1136,6 +1191,8 @@ function updateBuffs() {
             gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + regenBuff.value);
         }
     }
+
+    // 注意：反击效果将在碰撞检测中处理
 
     for (let i = gameState.buffs.length - 1; i >= 0; i--) {
         gameState.buffs[i].duration -= 1/60; // 假设 60fps
@@ -1153,6 +1210,26 @@ function updateUI() {
     document.getElementById('kills').textContent = gameState.kills;
     document.getElementById('combo').textContent = gameState.player.combo;
     document.getElementById('score').textContent = gameState.player.score;
+
+    // 更新BUFF显示
+    if (gameState.buffs.length > 0) {
+        const buffNames = gameState.buffs.map(buff => {
+            const effectNames = {
+                'protect': '🛡️保护',
+                'luck': '✨幸运',
+                'damage': '💪力量',
+                'shield': '🛡️护盾',
+                'speed': '💨加速',
+                'regen': '🌿回血',
+                'counter': '⚔️反击',
+                'berserk_damage': '😠狂暴'
+            };
+            return effectNames[buff.effect] || buff.effect;
+        });
+        document.getElementById('buffs').textContent = buffNames.join(',');
+    } else {
+        document.getElementById('buffs').textContent = '无';
+    }
 
     // 更新背包
     const potionsList = gameState.potions.map(p => `${p.name}`).join(', ') || '空';
@@ -1335,6 +1412,59 @@ function checkCollisions() {
             gameState.player.hp -= damage;
             createParticles(gameState.player.x, gameState.player.y, '#ff0000', 15, 'explosion');
 
+            // 检查是否有反击效果
+            const counterBuff = gameState.buffs.find(b => b.effect === 'counter');
+            if (counterBuff) {
+                // 对敌人造成反击伤害
+                enemy.hp -= counterBuff.value;
+
+                // 创建反击粒子效果
+                createParticles(enemy.x, enemy.y, '#FFD700', 10, 'sparkle');
+
+                // 如果敌人因此死亡
+                if (enemy.hp <= 0) {
+                    // 增加得分
+                    let enemyScore = Math.floor(enemy.maxHp / 10);
+                    switch(enemy.type) {
+                        case 'MELEE': enemyScore += 10; break;
+                        case 'RANGED': enemyScore += 20; break;
+                        case 'ELITE': enemyScore += 50; break;
+                        case 'TANK': enemyScore += 75; break;
+                        case 'BOSS': enemyScore += 100; break;
+                    }
+
+                    gameState.player.score += enemyScore;
+
+                    // 生成掉落
+                    const dropChance = 0.7;
+                    if (Math.random() < dropChance) {
+                        gameState.drops.push(new Drop(
+                            enemy.x, enemy.y,
+                            enemy.weapon, 'weapon'
+                        ));
+                    }
+
+                    // 小概率掉落药水或遗物
+                    if (Math.random() < 0.15) {
+                        const potion = POTIONS[randomInt(0, POTIONS.length - 1)];
+                        gameState.drops.push(new Drop(enemy.x, enemy.y, potion, 'potion'));
+                    }
+
+                    if (Math.random() < 0.05) {
+                        const relic = RELICS[randomInt(0, RELICS.length - 1)];
+                        gameState.drops.push(new Drop(enemy.x, enemy.y, relic, 'relic'));
+                    }
+
+                    gameState.kills++;
+
+                    // 每 10 杀升级
+                    if (gameState.kills % 10 === 0) {
+                        gameState.level++;
+                        showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                    }
+                }
+            }
+
             // 屏幕震动效果
             gameState.screenShake = Math.min(15, damage);
 
@@ -1369,12 +1499,22 @@ function checkCollisions() {
                 }
             }
 
+            // 检查是否有反击效果 - 注意反击只针对接触伤害，不包括射弹
+            // 但如果确实想要反击射弹，可以取消注释下面几行
+            /*
+            const counterBuff = gameState.buffs.find(b => b.effect === 'counter');
+            if (counterBuff) {
+                // 找到发射该射弹的敌人并对其造成伤害
+                // 由于我们没有跟踪射弹来源，暂时跳过
+            }
+            */
+
             gameState.player.hp -= projDamage;
             createParticles(proj.x, proj.y, proj.color, 12, 'explosion');
             gameState.projectiles.splice(i, 1);
 
             // 受到射弹攻击时的屏幕震动
-            gameState.screenShake = Math.min(10, proj.damage);
+            gameState.screenShake = Math.min(10, projDamage);
 
             if (gameState.player.hp <= 0) {
                 gameOver();
@@ -1552,8 +1692,8 @@ function initGame() {
         player: {
             x: canvas.width / 2,  // 添加玩家坐标
             y: canvas.height / 2, // 添加玩家坐标
-            hp: 100,
-            maxHp: 100,
+            hp: 120,  // 增加玩家初始生命值
+            maxHp: 120,  // 同步最大生命值
             weapon: null,
             weapons: [],
             lastWeapon: null,
