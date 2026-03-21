@@ -106,6 +106,11 @@ const WEAPONS = [
     { name: '极地之矛', damage: 35, rarity: 'rare', color: '#E0FFFF' },
     { name: '熔岩巨剑', damage: 39, rarity: 'rare', color: '#FF4500' },
 
+    // 新增高级稀有武器，作为稀有和史诗之间的过渡
+    { name: '暴风之刃', damage: 42, rarity: 'rare', color: '#87CEEB' },
+    { name: '雷神之锤', damage: 43, rarity: 'rare', color: '#B0C4DE' },
+    { name: '海神三叉戟', damage: 44, rarity: 'rare', color: '#20B2AA' },
+
     // Epic weapons (史诗)
     { name: '暗影匕首', damage: 35, rarity: 'epic', color: '#8b00ff' },
     { name: '圣光之剑', damage: 40, rarity: 'epic', color: '#ffd700' },
@@ -147,6 +152,11 @@ const POTIONS = [
     { name: '武器保护剂', effect: 'protect', duration: 3, color: '#00ff00' }, // 保护下次不替换
     { name: '幸运药水', effect: 'luck', duration: 5, color: '#ffd700' }, // 提高稀有度
     { name: '力量药水', effect: 'damage', duration: 5, value: 10, color: '#ff8800' },
+
+    // 新增药水类型
+    { name: '护盾药水', effect: 'shield', duration: 8, value: 20, color: '#8A2BE2' }, // 获得护盾
+    { name: '速度药水', effect: 'speed', duration: 6, value: 2, color: '#00BFFF' }, // 增加移动速度
+    { name: '回复药水', effect: 'regen', duration: 10, value: 5, color: '#32CD32' }, // 持续回血
 ];
 
 // 遗物系统
@@ -321,11 +331,11 @@ function useSkill(skillKey) {
             break;
 
         case 'berserk':
-            // 狂暴状态
+            // 狂暴状态 - 伤害翻倍
             gameState.buffs.push({
-                effect: 'damage',
+                effect: 'berserk_damage',
                 duration: 5, // 5秒
-                value: gameState.player.weapon ? gameState.player.weapon.damage : 10
+                value: 2 // 伤害倍数
             });
             createParticles(gameState.player.x, gameState.player.y, '#FF0000', 25);
             showCombatLog(`😠 ${skill.name} 开启，伤害翻倍!`, 'weapon-get');
@@ -460,14 +470,23 @@ class Player {
     }
     
     update() {
+        // 计算基础速度
+        let effectiveSpeed = this.speed;
+
+        // 应用速度增益效果
+        const speedBuff = gameState.buffs.find(b => b.effect === 'speed');
+        if (speedBuff) {
+            effectiveSpeed += speedBuff.value;
+        }
+
         // 玩家跟随鼠标
         const dx = mouseX - this.x;
         const dy = mouseY - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist > 5) {
-            this.x += (dx / dist) * this.speed;
-            this.y += (dy / dist) * this.speed;
+            this.x += (dx / dist) * effectiveSpeed;
+            this.y += (dy / dist) * effectiveSpeed;
         }
 
         // 边界限制
@@ -481,7 +500,8 @@ const ENEMY_TYPES = {
     MELEE: { name: '近战', speed: 1.5, hp: 1, damage: 1, size: 1, behavior: 'melee' },
     RANGED: { name: '远程', speed: 0.8, hp: 0.7, damage: 1.5, size: 0.8, behavior: 'ranged' },
     ELITE: { name: '精英', speed: 1.2, hp: 2, damage: 1.8, size: 1.5, behavior: 'melee' },
-    BOSS: { name: 'Boss', speed: 1.0, hp: 5, damage: 2.5, size: 2.0, behavior: 'mixed' },
+    SUPPORT: { name: '支援', speed: 1.0, hp: 1.2, damage: 0.8, size: 1.2, behavior: 'support' }, // 新增支援型敌人
+    BOSS: { name: 'Boss', speed: 0.8, hp: 3.5, damage: 2.0, size: 1.8, behavior: 'mixed' }, // 降低了Boss的生命值和伤害
 };
 
 class Enemy {
@@ -489,16 +509,18 @@ class Enemy {
         if (type === null) {
             // 随机选择敌人类型，越到后面精英和Boss出现几率越高
             const rand = Math.random();
-            if (level < 3 && rand < 0.7) {
+            if (level < 3 && rand < 0.6) {
                 type = 'MELEE';
-            } else if (level < 5 && rand < 0.85) {
+            } else if (level < 5 && rand < 0.75) {
                 type = 'RANGED';
-            } else if (level < 10 && rand < 0.95) {
+            } else if (level < 8 && rand < 0.88) {
                 type = 'ELITE';
-            } else if (rand < 0.98) {
+            } else if (level < 12 && rand < 0.93) {
+                type = 'SUPPORT'; // 新增支援型敌人
+            } else if (rand < 0.97) {
                 type = 'BOSS';
             } else {
-                type = ['MELEE', 'RANGED', 'ELITE'][randomInt(0, 2)];
+                type = ['MELEE', 'RANGED', 'ELITE', 'SUPPORT'][randomInt(0, 3)]; // 添加支援型
             }
         }
 
@@ -547,12 +569,38 @@ class Enemy {
             const drawHeight = this.size * 2 * 0.8;
 
             ctx.drawImage(enemyImg, this.x - drawWidth/2, this.y - drawHeight/2, drawWidth, drawHeight);
+
+            // 为支援型敌人添加光环效果
+            if (this.type === 'SUPPORT') {
+                // 绘制一个淡蓝色的光环
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // 绘制一个小图标表示支援能力
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size/2, 0, Math.PI * 2);
+                ctx.fill();
+            }
         } else {
             // 如果图像未加载，则回退到原来的绘制方式
             ctx.fillStyle = this.color;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
+
+            // 为支援型敌人添加特殊标记
+            if (this.type === 'SUPPORT') {
+                // 绘制支援型敌人的特殊光环
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
 
             // 绘制边框
             ctx.strokeStyle = '#fff';
@@ -583,6 +631,19 @@ class Enemy {
             // 远程敌人保持距离
             this.x -= (dx / dist) * this.speed * 0.5;
             this.y -= (dy / dist) * this.speed * 0.5;
+        } else if (this.config.behavior === 'support') {
+            // 支援型敌人 - 不直接攻击玩家，而是增强附近敌人
+            this.supportNearbyEnemies();
+
+            // 缓慢靠近玩家但不紧追
+            if (dist > 150) {
+                this.x += (dx / dist) * this.speed * 0.3;
+                this.y += (dy / dist) * this.speed * 0.3;
+            } else if (dist < 100) {
+                // 太近时稍微后退
+                this.x -= (dx / dist) * this.speed * 0.2;
+                this.y -= (dy / dist) * this.speed * 0.2;
+            }
         } else {
             // 近战敌人靠近玩家
             this.x += (dx / dist) * this.speed;
@@ -595,6 +656,32 @@ class Enemy {
             if (this.shootCooldown <= 0 && dist < 200) {
                 this.shootAtPlayer();
                 this.shootCooldown = 60; // 每秒射击一次
+            }
+        }
+    }
+
+    // 支援型敌人的辅助方法
+    supportNearbyEnemies() {
+        // 寻找附近的敌人并给予增益
+        for (const enemy of gameState.enemies) {
+            if (enemy !== this) {
+                const supportDist = getDistance(this, enemy);
+                if (supportDist < 100) { // 支援范围
+                    // 每帧轻微提升附近敌人的伤害和速度
+                    enemy.damage = Math.min(enemy.damage + 0.01, enemy.damage * 1.5); // 设置上限防止无限增长
+                    enemy.speed = Math.min(enemy.speed + 0.005, enemy.speed * 1.3);
+
+                    // 绘制支援效果连线
+                    if (Math.random() < 0.1) { // 偶尔产生特效
+                        createParticles(
+                            (this.x + enemy.x) / 2,
+                            (this.y + enemy.y) / 2,
+                            '#00FFFF',
+                            2,
+                            'support_beam'
+                        );
+                    }
+                }
             }
         }
     }
@@ -933,6 +1020,23 @@ function usePotion(potion) {
             gameState.buffs.push({ effect: 'damage', duration: potion.duration, value: potion.value });
             showCombatLog(`💪 使用 ${potion.name}，攻击力 +${potion.value}`, 'weapon-get');
             break;
+
+        // 新增药水效果
+        case 'shield':
+            // 添加护盾效果
+            gameState.buffs.push({ effect: 'shield', duration: potion.duration, value: potion.value });
+            showCombatLog(`🛡️ 使用 ${potion.name}，获得 ${potion.value} 点护盾！`, 'weapon-get');
+            break;
+        case 'speed':
+            // 增加玩家速度
+            gameState.buffs.push({ effect: 'speed', duration: potion.duration, value: potion.value });
+            showCombatLog(`💨 使用 ${potion.name}，移动速度 +${potion.value}！`, 'weapon-get');
+            break;
+        case 'regen':
+            // 生命回复效果
+            gameState.buffs.push({ effect: 'regen', duration: potion.duration, value: potion.value });
+            showCombatLog(`🌿 使用 ${potion.name}，持续回血！`, 'weapon-get');
+            break;
     }
     updateUI();
 }
@@ -976,12 +1080,21 @@ function spawnEnemy() {
 
     gameState.enemies.push(new Enemy(gameState.level));
 
-    // 随着关卡提高，生成速度加快
-    const spawnRate = Math.max(500, 2000 - gameState.level * 100);
+    // 随着关卡提高，生成速度加快（调整为更平缓的增长）
+    const spawnRate = Math.max(800, 3000 - gameState.level * 80);
     setTimeout(spawnEnemy, spawnRate);
 }
 
 function updateBuffs() {
+    // 处理再生效果
+    const regenBuff = gameState.buffs.find(b => b.effect === 'regen');
+    if (regenBuff) {
+        // 每秒恢复一定生命值
+        if (Date.now() % 1000 < 17) { // 约每秒60次中的1次（约每秒恢复一次）
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + regenBuff.value);
+        }
+    }
+
     for (let i = gameState.buffs.length - 1; i >= 0; i--) {
         gameState.buffs[i].duration -= 1/60; // 假设 60fps
         if (gameState.buffs[i].duration <= 0) {
@@ -1016,6 +1129,10 @@ function attackEnemies() {
     // 应用增伤buff
     const damageBuff = gameState.buffs.find(b => b.effect === 'damage');
     if (damageBuff) damage += damageBuff.value;
+
+    // 应用狂暴伤害倍数
+    const berserkBuff = gameState.buffs.find(b => b.effect === 'berserk_damage');
+    if (berserkBuff) damage *= berserkBuff.value;
 
     let hitCount = 0;
 
@@ -1141,7 +1258,31 @@ function checkCollisions() {
                 let weaponDamage = gameState.player.weapon.damage;
                 const damageBuff = gameState.buffs.find(b => b.effect === 'damage');
                 if (damageBuff) weaponDamage += damageBuff.value;
+
+                // 应用狂暴伤害倍数
+                const berserkBuff = gameState.buffs.find(b => b.effect === 'berserk_damage');
+                if (berserkBuff) weaponDamage *= berserkBuff.value;
+
                 damage = Math.max(1, damage - weaponDamage / 5);
+            }
+
+            // 检查是否有护盾效果
+            const shieldBuff = gameState.buffs.find(b => b.effect === 'shield');
+            if (shieldBuff) {
+                // 先减少护盾值
+                const shieldReduction = Math.min(damage, shieldBuff.value);
+                damage -= shieldReduction;
+
+                // 更新护盾值
+                shieldBuff.value -= shieldReduction;
+
+                if (shieldBuff.value <= 0) {
+                    // 护盾耗尽，移除buff
+                    const shieldIndex = gameState.buffs.findIndex(b => b.effect === 'shield');
+                    if (shieldIndex !== -1) {
+                        gameState.buffs.splice(shieldIndex, 1);
+                    }
+                }
             }
 
             gameState.player.hp -= damage;
@@ -1160,7 +1301,28 @@ function checkCollisions() {
     for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
         const proj = gameState.projectiles[i];
         if (getDistance(gameState.player, proj) < player.size + proj.size) {
-            gameState.player.hp -= proj.damage;
+            // 检查是否有护盾效果
+            const shieldBuff = gameState.buffs.find(b => b.effect === 'shield');
+            let projDamage = proj.damage;
+
+            if (shieldBuff) {
+                // 先减少护盾值
+                const shieldReduction = Math.min(projDamage, shieldBuff.value);
+                projDamage -= shieldReduction;
+
+                // 更新护盾值
+                shieldBuff.value -= shieldReduction;
+
+                if (shieldBuff.value <= 0) {
+                    // 护盾耗尽，移除buff
+                    const shieldIndex = gameState.buffs.findIndex(b => b.effect === 'shield');
+                    if (shieldIndex !== -1) {
+                        gameState.buffs.splice(shieldIndex, 1);
+                    }
+                }
+            }
+
+            gameState.player.hp -= projDamage;
             createParticles(proj.x, proj.y, proj.color, 12, 'explosion');
             gameState.projectiles.splice(i, 1);
 
@@ -1262,8 +1424,27 @@ function gameLoop() {
         if (p.life <= 0) gameState.particles.splice(i, 1);
     }
 
-    // 绘制
-    player.draw();
+    // 绘制支援型敌人与其他敌人的连接线
+    for (const enemy of gameState.enemies) {
+        if (enemy.type === 'SUPPORT') {
+            // 为每个支援型敌人绘制到其支援范围内其他敌人的连线
+            for (const otherEnemy of gameState.enemies) {
+                if (otherEnemy !== enemy) {
+                    const dist = getDistance(enemy, otherEnemy);
+                    if (dist < 100) { // 支援范围
+                        ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(enemy.x, enemy.y);
+                        ctx.lineTo(otherEnemy.x, otherEnemy.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+    }
+
+    // 绘制所有敌人
     gameState.enemies.forEach(enemy => enemy.draw());
     gameState.projectiles.forEach(proj => {
         // 使用自定义精灵绘制射弹（如果有对应图像）
