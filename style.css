@@ -1,0 +1,152 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #eee;
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+}
+
+#gameCanvas {
+    background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+    border: 3px solid #4a4a6a;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(100, 100, 255, 0.3);
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+#stats {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #4a4a6a;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+#inventory {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #4a4a6a;
+    min-width: 150px;
+}
+
+#inventory h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #ffd700;
+}
+
+#potions, #relics {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+#start-screen, #game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 40px;
+    border-radius: 16px;
+    border: 3px solid #4a4a6a;
+    text-align: center;
+    z-index: 100;
+}
+
+#start-screen h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.description {
+    font-size: 16px;
+    line-height: 1.8;
+    margin-bottom: 30px;
+    color: #aaa;
+}
+
+.description strong {
+    color: #ff6b6b;
+}
+
+button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+.hidden {
+    display: none !important;
+}
+
+#game-over h2 {
+    font-size: 32px;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+}
+
+#game-over p {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+/* 战斗提示 */
+.combat-log {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    max-width: 600px;
+    text-align: center;
+}
+
+.weapon-get {
+    color: #4ade80;
+    font-weight: bold;
+}
+
+.weapon-lose {
+    color: #f87171;
+    font-weight: bold;
+}

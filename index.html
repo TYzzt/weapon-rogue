@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武器替换者 - Weapon Rogue</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-overlay">
+            <div id="stats">
+                <div>❤️ 生命：<span id="hp">100</span></div>
+                <div>⚔️ 武器：<span id="weapon">无</span></div>
+                <div>🏆 关卡：<span id="level">1</span></div>
+                <div>💀 击杀：<span id="kills">0</span></div>
+                <div>🔥 连击：<span id="combo">0</span></div>
+                <div>⭐ 分数：<span id="score">0</span></div>
+            </div>
+            <div id="inventory">
+                <h3>🎒 背包</h3>
+                <div id="potions"></div>
+                <div id="relics"></div>
+            </div>
+        </div>
+        <div id="game-over" class="hidden">
+            <h2>游戏结束</h2>
+            <p>你到达了第 <span id="final-level">0</span> 关</p>
+            <p>击败了 <span id="final-kills">0</span> 个敌人</p>
+            <p>最终得分：<span id="final-score">0</span></p>
+            <button id="restart-btn">重新开始</button>
+        </div>
+        <div id="start-screen">
+            <h1>🗡️ 武器替换者</h1>
+            <p class="description">
+                敌人掉落的武器<strong>必定替换</strong>你当前的武器<br>
+                这可能是好事，也可能是灾难...<br><br>
+                收集药水和遗物来改变命运
+            </p>
+            <button id="start-btn">开始游戏</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
