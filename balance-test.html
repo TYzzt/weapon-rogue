@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武器替换者 - 平衡性测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #e6e6e6;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #4a4a8a;
+        }
+
+        h2 {
+            color: #4cc9f0;
+            border-bottom: 1px solid #4a4a8a;
+            padding-bottom: 10px;
+        }
+
+        button {
+            background: #4361ee;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #3a56d4;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #4a4a8a;
+            background: #1a1a2e;
+            color: #e6e6e6;
+            width: 100px;
+        }
+
+        .result {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #4a4a8a;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #4361ee;
+        }
+    </style>
+</head>
+<body>
+    <h1>武器替换者 - 游戏平衡性测试工具</h1>
+
+    <div class="container">
+        <div class="panel">
+            <h2>敌人生成权重测试</h2>
+            <label>关卡等级: <input type="number" id="levelInput" value="1" min="1" max="50"></label>
+            <button onclick="testEnemyWeights()">测试敌人权重</button>
+            <button onclick="showEnemyCurve()">显示权重曲线</button>
+            <div id="enemyResult" class="result"></div>
+        </div>
+
+        <div class="panel">
+            <h2>武器稀有度权重测试</h2>
+            <label>关卡等级: <input type="number" id="weaponLevelInput" value="1" min="1" max="50"></label>
+            <button onclick="testWeaponRarity()">测试武器稀有度</button>
+            <div id="weaponResult" class="result"></div>
+        </div>
+
+        <div class="panel">
+            <h2>玩家升级需求测试</h2>
+            <label>当前等级: <input type="number" id="playerLevelInput" value="1" min="1" max="50"></label>
+            <button onclick="testPlayerLevel()">测试升级需求</button>
+            <button onclick="showLevelCurve()">显示升级曲线</button>
+            <div id="levelResult" class="result"></div>
+        </div>
+
+        <div class="panel">
+            <h2>生命值增长测试</h2>
+            <label>玩家等级: <input type="number" id="hpLevelInput" value="1" min="1" max="50"></label>
+            <button onclick="testHpGrowth()">测试生命值增长</button>
+            <div id="hpResult" class="result"></div>
+        </div>
+    </div>
+
+    <script src="game-balance-patch.js"></script>
+    <script>
+        // 测试敌人生成权重
+        function testEnemyWeights() {
+            const level = parseInt(document.getElementById('levelInput').value);
+            const weights = window.GameBalancePatch.updateEnemySpawnWeights(level);
+
+            let result = `关卡 ${level} 的敌人生成权重:\n\n`;
+            for (const [type, weight] of Object.entries(weights)) {
+                result += `${type}: ${weight.toFixed(2)}\n`;
+            }
+
+            document.getElementById('enemyResult').textContent = result;
+        }
+
+        // 显示敌人权重变化曲线
+        function showEnemyCurve() {
+            const level = parseInt(document.getElementById('levelInput').value);
+            let result = `敌人权重随等级变化曲线 (参考第${level}级):\n\n`;
+
+            for (let l = 1; l <= Math.min(level + 5, 30); l += Math.max(1, Math.floor((level + 5) / 10))) {
+                const weights = window.GameBalancePatch.updateEnemySpawnWeights(l);
+                result += `L${l}: `;
+                for (const [type, weight] of Object.entries(weights)) {
+                    if (['MELEE', 'RANGED', 'ELITE'].includes(type)) {
+                        result += `${type.substring(0, 2)}:${weight.toFixed(1)} `;
+                    }
+                }
+                result += '\n';
+            }
+
+            document.getElementById('enemyResult').textContent = result;
+        }
+
+        // 测试武器稀有度权重
+        function testWeaponRarity() {
+            const level = parseInt(document.getElementById('weaponLevelInput').value);
+            const weights = window.GameBalancePatch.getWeaponRarityWeight(level);
+
+            let result = `关卡 ${level} 的武器稀有度权重:\n\n`;
+            for (const [rarity, weight] of Object.entries(weights)) {
+                result += `${rarity}: ${weight.toFixed(2)}\n`;
+            }
+
+            document.getElementById('weaponResult').textContent = result;
+        }
+
+        // 测试玩家升级需求
+        function testPlayerLevel() {
+            const level = parseInt(document.getElementById('playerLevelInput').value);
+            const killsNeeded = window.GameBalancePatch.getKillsNeededForLevel(level);
+
+            let result = `当前 ${level} 级，升级到 ${level + 1} 级需要:\n\n`;
+            result += `击杀数: ${killsNeeded}\n`;
+
+            document.getElementById('levelResult').textContent = result;
+        }
+
+        // 显示升级曲线
+        function showLevelCurve() {
+            let result = `玩家升级所需击杀数曲线:\n\n`;
+            result += "等级 -> 所需击杀数\n";
+
+            for (let l = 1; l <= 20; l++) {
+                const kills = window.GameBalancePatch.getKillsNeededForLevel(l);
+                result += `${l.toString().padStart(2)}级 -> ${kills.toString().padStart(2)} 击杀\n`;
+
+                if (l % 10 === 0) result += "\n";
+            }
+
+            document.getElementById('levelResult').textContent = result;
+        }
+
+        // 测试生命值增长
+        function testHpGrowth() {
+            const level = parseInt(document.getElementById('hpLevelInput').value);
+            const hpIncrease = window.GameBalancePatch.calculateHpIncrease(level);
+
+            let result = `第 ${level} 级时的生命值增长:\n\n`;
+            result += `每级增加生命值: ${hpIncrease}\n`;
+
+            // 计算累积生命值
+            let totalHp = 100; // 假设初始生命值为100
+            for (let l = 1; l <= level; l++) {
+                totalHp += window.GameBalancePatch.calculateHpIncrease(l);
+            }
+            result += `累计总生命值: ${totalHp}`;
+
+            document.getElementById('hpResult').textContent = result;
+        }
+    </script>
+</body>
+</html>
