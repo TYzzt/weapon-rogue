@@ -186,12 +186,28 @@ const WEAPONS = [
     { name: '万物之主', damage: 75, rarity: 'legendary', color: '#228B22' },
     { name: '永恒守护', damage: 60, rarity: 'legendary', color: '#FFD700' },
     { name: '虚无之吻', damage: 80, rarity: 'legendary', color: '#36454F' },
+    { name: '凤凰之剑', damage: 70, rarity: 'legendary', color: '#FF4500' },
+    { name: '雷神之锤', damage: 75, rarity: 'legendary', color: '#F0E68C' },
+    { name: '海神三叉戟', damage: 82, rarity: 'legendary', color: '#00CED1' },
+    { name: '创世之柱', damage: 88, rarity: 'legendary', color: '#FFD700' },
 
     // Mythic weapons (神话)
     { name: '开发者之剑', damage: 999, rarity: 'mythic', color: '#ff00ff' },
     { name: '元神之剑', damage: 500, rarity: 'mythic', color: '#FF1493' },
     { name: '平衡之锤', damage: 150, rarity: 'mythic', color: '#7B68EE' },
+    { name: '创世神之刃', damage: 1200, rarity: 'mythic', color: '#9370DB' },
+    { name: '宇宙之心', damage: 800, rarity: 'mythic', color: '#00FFFF' },
 ];
+
+// 更新稀有度权重，调整为更合理的平衡性分布
+const RARITY_WEIGHTS = {
+    common: 50,
+    uncommon: 25,
+    rare: 15,
+    epic: 7,
+    legendary: 2.5,
+    mythic: 0.5
+};
 
 const RARITY_WEIGHTS = {
     common: 50,
@@ -965,6 +981,18 @@ const ENEMY_TYPES = {
     SKELETON: { name: '骷髅', speed: 0.9, hp: 0.8, damage: 0.9, size: 0.9, behavior: 'melee' }, // 基础亡灵单位
     DEMON: { name: '小恶魔', speed: 1.3, hp: 1.0, damage: 1.7, size: 1.2, behavior: 'melee' }, // 火属性伤害
     ORC: { name: '兽人', speed: 1.1, hp: 1.8, damage: 1.6, size: 1.6, behavior: 'melee' }, // 高血高伤害近战
+
+    // 新增更多敌人类型 (第2波)
+    GOBLIN: { name: '哥布林', speed: 1.6, hp: 0.7, damage: 1.2, size: 0.8, behavior: 'melee' }, // 小型快速敌人
+    SPIDER: { name: '蜘蛛', speed: 1.4, hp: 0.6, damage: 1.3, size: 0.7, behavior: 'ranged' }, // 小型远程敌人
+    WIZARD: { name: '巫师', speed: 0.4, hp: 0.9, damage: 2.5, size: 1.3, behavior: 'ranged' }, // 高伤害法师
+    BERSERKER: { name: '狂战士', speed: 1.8, hp: 1.4, damage: 2.0, size: 1.7, behavior: 'melee' }, // 高攻高血低防
+    PHANTOM: { name: '幻影', speed: 2.2, hp: 0.4, damage: 2.5, size: 0.8, behavior: 'melee' }, // 超高速敌人，伤害高但血薄
+    GOATMAN: { name: '羊头人', speed: 1.0, hp: 2.0, damage: 1.5, size: 1.5, behavior: 'melee' }, // 高血中伤害
+    CRYSTAL: { name: '水晶守护者', speed: 0.2, hp: 4.0, damage: 2.2, size: 2.5, behavior: 'ranged' }, // 极高血量，远程攻击
+    SHADOW: { name: '暗影刺客', speed: 2.5, hp: 0.5, damage: 3.0, size: 0.6, behavior: 'melee' }, // 极速高伤低血
+    TROLL: { name: '巨魔', speed: 0.6, hp: 3.5, damage: 1.8, size: 2.4, behavior: 'melee' }, // 超高血量中伤害
+    LICH: { name: '巫妖王', speed: 0.3, hp: 2.8, damage: 3.0, size: 2.0, behavior: 'ranged' }, // 高血高伤害远程
 };
 
 class Enemy {
@@ -990,17 +1018,33 @@ class Enemy {
                 type = 'UNDEAD'; // 新增亡灵敌人
             } else if (level < 20 && rand < 0.94) {
                 type = 'BEAST'; // 新增野兽敌人
-            } else if (level < 22 && rand < 0.96) {
+            } else if (level < 22 && rand < 0.95) {
                 type = 'SKELETON'; // 新增骷髅敌人
-            } else if (level < 24 && rand < 0.97) {
+            } else if (level < 24 && rand < 0.96) {
+                type = 'GOBLIN'; // 新增哥布林敌人
+            } else if (level < 26 && rand < 0.97) {
                 type = 'DRAGON'; // 新增龙类敌人
-            } else if (level < 26 && rand < 0.98) {
+            } else if (level < 28 && rand < 0.975) {
                 type = 'GOLEM'; // 新增石像鬼敌人
-            } else if (level < 28 && rand < 0.99) {
-                type = 'NECROMANCER'; // 新增亡灵法师敌人
-            } else if (rand < 0.995) {
+            } else if (level < 30 && rand < 0.98) {
+                type = 'SPIDER'; // 新增蜘蛛敌人
+            } else if (level < 32 && rand < 0.985) {
+                type = 'BERSERKER'; // 新增狂战士敌人
+            } else if (level < 34 && rand < 0.99) {
+                type = 'WIZARD'; // 新增巫师敌人
+            } else if (level < 36 && rand < 0.992) {
+                type = 'PHANTOM'; // 新增幻影敌人
+            } else if (level < 38 && rand < 0.994) {
+                type = 'TROLL'; // 新增巨魔敌人
+            } else if (level < 40 && rand < 0.996) {
+                type = 'LICH'; // 新增巫妖王敌人
+            } else if (level < 42 && rand < 0.998) {
+                type = 'CRYSTAL'; // 新增水晶守护者敌人
+            } else if (rand < 0.999) {
+                type = 'SHADOW'; // 新增暗影刺客敌人
+            } else if (rand < 0.9995) {
                 type = 'BOSS';
-            } else if (rand < 0.998) {
+            } else if (rand < 0.9998) {
                 type = 'DEMON'; // 小恶魔
             } else {
                 type = 'ELEMENTAL'; // 元素生物
@@ -1043,6 +1087,16 @@ class Enemy {
             case 'SKELETON': return `hsl(${randomInt(120, 180)}, 20%, 70%)`; // 灰白系 - 骷髅
             case 'DEMON': return `hsl(${randomInt(0, 15)}, 80%, 45%)`; // 红色系 - 恶魔
             case 'ORC': return `hsl(${randomInt(120, 160)}, 60%, 40%)`; // 绿色系 - 兽人
+            case 'GOBLIN': return `hsl(${randomInt(80, 120)}, 70%, 45%)`; // 浅绿色系 - 哥布林
+            case 'SPIDER': return `hsl(${randomInt(0, 20)}, 30%, 20%)`; // 深褐色系 - 蜘蛛
+            case 'WIZARD': return `hsl(${randomInt(250, 290)}, 90%, 70%)`; // 鲜艳紫色系 - 巫师
+            case 'BERSERKER': return `hsl(${randomInt(0, 20)}, 90%, 40%)`; // 深橙色系 - 狂战士
+            case 'PHANTOM': return `hsl(${randomInt(270, 300)}, 50%, 30%)`; // 暗紫色系 - 幻影
+            case 'GOATMAN': return `hsl(${randomInt(20, 50)}, 60%, 45%)`; // 深棕色系 - 羊头人
+            case 'CRYSTAL': return `hsl(${randomInt(180, 210)}, 80%, 70%)`; // 淡蓝色系 - 水晶守护者
+            case 'SHADOW': return `hsl(${randomInt(0, 360)}, 100%, 5%)`; // 纯黑色系 - 暗影刺客
+            case 'TROLL': return `hsl(${randomInt(60, 100)}, 40%, 30%)`; // 暗绿色系 - 巨魔
+            case 'LICH': return `hsl(${randomInt(280, 320)}, 70%, 35%)`; // 深紫色系 - 巫妖王
             default: return `hsl(${randomInt(0, 60)}, 70%, 50%)`;
         }
     }
@@ -1719,7 +1773,8 @@ function spawnEnemy() {
     gameState.enemies.push(new Enemy(gameState.level));
 
     // 随着关卡提高，生成速度加快（调整为更平缓的增长，使游戏体验更好）
-    const spawnRate = Math.max(1500, 5000 - gameState.level * 120); // 增加随等级增长的速度，使游戏更具有挑战性
+    // 初始速度较慢，让新手玩家有适应期；后期增速更快，增加挑战性
+    const spawnRate = Math.max(800, 6000 - gameState.level * 150); // 调整增长速率以优化平衡性
     setTimeout(spawnEnemy, spawnRate);
 }
 
@@ -1747,7 +1802,7 @@ function updateUI() {
     document.getElementById('hp').textContent = gameState.player.hp;
     document.getElementById('weapon').textContent = gameState.player.weapon?.name || '无';
     document.getElementById('level').textContent = gameState.level;
-    document.getElementById('goal').textContent = `击杀${Math.min(20, 5 + gameState.level * 2)}敌升级`;
+    document.getElementById('goal').textContent = `击杀${Math.min(25, 5 + Math.floor(gameState.level * 1.5) + Math.floor(gameState.level / 5) * 2)}敌升级`;
     document.getElementById('kills').textContent = gameState.kills;
     document.getElementById('combo').textContent = gameState.player.combo;
     document.getElementById('score').textContent = gameState.player.score;
@@ -1851,7 +1906,8 @@ function attackEnemies() {
                 gameState.kills++;
 
                 // 根据当前关卡决定升级所需的击杀数，使其与UI显示一致
-                const killsNeededForLevel = Math.min(20, 5 + gameState.level * 2);
+                // 优化升级公式：前期增长较慢，让玩家有适应期；后期增长加快，保持挑战性
+                const killsNeededForLevel = Math.min(25, 5 + Math.floor(gameState.level * 1.5) + Math.floor(gameState.level / 5) * 2);
 
                 if (gameState.kills % killsNeededForLevel === 0) {
                     gameState.level++;
