@@ -351,7 +351,67 @@ const WEAPONS = [
     { name: '乾坤鼎', damage: 68, rarity: 'legendary', color: '#20B2AA' },
     { name: '轮回盘', damage: 65, rarity: 'legendary', color: '#FF69B4' },
     { name: '造化果', damage: 57, rarity: 'legendary', color: '#FF1493' },
-    { name: '混沌珠', damage: 70, rarity: 'legendary', color: '#9370DB' }
+    { name: '混沌珠', damage: 70, rarity: 'legendary', color: '#9370DB' },
+
+    // 新增的普通武器（50+新武器的第一批）
+    { name: '铁锅', damage: 6, rarity: 'common', color: '#708090' },
+    { name: '擀面杖', damage: 5, rarity: 'common', color: '#D2B48C' },
+    { name: '汤勺', damage: 2, rarity: 'common', color: '#C0C0C0' },
+    { name: '叉子', damage: 3, rarity: 'common', color: '#C0C0C0' },
+    { name: '削皮刀', damage: 4, rarity: 'common', color: '#708090' },
+    { name: '扳手', damage: 6, rarity: 'common', color: '#A9A9A9' },
+    { name: '锤子', damage: 7, rarity: 'common', color: '#696969' },
+    { name: '螺丝刀', damage: 4, rarity: 'common', color: '#CD853F' },
+    { name: '钳子', damage: 5, rarity: 'common', color: '#778899' },
+    { name: '卷尺', damage: 2, rarity: 'common', color: '#D3D3D3' },
+
+    // 新增的不常见武器
+    { name: '工兵铲', damage: 12, rarity: 'uncommon', color: '#808080' },
+    { name: '登山镐', damage: 14, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '伐木斧', damage: 16, rarity: 'uncommon', color: '#8B4513' },
+    { name: '猎刀', damage: 15, rarity: 'uncommon', color: '#2F4F4F' },
+    { name: '军用匕首', damage: 13, rarity: 'uncommon', color: '#708090' },
+    { name: '战术锤', damage: 17, rarity: 'uncommon', color: '#A9A9A9' },
+    { name: '警棍', damage: 11, rarity: 'uncommon', color: '#2F2F2F' },
+    { name: '船桨', damage: 13, rarity: 'uncommon', color: '#8B4513' },
+    { name: '鱼叉', damage: 18, rarity: 'uncommon', color: '#4682B4' },
+    { name: '三节棍', damage: 14, rarity: 'uncommon', color: '#DAA520' },
+
+    // 新增的稀有武器
+    { name: '符文短剑', damage: 22, rarity: 'rare', color: '#4169E1' },
+    { name: '月牙铲', damage: 25, rarity: 'rare', color: '#7FFFD4' },
+    { name: '龙鳞匕', damage: 24, rarity: 'rare', color: '#FF6347' },
+    { name: '凤凰羽扇', damage: 26, rarity: 'rare', color: '#FF6347' },
+    { name: '玄武甲胄', damage: 23, rarity: 'rare', color: '#2F4F4F' },
+    { name: '青龙偃月刀', damage: 28, rarity: 'rare', color: '#7CFC00' },
+    { name: '白虎啸天', damage: 27, rarity: 'rare', color: '#F5F5DC' },
+    { name: '朱雀之翼', damage: 29, rarity: 'rare', color: '#FF4500' },
+    { name: '麒麟角', damage: 30, rarity: 'rare', color: '#F0E68C' },
+    { name: '貔貅牙', damage: 25, rarity: 'rare', color: '#DAA520' },
+
+    // 新增的史诗武器
+    { name: '天罡北斗阵', damage: 35, rarity: 'epic', color: '#483D8B' },
+    { name: '地煞黄泉路', damage: 36, rarity: 'epic', color: '#8B0000' },
+    { name: '五行相生剑', damage: 37, rarity: 'epic', color: '#32CD32' },
+    { name: '八卦游龙阵', damage: 38, rarity: 'epic', color: '#FFD700' },
+    { name: '奇门遁甲', damage: 39, rarity: 'epic', color: '#9370DB' },
+    { name: '太乙玄门', damage: 40, rarity: 'epic', color: '#000080' },
+    { name: '九宫八卦', damage: 41, rarity: 'epic', color: '#4169E1' },
+    { name: '混元一气', damage: 42, rarity: 'epic', color: '#7CFC00' },
+    { name: '道法自然', damage: 43, rarity: 'epic', color: '#228B22' },
+    { name: '无极生太极', damage: 44, rarity: 'epic', color: '#F0F8FF' },
+
+    // 新增的传说武器
+    { name: '三界之主', damage: 55, rarity: 'legendary', color: '#FF1493' },
+    { name: '六道轮回', damage: 58, rarity: 'legendary', color: '#8A2BE2' },
+    { name: '阴阳两仪', damage: 56, rarity: 'legendary', color: '#FFFFFF' },
+    { name: '四象归一', damage: 57, rarity: 'legendary', color: '#FFA500' },
+    { name: '五行逆天', damage: 59, rarity: 'legendary', color: '#FF0000' },
+
+    // 新增的神话武器
+    { name: '大道至简', damage: 850, rarity: 'mythic', color: '#FFFF00' },
+    { name: '无为而治', damage: 820, rarity: 'mythic', color: '#00FF00' },
+    { name: '万物归一', damage: 900, rarity: 'mythic', color: '#FF00FF' }
 ];
 
 // 更新稀有度权重，调整为更合理的平衡性分布
@@ -1163,6 +1223,9 @@ function useSkill(skillKey) {
                             const maxHpLimit = 500; // 设定最大生命值上限
                             gameState.player.maxHp = Math.min(gameState.player.maxHp, maxHpLimit);
                             gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
+
+                            // 检查并处理特殊关卡里程碑事件
+                            handleMilestoneEvents();
                         }
 
                         gameState.enemies.splice(i, 1);
@@ -1942,6 +2005,18 @@ const ENEMY_TYPES = {
     ORGE: { name: '食人魔', speed: 0.7, hp: 2.8, damage: 2.2, size: 2.2, behavior: 'melee' }, // 大型近战怪物
     PHOENIX: { name: '凤凰', speed: 1.2, hp: 1.0, damage: 2.4, size: 1.3, behavior: 'ranged' }, // 火系飞行敌人，会重生
     KRAKEN: { name: '海怪', speed: 0.4, hp: 4.5, damage: 1.5, size: 2.8, behavior: 'ranged' }, // 大型水域敌人，触手攻击
+
+    // 新增敌人类型 (第六波)
+    DRAGON_KING: { name: '龙王', speed: 0.8, hp: 5.0, damage: 3.0, size: 3.2, behavior: 'ranged' }, // 强大的龙族君主，具有强大魔法
+    UNICORN: { name: '独角兽', speed: 1.5, hp: 2.0, damage: 2.5, size: 1.6, behavior: 'melee' }, // 神圣生物，高机动性
+    BASILISK: { name: '蛇怪', speed: 0.6, hp: 3.0, damage: 2.8, size: 1.9, behavior: 'ranged' }, // 石化攻击的危险生物
+    GRIFFIN: { name: '狮鹫', speed: 1.4, hp: 2.2, damage: 2.2, size: 2.0, behavior: 'mixed' }, // 空中地面皆可攻击
+    MINOTAUR: { name: '牛头怪', speed: 1.0, hp: 4.0, damage: 2.0, size: 2.5, behavior: 'melee' }, // 迷宫守护者，高血高攻
+    HYDRA: { name: '九头蛇', speed: 0.7, hp: 6.0, damage: 1.8, size: 3.0, behavior: 'ranged' }, // 多头怪物，被砍掉头会长出新头
+    PEGASUS: { name: '飞马', speed: 2.0, hp: 1.5, damage: 1.5, size: 1.4, behavior: 'ranged' }, // 高速空中单位
+    COCKATRICE: { name: '鸡蛇怪', speed: 1.1, hp: 1.8, damage: 2.6, size: 1.2, behavior: 'ranged' }, // 小型石化生物
+    CHIMERA: { name: '奇美拉', speed: 1.2, hp: 3.5, damage: 2.4, size: 2.2, behavior: 'mixed' }, // 多头混合生物，多重攻击
+    BANSHEE: { name: '女妖', speed: 1.8, hp: 1.2, damage: 3.0, size: 1.0, behavior: 'ranged' }, // 高速精神攻击者
 };
 
 class Enemy {
@@ -2007,6 +2082,29 @@ class Enemy {
         if (level > 20) { // 非常高的关卡才出现以下敌人
             enemyWeights['PHOENIX'] = Math.min(0.001, 0.00005 + (level * 0.00008)); // 凤凰随等级提高而增加
             enemyWeights['KRAKEN'] = Math.min(0.0005, 0.00002 + (level * 0.00005)); // 海怪随等级提高而增加
+        }
+
+        // 更高关卡（25级以上）出现更稀有的敌人
+        if (level > 25) {
+            enemyWeights['DRAGON_KING'] = Math.min(0.0003, 0.00001 + (level * 0.00003)); // 龙王随等级提高而增加
+            enemyWeights['UNICORN'] = Math.min(0.0003, 0.00001 + (level * 0.00003)); // 独角兽随等级提高而增加
+        }
+
+        if (level > 30) {
+            enemyWeights['BASILISK'] = Math.min(0.0002, 0.000005 + (level * 0.00002)); // 蛇怪随等级提高而增加
+            enemyWeights['GRIFFIN'] = Math.min(0.0002, 0.000005 + (level * 0.00002)); // 狮鹫随等级提高而增加
+        }
+
+        if (level > 35) {
+            enemyWeights['MINOTAUR'] = Math.min(0.0001, 0.000003 + (level * 0.00001)); // 牛头怪随等级提高而增加
+            enemyWeights['HYDRA'] = Math.min(0.0001, 0.000003 + (level * 0.00001)); // 九头蛇随等级提高而增加
+        }
+
+        if (level > 40) {
+            enemyWeights['PEGASUS'] = Math.min(0.0001, 0.000002 + (level * 0.000008)); // 飞马随等级提高而增加
+            enemyWeights['COCKATRICE'] = Math.min(0.0001, 0.000002 + (level * 0.000008)); // 鸡蛇怪随等级提高而增加
+            enemyWeights['CHIMERA'] = Math.min(0.00008, 0.000001 + (level * 0.000005)); // 奇美拉随等级提高而增加
+            enemyWeights['BANSHEE'] = Math.min(0.00008, 0.000001 + (level * 0.000005)); // 女妖随等级提高而增加
         }
 
         // 随机选择敌人类型，基于权重
@@ -3248,6 +3346,9 @@ function usePotion(potion) {
                             const maxHpLimit = 500; // 设定最大生命值上限
                             gameState.player.maxHp = Math.min(gameState.player.maxHp, maxHpLimit);
                             gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
+
+                            // 检查并处理特殊关卡里程碑事件
+                            handleMilestoneEvents();
                         }
 
                         gameState.enemies.splice(i, 1);
@@ -4835,3 +4936,74 @@ gameLoop = function() {
     // 调用原始游戏循环
     originalGameLoop();
 };
+
+// 关卡里程碑事件处理器
+function handleMilestoneEvents() {
+    // 检查特定关卡的里程碑事件
+    switch(gameState.level) {
+        case 5:
+            showCombatLog('🎉 到达第5关！解锁了新的敌人类型：弓箭手！', 'weapon-get');
+            break;
+        case 10:
+            showCombatLog('🎊 到达第10关！你正在成为一名真正的战士！', 'weapon-get');
+            // 在第10关开始增加精英敌人比例
+            break;
+        case 15:
+            showCombatLog('🌟 到达第15关！新的敌人类型现已出现：法师和刺客！', 'weapon-get');
+            break;
+        case 20:
+            showCombatLog('🏆 到达第20关！你是个传奇英雄！', 'weapon-get');
+            // 从第20关开始增加Boss出现频率
+            break;
+        case 25:
+            showCombatLog('👑 到达第25关！神话级别的挑战者！', 'weapon-get');
+            showCombatLog('🐉 新敌人类型解锁：龙类、石像鬼！', 'weapon-get');
+            break;
+        case 30:
+            showCombatLog('🌌 到达第30关！进入传奇领域！', 'weapon-get');
+            showCombatLog('👻 新敌人类型解锁：幻影、巫妖王！', 'weapon-get');
+            break;
+        case 35:
+            showCombatLog('💫 到达第35关！半神境界！', 'weapon-get');
+            showCombatLog('🦄 新敌人类型解锁：独角兽、蛇怪、狮鹫！', 'weapon-get');
+            break;
+        case 40:
+            showCombatLog('🌠 到达第40关！宇宙意志的挑战者！', 'weapon-get');
+            showCombatLog('🦅 新敌人类型解锁：飞马、奇美拉、女妖！', 'weapon-get');
+            break;
+        case 45:
+            showCombatLog('⭐ 到达第45关！接近神之境界！', 'weapon-get');
+            showCombatLog('🐉 新敌人类型解锁：龙王！', 'weapon-get');
+            break;
+        case 50:
+            showCombatLog('👑 到达第50关！你是真正的游戏冠军！', 'victory');
+            // 播放胜利音效
+            AudioManager.playSound('victory');
+            break;
+        default:
+            // 检查每5关的特殊事件
+            if (gameState.level > 50 && gameState.level % 10 === 0) {
+                showCombatLog(`🚀 第${gameState.level}关！你在创造历史！`, 'weapon-get');
+            }
+            break;
+    }
+
+    // 每10关增加一点玩家生命值（从第10关开始）
+    if (gameState.level > 1 && gameState.level % 10 === 0) {
+        gameState.player.maxHp += 10;
+        gameState.player.hp += 10; // 同时恢复对应的生命值
+        gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
+
+        showCombatLog(`💪 生命力提升！最大生命值+10`, 'heal');
+    }
+
+    // 每20关给玩家一个特殊奖励
+    if (gameState.level > 1 && gameState.level % 20 === 0) {
+        // 随机给予一个药水作为奖励
+        const randomPotion = POTIONS[Math.floor(Math.random() * POTIONS.length)];
+        gameState.potions.push(randomPotion);
+
+        showCombatLog(`🎁 里程碑奖励！获得药水：${randomPotion.name}`, 'potion_pickup');
+        AudioManager.playSound('collect');
+    }
+}
