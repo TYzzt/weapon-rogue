@@ -449,6 +449,111 @@ const WEAPONS = [
     { name: '万物归一', damage: 900, rarity: 'mythic', color: '#FF00FF' }
 ];
 
+// 引入额外内容 - 从外部文件加载，这里定义备用内容
+const ADDITIONAL_EPIC_WEAPONS = [
+    { name: '时光倒流剑', damage: 53, rarity: 'epic', color: '#7B68EE', effect: 'time_reverse', desc: '有时能使敌人倒退一秒' },
+    { name: '虚无之刃', damage: 54, rarity: 'epic', color: '#4B0082', effect: 'phase_through', desc: '偶尔穿透敌人' },
+    { name: '雷神之锤', damage: 55, rarity: 'epic', color: '#B0C4DE', effect: 'chain_lightning', desc: '攻击可能引发连锁闪电' },
+    { name: '海神三叉戟', damage: 56, rarity: 'epic', color: '#20B2AA', effect: 'tidal_wave', desc: '攻击产生冲击波' },
+    { name: '风暴使者', damage: 57, rarity: 'epic', color: '#87CEEB', effect: 'wind_boost', desc: '增加移动速度' },
+    { name: '冰霜女王', damage: 58, rarity: 'epic', color: '#B0E0E6', effect: 'freeze', desc: '有几率冻结敌人' },
+    { name: '烈焰君主', damage: 59, rarity: 'epic', color: '#FF4500', effect: 'burn', desc: '造成持续燃烧伤害' },
+    { name: '自然之怒', damage: 60, rarity: 'epic', color: '#228B22', effect: 'poison', desc: '造成毒素伤害' },
+    { name: '暗物质匕首', damage: 61, rarity: 'epic', color: '#000000', effect: 'gravity_well', desc: '吸引附近敌人' },
+    { name: '光明制裁者', damage: 62, rarity: 'epic', color: '#FFFFFF', effect: 'holy_blast', desc: '对黑暗敌人造成额外伤害' },
+];
+
+const ADDITIONAL_LEGENDARY_WEAPONS = [
+    { name: '创世之柱', damage: 75, rarity: 'legendary', color: '#FFD700', effect: 'creation_field', desc: '周围持续生成有益能量' },
+    { name: '混沌之核', damage: 76, rarity: 'legendary', color: '#FF00FF', effect: 'chaos_orb', desc: '发射混乱球体' },
+    { name: '审判日', damage: 77, rarity: 'legendary', color: '#FFFFFF', effect: 'judgment_day', desc: '周期性审判范围内敌人' },
+    { name: '世界之树', damage: 78, rarity: 'legendary', color: '#32CD32', effect: 'life_bloom', desc: '持续恢复生命值' },
+    { name: '虚无缥缈', damage: 79, rarity: 'legendary', color: '#F8F8FF', effect: 'intangibility', desc: '短暂无敌效果' },
+    { name: '造物之主', damage: 80, rarity: 'legendary', color: '#FFD700', effect: 'creation', desc: '能创造临时盟友' },
+    { name: '末日使者', damage: 81, rarity: 'legendary', color: '#8B0000', effect: 'apocalypse', desc: '蓄力后毁灭一片区域' },
+    { name: '永恒大帝', damage: 82, rarity: 'legendary', color: '#4169E1', effect: 'eternity', desc: '大幅延长所有增益效果' },
+    { name: '宇宙之心', damage: 83, rarity: 'legendary', color: '#0000FF', effect: 'cosmic_resonance', desc: '与宇宙共鸣，增强所有属性' },
+    { name: '多元掌控', damage: 84, rarity: 'legendary', color: '#9370DB', effect: 'dimensional_control', desc: '能够操控维度力量' },
+];
+
+const ADDITIONAL_MYTHIC_WEAPONS = [
+    { name: '概念抹除者', damage: 1400, rarity: 'mythic', color: '#9400D3', effect: 'conceptual_erasure', desc: '从概念层面抹除敌人' },
+    { name: '维度支配者', damage: 1350, rarity: 'mythic', color: '#4682B4', effect: 'dimensional_dominion', desc: '掌控多个维度的力量' },
+    { name: '现实扭曲器', damage: 1200, rarity: 'mythic', color: '#FF69B4', effect: 'reality_distortion', desc: '扭曲现实规则' },
+    { name: '宇宙起源', damage: 1500, rarity: 'mythic', color: '#000000', effect: 'origin_of_universe', desc: '重现宇宙诞生的力量' },
+    { name: '存在意义', damage: 1300, rarity: 'mythic', color: '#0000FF', effect: 'meaning_of_existence', desc: '揭示存在的真谛并摧毁非存在' },
+    { name: '绝对零度', damage: 1100, rarity: 'mythic', color: '#87CEEB', effect: 'absolute_zero', desc: '将一切降至绝对零度' },
+    { name: '时间之主', damage: 1600, rarity: 'mythic', color: '#9370DB', effect: 'lord_of_time', desc: '掌控时间的流动' },
+    { name: '空间之王', damage: 1550, rarity: 'mythic', color: '#4169E1', effect: 'king_of_space', desc: '掌控空间的形态' },
+    { name: '虚无之神', damage: 1700, rarity: 'mythic', color: '#2F4F4F', effect: 'god_of_void', desc: '化身虚无，超越存在' },
+    { name: '无限手套', damage: 2000, rarity: 'mythic', color: '#8A2BE2', effect: 'infinity_gauntlet', desc: '拥有无限的力量' },
+];
+
+// 合并额外武器到主武器库
+WEAPONS.push(...ADDITIONAL_EPIC_WEAPONS, ...ADDITIONAL_LEGENDARY_WEAPONS, ...ADDITIONAL_MYTHIC_WEAPONS);
+
+// 新增敌人类型
+const ADDITIONAL_ENEMY_TYPES = {
+    // 机械系敌人
+    ROBOT: { name: '机器人', speed: 0.9, hp: 2.0, damage: 1.8, size: 1.6, behavior: 'mechanical', element: 'metal' },
+    CYBORG: { name: '半机械人', speed: 1.4, hp: 2.5, damage: 2.2, size: 1.8, behavior: 'hybrid', element: 'metal' },
+    DRONE: { name: '无人机', speed: 2.0, hp: 0.8, damage: 1.2, size: 0.8, behavior: 'flying', element: 'metal' },
+    TURRET: { name: '炮塔', speed: 0.0, hp: 1.5, damage: 2.5, size: 1.2, behavior: 'stationary', element: 'metal' },
+
+    // 神话系敌人
+    ANGEL: { name: '天使', speed: 1.2, hp: 3.0, damage: 2.8, size: 2.0, behavior: 'divine', element: 'holy' },
+    DEMIGOD: { name: '半神', speed: 0.8, hp: 6.0, damage: 3.5, size: 2.5, behavior: 'divine', element: 'divine' },
+    DRAGON_KING: { name: '龙王', speed: 0.7, hp: 7.0, damage: 4.0, size: 3.0, behavior: 'dragon', element: 'dragon' },
+
+    // 稀有变种敌人
+    ZOMBIE: { name: '僵尸', speed: 0.4, hp: 2.2, damage: 1.4, size: 1.3, behavior: 'undead', element: 'undead' },
+    ORGE: { name: '食人魔', speed: 0.6, hp: 4.0, damage: 2.8, size: 2.2, behavior: 'brute', element: 'earth' },
+
+    // 飞行敌人
+    PHOENIX: { name: '凤凰', speed: 1.5, hp: 2.5, damage: 3.0, size: 1.8, behavior: 'flying', element: 'fire' },
+    GRIFFIN: { name: '狮鹫', speed: 1.6, hp: 3.2, damage: 2.6, size: 2.0, behavior: 'flying', element: 'air' },
+    BASILISK: { name: '蛇怪', speed: 0.9, hp: 4.5, damage: 3.2, size: 1.9, behavior: 'gaze', element: 'poison' },
+    KRAKEN: { name: '北海巨妖', speed: 0.3, hp: 8.0, damage: 4.5, size: 3.5, behavior: 'tentacles', element: 'water' },
+
+    // 稀有精英变种
+    UNICORN: { name: '独角兽', speed: 1.8, hp: 3.5, damage: 2.5, size: 1.7, behavior: 'divine', element: 'holy' },
+};
+
+// 合并敌人类型
+Object.assign(ENEMY_TYPES, ADDITIONAL_ENEMY_TYPES);
+
+// 新增药水类型
+const ADDITIONAL_POTIONS = [
+    { name: '传送药水', effect: 'teleport', value: 1, color: '#9370DB', desc: '瞬间传送到随机位置' },
+    { name: '时间减缓', effect: 'slow_time', duration: 5, color: '#4169E1', desc: '减缓周围敌人时间' },
+    { name: '护盾超载', effect: 'shield_overflow', value: 50, color: '#00BFFF', desc: '获得超大护盾' },
+    { name: '元素精通', effect: 'elemental_mastery', duration: 10, value: 2, color: '#32CD32', desc: '元素伤害翻倍' },
+    { name: '暴击专精', effect: 'crit_mastery', duration: 8, value: 0.3, color: '#FF4500', desc: '暴击率大幅提升' },
+    { name: '反伤护盾', effect: 'thorns_shield', duration: 6, value: 0.2, color: '#8A2BE2', desc: '反弹部分伤害给攻击者' },
+    { name: '吸血光环', effect: 'vampire_aura', duration: 7, value: 0.15, color: '#8B0000', desc: '攻击时恢复部分生命' },
+    { name: '元素转换', effect: 'element_convert', value: 1, color: '#FFD700', desc: '临时改变武器元素属性' },
+    { name: '抗性提升', effect: 'resistance_up', duration: 10, value: 0.5, color: '#20B2AA', desc: '减少受到的伤害' },
+    { name: '敏捷提升', effect: 'agility_boost', duration: 8, value: 1.5, color: '#98FB98', desc: '大幅提升移动速度和闪避' },
+];
+
+// 合并药水
+POTIONS.push(...ADDITIONAL_POTIONS);
+
+// 新增遗物类型
+const ADDITIONAL_RELICS = [
+    { name: '时空沙漏', effect: 'time_dilation', desc: '偶尔减缓游戏时间' },
+    { name: '元素核心', effect: 'elemental_synergy', desc: '元素攻击产生额外效果' },
+    { name: '生命之种', effect: 'life_regeneration', desc: '持续缓慢恢复生命值' },
+    { name: '量子护盾', effect: 'quantum_shield', desc: '有机会完全抵消一次攻击' },
+    { name: '命运之骰', effect: 'dice_fate', desc: '随机获得正面效果' },
+    { name: '灵魂链接', effect: 'soul_link', desc: '将部分伤害转移到附近的敌人' },
+    { name: '无限循环', effect: 'infinite_loop', desc: '有时技能效果会被复制' },
+    { name: '虚无之盒', effect: 'void_box', desc: '可以储存一个物品供以后使用' },
+];
+
+// 合并遗物
+RELICS.push(...ADDITIONAL_RELICS);
+
 // 更新稀有度权重，调整为更合理的平衡性分布
 const RARITY_WEIGHTS = {
     common: 50,
@@ -5320,4 +5425,613 @@ function handleMilestoneEvents() {
         showCombatLog(`🎁 里程碑奖励！获得药水：${randomPotion.name}`, 'potion_pickup');
         AudioManager.playSound('collect');
     }
+}
+
+// ==================== Steam版游戏增强系统 ====================
+//
+// 该系统包含：
+// 1. 更丰富的敌人AI行为
+// 2. 更多特殊事件
+// 3. 更好的视觉特效
+// 4. 更深入的游戏机制
+
+// 扩展敌人AI行为
+const ENHANCED_AI_BEHAVIORS = {
+    // 机械系AI
+    mechanical: {
+        name: '机械智能',
+        description: '精确计算的攻击和移动',
+        movementPattern: 'precise',
+        attackStrategy: 'calculated',
+        weakness: 'electricity',
+        resistance: 'poison'
+    },
+    // 神话系AI
+    divine: {
+        name: '神圣智慧',
+        description: '使用神圣力量进行战斗',
+        movementPattern: 'graceful',
+        attackStrategy: 'blessed',
+        weakness: 'darkness',
+        resistance: 'light'
+    },
+    // 混合型AI
+    hybrid: {
+        name: '混合智能',
+        description: '结合生物与机械特征',
+        movementPattern: 'adaptive',
+        attackStrategy: 'combined',
+        weakness: 'disruption',
+        resistance: 'adaptation'
+    },
+    // 飞行AI
+    flying: {
+        name: '飞行优势',
+        description: '从空中发起攻击',
+        movementPattern: 'aerial',
+        attackStrategy: 'aerial_strike',
+        weakness: 'ground_attacks',
+        resistance: 'melee_defense'
+    },
+    // 凝视攻击AI
+    gaze: {
+        name: '凝视攻击',
+        description: '使用凝视造成效果',
+        movementPattern: 'stationary',
+        attackStrategy: 'gaze_attack',
+        weakness: 'blindness',
+        resistance: 'eye_protection'
+    },
+    // 触手AI
+    tentacles: {
+        name: '多触手攻击',
+        description: '使用多触手进行全方位攻击',
+        movementPattern: 'flexible',
+        attackStrategy: 'multi_tentacle',
+        weakness: 'cutting',
+        resistance: 'distributed_damage'
+    }
+};
+
+// 新增特殊关卡事件
+const SPECIAL_EVENTS = [
+    {
+        id: 'elemental_storm',
+        name: '元素风暴',
+        trigger: (level) => level % 10 === 0 && level > 5,
+        effect: function() {
+            gameState.currentElementalStorm = {
+                type: ['fire', 'ice', 'lightning', 'earth'][Math.floor(Math.random() * 4)],
+                duration: 30000, // 30秒
+                multiplier: 1.5
+            };
+            showCombatLog('🌀 元素风暴即将来临！', 'special-event');
+        },
+        description: '元素风暴增强特定元素伤害'
+    },
+    {
+        id: 'weapon_blessing',
+        name: '武器祝福',
+        trigger: (level) => level % 15 === 0 && level > 10,
+        effect: function() {
+            gameState.currentWeaponBlessing = {
+                duration: 60000, // 60秒
+                damageBoost: 1.3,
+                specialEffect: true
+            };
+            showCombatLog('✨ 武器祝福！攻击力提升30%', 'special-event');
+        },
+        description: '临时提升武器威力'
+    },
+    {
+        id: 'time_warp',
+        name: '时间扭曲',
+        trigger: (level) => level % 20 === 0 && level > 15,
+        effect: function() {
+            gameState.currentTimeWarp = {
+                duration: 45000, // 45秒
+                slowEnemies: true,
+                boostPlayer: true
+            };
+            showCombatLog('⏰ 时间扭曲！敌人变慢，你变快！', 'special-event');
+        },
+        description: '改变时间流速'
+    },
+    {
+        id: 'treasure_horde',
+        name: '宝藏洪流',
+        trigger: (level) => level % 25 === 0 && level > 20,
+        effect: function() {
+            // 在本关生成额外的宝箱和稀有掉落
+            gameState.extraTreasureSpawn = true;
+            showCombatLog('💰 宝藏洪流！掉落翻倍！', 'special-event');
+        },
+        description: '增加稀有掉落率'
+    }
+];
+
+// 新增玩家能力
+const PLAYER_ABILITIES = {
+    // 终极技能
+    ULTIMATE_BARRIER: {
+        name: '终极屏障',
+        description: '短时间内无敌并反弹伤害',
+        cooldown: 120000, // 2分钟
+        duration: 5000, // 5秒
+        effect: function() {
+            gameState.player.barrierActive = true;
+            gameState.player.barrierEndTime = Date.now() + 5000;
+            showCombatLog('🛡️ 终极屏障激活！', 'ability-used');
+        }
+    },
+    // 生命汲取
+    LIFE_DRAIN: {
+        name: '生命汲取',
+        description: '吸收敌人生命力',
+        cooldown: 90000, // 1.5分钟
+        duration: 10000, // 10秒
+        effect: function() {
+            gameState.player.lifeDrainActive = true;
+            gameState.player.lifeDrainEndTime = Date.now() + 10000;
+            showCombatLog('💉 生命汲取激活！', 'ability-used');
+        }
+    },
+    // 元素掌控
+    ELEMENT_MASTERY: {
+        name: '元素掌控',
+        description: '元素伤害翻倍，持续一定时间',
+        cooldown: 150000, // 2.5分钟
+        duration: 15000, // 15秒
+        effect: function() {
+            gameState.player.elementMasteryActive = true;
+            gameState.player.elementMasteryEndTime = Date.now() + 15000;
+            showCombatLog('🔥❄️⚡ 元素掌控激活！', 'ability-used');
+        }
+    }
+};
+
+// 扩展粒子系统效果
+const PARTICLE_EFFECTS = {
+    TIME_REVERSE: {
+        name: '时间逆转',
+        color: '#7B68EE',
+        size: 3,
+        life: 800,
+        speed: 0.5,
+        variation: 0.3,
+        effect: 'reverse_motion'
+    },
+    CHAIN_LIGHTNING: {
+        name: '连锁闪电',
+        color: '#B0C4DE',
+        size: 2,
+        life: 400,
+        speed: 3,
+        variation: 0.5,
+        effect: 'electrical_arc'
+    },
+    TIDAL_WAVE: {
+        name: '潮汐冲击',
+        color: '#20B2AA',
+        size: 4,
+        life: 1000,
+        speed: 1.5,
+        variation: 0.2,
+        effect: 'wave_propagation'
+    },
+    FREEZE: {
+        name: '冰冻',
+        color: '#B0E0E6',
+        size: 2,
+        life: 1200,
+        speed: 0.2,
+        variation: 0.1,
+        effect: 'freezing_crystal'
+    },
+    BURN: {
+        name: '燃烧',
+        color: '#FF4500',
+        size: 3,
+        life: 600,
+        speed: 1,
+        variation: 0.4,
+        effect: 'flame_spread'
+    },
+    POISON_CLOUD: {
+        name: '毒云',
+        color: '#32CD32',
+        size: 2.5,
+        life: 1500,
+        speed: 0.3,
+        variation: 0.2,
+        effect: 'poison_spread'
+    }
+};
+
+// 增强武器效果处理
+function enhanceWeaponEffects(weapon, target) {
+    if (!weapon.effect) return false;
+
+    switch(weapon.effect) {
+        case 'time_reverse':
+            if (Math.random() < 0.15) { // 15% 概率触发
+                target.x -= target.dx * 20; // 回退2秒的位置
+                target.y -= target.dy * 20;
+                createParticleEffect(target.x, target.y, PARTICLE_EFFECTS.TIME_REVERSE);
+                showCombatLog(`⏱️ ${weapon.name} 触发时间逆转！`, 'weapon-effect');
+                return true;
+            }
+            break;
+
+        case 'chain_lightning':
+            if (Math.random() < 0.2) { // 20% 概率触发
+                // 找到附近的敌人并造成连锁伤害
+                const nearbyEnemies = gameState.enemies.filter(e =>
+                    getDistance(target, e) < 80 && e !== target
+                );
+
+                for (let i = 0; i < Math.min(3, nearbyEnemies.length); i++) {
+                    const e = nearbyEnemies[i];
+                    e.hp -= weapon.damage * 0.5; // 50% 伤害
+
+                    // 创建闪电粒子效果
+                    createLightningEffect(target.x, target.y, e.x, e.y);
+                    createParticleEffect(e.x, e.y, PARTICLE_EFFECTS.CHAIN_LIGHTNING);
+
+                    if (e.hp <= 0) {
+                        handleEnemyDeath(e);
+                    }
+                }
+                showCombatLog(`⚡ ${weapon.name} 触发连锁闪电！`, 'weapon-effect');
+                return true;
+            }
+            break;
+
+        case 'tidal_wave':
+            // 在目标周围产生冲击波
+            createWaveEffect(target.x, target.y, 100);
+            gameState.enemies.forEach(enemy => {
+                if (getDistance(target, enemy) < 100) {
+                    enemy.x += (enemy.x - target.x) * 0.3;
+                    enemy.y += (enemy.y - target.y) * 0.3;
+                    enemy.hp -= weapon.damage * 0.3;
+                    createParticleEffect(enemy.x, enemy.y, PARTICLE_EFFECTS.TIDAL_WAVE);
+
+                    if (enemy.hp <= 0) {
+                        handleEnemyDeath(enemy);
+                    }
+                }
+            });
+            showCombatLog(`🌊 ${weapon.name} 产生潮汐冲击！`, 'weapon-effect');
+            return true;
+
+        case 'freeze':
+            if (Math.random() < 0.18) { // 18% 概率冻结
+                target.frozen = Date.now() + 3000; // 冻结3秒
+                createParticleEffect(target.x, target.y, PARTICLE_EFFECTS.FREEZE);
+                showCombatLog(`❄️ ${weapon.name} 冻结了敌人！`, 'weapon-effect');
+                return true;
+            }
+            break;
+
+        case 'burn':
+            if (Math.random() < 0.25) { // 25% 概率点燃
+                target.burning = Date.now() + 5000; // 燃烧5秒
+                target.burnDamage = weapon.damage * 0.1; // 每秒造成10%武器伤害
+                createParticleEffect(target.x, target.y, PARTICLE_EFFECTS.BURN);
+                showCombatLog(`🔥 ${weapon.name} 点燃了敌人！`, 'weapon-effect');
+                return true;
+            }
+            break;
+
+        case 'poison':
+            if (Math.random() < 0.22) { // 22% 概率中毒
+                target.poisoned = Date.now() + 6000; // 中毒6秒
+                target.poisonDamage = weapon.damage * 0.08; // 每秒造成8%武器伤害
+                createPoisonCloud(target.x, target.y);
+                showCombatLog(`☠️ ${weapon.name} 毒害了敌人！`, 'weapon-effect');
+                return true;
+            }
+            break;
+    }
+
+    return false;
+}
+
+// 创建闪电效果
+function createLightningEffect(x1, y1, x2, y2) {
+    // 在两点之间创建闪电效果
+    const segments = 5;
+    for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const x = x1 + (x2 - x1) * t;
+        const y = y1 + (y2 - y1) * t;
+
+        // 添加一些随机偏移来模拟闪电的形状
+        const offsetX = (Math.random() - 0.5) * 15;
+        const offsetY = (Math.random() - 0.5) * 15;
+
+        createParticleEffect(x + offsetX, y + offsetY, PARTICLE_EFFECTS.CHAIN_LIGHTNING);
+    }
+}
+
+// 创建波浪效果
+function createWaveEffect(centerX, centerY, radius) {
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        createParticleEffect(x, y, PARTICLE_EFFECTS.TIDAL_WAVE);
+    }
+}
+
+// 创建毒云
+function createPoisonCloud(x, y) {
+    for (let i = 0; i < 8; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 30;
+        const px = x + Math.cos(angle) * distance;
+        const py = y + Math.sin(angle) * distance;
+        createParticleEffect(px, py, PARTICLE_EFFECTS.POISON_CLOUD);
+    }
+}
+
+// 处理燃烧效果
+function processBurnEffects() {
+    gameState.enemies.forEach(enemy => {
+        if (enemy.burning && Date.now() < enemy.burning) {
+            enemy.hp -= enemy.burnDamage;
+            if (enemy.hp <= 0) {
+                handleEnemyDeath(enemy);
+            }
+        } else if (enemy.burning && Date.now() >= enemy.burning) {
+            enemy.burning = null;
+        }
+    });
+}
+
+// 处理中毒效果
+function processPoisonEffects() {
+    gameState.enemies.forEach(enemy => {
+        if (enemy.poisoned && Date.now() < enemy.poisoned) {
+            enemy.hp -= enemy.poisonDamage;
+            if (enemy.hp <= 0) {
+                handleEnemyDeath(enemy);
+            }
+        } else if (enemy.poisoned && Date.now() >= enemy.poisoned) {
+            enemy.poisoned = null;
+        }
+    });
+}
+
+// 处理冻结效果
+function processFreezeEffects() {
+    gameState.enemies.forEach(enemy => {
+        if (enemy.frozen && Date.now() < enemy.frozen) {
+            // 冻结期间敌人不能移动或攻击
+            enemy.dx = 0;
+            enemy.dy = 0;
+        } else if (enemy.frozen && Date.now() >= enemy.frozen) {
+            enemy.frozen = null;
+        }
+    });
+}
+
+// 增强的敌人生成器，考虑特殊事件
+function enhancedSpawnEnemy() {
+    // 原始敌人生成逻辑
+    const baseSpawnInterval = 2000; // 基础生成间隔
+
+    // 如果有时间扭曲事件，调整生成速度
+    if (gameState.currentTimeWarp && Date.now() < gameState.currentTimeWarp.endTime) {
+        // 敌人生速减慢
+        setTimeout(enhancedSpawnEnemy, baseSpawnInterval * 1.5);
+    } else {
+        // 标准生成间隔
+        setTimeout(enhancedSpawnEnemy, baseSpawnInterval);
+    }
+
+    // 根据关卡和特殊事件决定生成的敌人类型
+    let enemyType;
+    const level = gameState.level;
+    const rand = Math.random();
+
+    // 根据关卡和事件调整敌人类型概率
+    if (gameState.currentElementalStorm) {
+        // 元素风暴期间更可能生成对应元素的敌人
+        if (gameState.currentElementalStorm.type === 'fire' && rand < 0.3) {
+            enemyType = 'DRAGON'; // 或其他火元素敌人
+        } else if (gameState.currentElementalStorm.type === 'ice' && rand < 0.3) {
+            enemyType = 'GOLEM'; // 或其他冰元素敌人
+        }
+    }
+
+    // 创建敌人
+    const newEnemy = new Enemy(level, enemyType);
+    gameState.enemies.push(newEnemy);
+
+    // 检查是否触发特殊事件
+    SPECIAL_EVENTS.forEach(event => {
+        if (event.trigger(level) && Math.random() < 0.3) { // 30% 概率触发
+            event.effect();
+        }
+    });
+}
+
+// 扩展游戏状态更新函数
+function extendedGameUpdate() {
+    // 处理各种状态效果
+    processBurnEffects();
+    processPoisonEffects();
+    processFreezeEffects();
+
+    // 检查特殊事件持续时间
+    if (gameState.currentElementalStorm &&
+        Date.now() > gameState.currentElementalStorm.startTime + gameState.currentElementalStorm.duration) {
+        delete gameState.currentElementalStorm;
+        showCombatLog('🌀 元素风暴结束', 'special-event-end');
+    }
+
+    if (gameState.currentWeaponBlessing &&
+        Date.now() > gameState.currentWeaponBlessing.startTime + gameState.currentWeaponBlessing.duration) {
+        delete gameState.currentWeaponBlessing;
+        showCombatLog('✨ 武器祝福结束', 'special-event-end');
+    }
+
+    if (gameState.currentTimeWarp &&
+        Date.now() > gameState.currentTimeWarp.startTime + gameState.currentTimeWarp.duration) {
+        delete gameState.currentTimeWarp;
+        showCombatLog('⏰ 时间扭曲结束', 'special-event-end');
+    }
+
+    // 处理玩家能力持续时间
+    if (gameState.player.barrierActive &&
+        Date.now() > gameState.player.barrierEndTime) {
+        gameState.player.barrierActive = false;
+        showCombatLog('🛡️ 终极屏障失效', 'ability-end');
+    }
+
+    if (gameState.player.lifeDrainActive &&
+        Date.now() > gameState.player.lifeDrainEndTime) {
+        gameState.player.lifeDrainActive = false;
+        showCombatLog('💉 生命汲取结束', 'ability-end');
+    }
+
+    if (gameState.player.elementMasteryActive &&
+        Date.now() > gameState.player.elementMasteryEndTime) {
+        gameState.player.elementMasteryActive = false;
+        showCombatLog('🔥❄️⚡ 元素掌控结束', 'ability-end');
+    }
+}
+
+console.log('Steam版游戏增强系统已加载');
+console.log('✓ 新增特殊敌人AI行为');
+console.log('✓ 新增特殊关卡事件');
+console.log('✓ 新增玩家能力系统');
+console.log('✓ 扩展武器特效系统');
+
+// 导出增强函数供游戏系统调用
+window.enhancedSpawnEnemy = enhancedSpawnEnemy;
+window.extendedGameUpdate = extendedGameUpdate;
+window.enhanceWeaponEffects = enhanceWeaponEffects;
+
+// 新增的史诗武器
+const NEW_EPIC_WEAPONS = [
+    { name: '时光倒流剑', damage: 53, rarity: 'epic', color: '#7B68EE', effect: 'time_reverse', desc: '有时能使敌人倒退一秒' },
+    { name: '虚无之刃', damage: 54, rarity: 'epic', color: '#4B0082', effect: 'phase_through', desc: '偶尔穿透敌人' },
+    { name: '雷神之锤', damage: 55, rarity: 'epic', color: '#B0C4DE', effect: 'chain_lightning', desc: '攻击可能引发连锁闪电' },
+    { name: '海神三叉戟', damage: 56, rarity: 'epic', color: '#20B2AA', effect: 'tidal_wave', desc: '攻击产生冲击波' },
+    { name: '风暴使者', damage: 57, rarity: 'epic', color: '#87CEEB', effect: 'wind_boost', desc: '增加移动速度' },
+    { name: '冰霜女王', damage: 58, rarity: 'epic', color: '#B0E0E6', effect: 'freeze', desc: '有几率冻结敌人' },
+    { name: '烈焰君主', damage: 59, rarity: 'epic', color: '#FF4500', effect: 'burn', desc: '造成持续燃烧伤害' },
+    { name: '自然之怒', damage: 60, rarity: 'epic', color: '#228B22', effect: 'poison', desc: '造成毒素伤害' },
+    { name: '暗物质匕首', damage: 61, rarity: 'epic', color: '#000000', effect: 'gravity_well', desc: '吸引附近敌人' },
+    { name: '光明制裁者', damage: 62, rarity: 'epic', color: '#FFFFFF', effect: 'holy_blast', desc: '对黑暗敌人造成额外伤害' }
+];
+
+// 新增的传说武器
+const NEW_LEGENDARY_WEAPONS = [
+    { name: '创世之柱', damage: 75, rarity: 'legendary', color: '#FFD700', effect: 'creation_field', desc: '周围持续生成有益能量' },
+    { name: '混沌之核', damage: 76, rarity: 'legendary', color: '#FF00FF', effect: 'chaos_orb', desc: '发射混乱球体' },
+    { name: '审判日', damage: 77, rarity: 'legendary', color: '#FFFFFF', effect: 'judgment_day', desc: '周期性审判范围内敌人' },
+    { name: '世界之树', damage: 78, rarity: 'legendary', color: '#32CD32', effect: 'life_bloom', desc: '持续恢复生命值' },
+    { name: '虚无缥缈', damage: 79, rarity: 'legendary', color: '#F8F8FF', effect: 'intangibility', desc: '短暂无敌效果' },
+    { name: '造物之主', damage: 80, rarity: 'legendary', color: '#FFD700', effect: 'creation', desc: '能创造临时盟友' },
+    { name: '末日使者', damage: 81, rarity: 'legendary', color: '#8B0000', effect: 'apocalypse', desc: '蓄力后毁灭一片区域' },
+    { name: '永恒大帝', damage: 82, rarity: 'legendary', color: '#4169E1', effect: 'eternity', desc: '大幅延长所有增益效果' },
+    { name: '宇宙之心', damage: 83, rarity: 'legendary', color: '#0000FF', effect: 'cosmic_resonance', desc: '与宇宙共鸣，增强所有属性' },
+    { name: '多元掌控', damage: 84, rarity: 'legendary', color: '#9370DB', effect: 'dimensional_control', desc: '能够操控维度力量' }
+];
+
+// 新增的神话武器
+const NEW_MYTHIC_WEAPONS = [
+    { name: '概念抹除者', damage: 1400, rarity: 'mythic', color: '#9400D3', effect: 'conceptual_erasure', desc: '从概念层面抹除敌人' },
+    { name: '维度支配者', damage: 1350, rarity: 'mythic', color: '#4682B4', effect: 'dimensional_dominion', desc: '掌控多个维度的力量' },
+    { name: '现实扭曲器', damage: 1200, rarity: 'mythic', color: '#FF69B4', effect: 'reality_distortion', desc: '扭曲现实规则' },
+    { name: '宇宙起源', damage: 1500, rarity: 'mythic', color: '#000000', effect: 'origin_of_universe', desc: '重现宇宙诞生的力量' },
+    { name: '存在意义', damage: 1300, rarity: 'mythic', color: '#0000FF', effect: 'meaning_of_existence', desc: '揭示存在的真谛并摧毁非存在' },
+    { name: '绝对零度', damage: 1100, rarity: 'mythic', color: '#87CEEB', effect: 'absolute_zero', desc: '将一切降至绝对零度' },
+    { name: '时间之主', damage: 1600, rarity: 'mythic', color: '#9370DB', effect: 'lord_of_time', desc: '掌控时间的流动' },
+    { name: '空间之王', damage: 1550, rarity: 'mythic', color: '#4169E1', effect: 'king_of_space', desc: '掌控空间的形态' },
+    { name: '虚无之神', damage: 1700, rarity: 'mythic', color: '#2F4F4F', effect: 'god_of_void', desc: '化身虚无，超越存在' },
+    { name: '无限手套', damage: 2000, rarity: 'mythic', color: '#8A2BE2', effect: 'infinity_gauntlet', desc: '拥有无限的力量' }
+];
+
+// 合并新武器到主武器库
+WEAPONS.push(...NEW_EPIC_WEAPONS, ...NEW_LEGENDARY_WEAPONS, ...NEW_MYTHIC_WEAPONS);
+
+// 新增敌人类型
+const NEW_ENEMY_TYPES = {
+    // 机械系敌人
+    ROBOT: { name: '机器人', speed: 0.9, hp: 2.0, damage: 1.8, size: 1.6, behavior: 'mechanical', element: 'metal' },
+    CYBORG: { name: '半机械人', speed: 1.4, hp: 2.5, damage: 2.2, size: 1.8, behavior: 'hybrid', element: 'metal' },
+    DRONE: { name: '无人机', speed: 2.0, hp: 0.8, damage: 1.2, size: 0.8, behavior: 'flying', element: 'metal' },
+    TURRET: { name: '炮塔', speed: 0.0, hp: 1.5, damage: 2.5, size: 1.2, behavior: 'stationary', element: 'metal' },
+
+    // 神话系敌人
+    ANGEL: { name: '天使', speed: 1.2, hp: 3.0, damage: 2.8, size: 2.0, behavior: 'divine', element: 'holy' },
+    DEMIGOD: { name: '半神', speed: 0.8, hp: 6.0, damage: 3.5, size: 2.5, behavior: 'divine', element: 'divine' },
+    DRAGON_KING: { name: '龙王', speed: 0.7, hp: 7.0, damage: 4.0, size: 3.0, behavior: 'dragon', element: 'dragon' },
+
+    // 稀有变种敌人
+    ZOMBIE: { name: '僵尸', speed: 0.4, hp: 2.2, damage: 1.4, size: 1.3, behavior: 'undead', element: 'undead' },
+    ORGE: { name: '食人魔', speed: 0.6, hp: 4.0, damage: 2.8, size: 2.2, behavior: 'brute', element: 'earth' },
+
+    // 飞行敌人
+    PHOENIX: { name: '凤凰', speed: 1.5, hp: 2.5, damage: 3.0, size: 1.8, behavior: 'flying', element: 'fire' },
+    GRIFFIN: { name: '狮鹫', speed: 1.6, hp: 3.2, damage: 2.6, size: 2.0, behavior: 'flying', element: 'air' },
+    BASILISK: { name: '蛇怪', speed: 0.9, hp: 4.5, damage: 3.2, size: 1.9, behavior: 'gaze', element: 'poison' },
+    KRAKEN: { name: '北海巨妖', speed: 0.3, hp: 8.0, damage: 4.5, size: 3.5, behavior: 'tentacles', element: 'water' },
+
+    // 稀有精英变种
+    UNICORN: { name: '独角兽', speed: 1.8, hp: 3.5, damage: 2.5, size: 1.7, behavior: 'divine', element: 'holy' },
+};
+
+// 合并敌人类型
+Object.assign(ENEMY_TYPES, NEW_ENEMY_TYPES);
+
+// 新增药水类型
+const NEW_POTIONS = [
+    { name: '传送药水', effect: 'teleport', value: 1, color: '#9370DB', desc: '瞬间传送到随机位置' },
+    { name: '时间减缓', effect: 'slow_time', duration: 5, color: '#4169E1', desc: '减缓周围敌人时间' },
+    { name: '护盾超载', effect: 'shield_overflow', value: 50, color: '#00BFFF', desc: '获得超大护盾' },
+    { name: '元素精通', effect: 'elemental_mastery', duration: 10, value: 2, color: '#32CD32', desc: '元素伤害翻倍' },
+    { name: '暴击专精', effect: 'crit_mastery', duration: 8, value: 0.3, color: '#FF4500', desc: '暴击率大幅提升' },
+    { name: '反伤护盾', effect: 'thorns_shield', duration: 6, value: 0.2, color: '#8A2BE2', desc: '反弹部分伤害给攻击者' },
+    { name: '吸血光环', effect: 'vampire_aura', duration: 7, value: 0.15, color: '#8B0000', desc: '攻击时恢复部分生命' },
+    { name: '元素转换', effect: 'element_convert', value: 1, color: '#FFD700', desc: '临时改变武器元素属性' },
+    { name: '抗性提升', effect: 'resistance_up', duration: 10, value: 0.5, color: '#20B2AA', desc: '减少受到的伤害' },
+    { name: '敏捷提升', effect: 'agility_boost', duration: 8, value: 1.5, color: '#98FB98', desc: '大幅提升移动速度和闪避' },
+];
+
+// 合并药水
+POTIONS.push(...NEW_POTIONS);
+
+// 新增遗物类型
+const NEW_RELICS = [
+    { name: '时空沙漏', effect: 'time_dilation', desc: '偶尔减缓游戏时间' },
+    { name: '元素核心', effect: 'elemental_synergy', desc: '元素攻击产生额外效果' },
+    { name: '生命之种', effect: 'life_regeneration', desc: '持续缓慢恢复生命值' },
+    { name: '量子护盾', effect: 'quantum_shield', desc: '有机会完全抵消一次攻击' },
+    { name: '命运之骰', effect: 'dice_fate', desc: '随机获得正面效果' },
+    { name: '灵魂链接', effect: 'soul_link', desc: '将部分伤害转移到附近的敌人' },
+    { name: '无限循环', effect: 'infinite_loop', desc: '有时技能效果会被复制' },
+    { name: '虚无之盒', effect: 'void_box', desc: '可以储存一个物品供以后使用' },
+];
+
+// 合并遗物
+RELICS.push(...NEW_RELICS);
+
+// 新增成就
+if (typeof enhancedAchievementSystem !== 'undefined') {
+    const NEW_ACHIEVEMENTS = [
+        { id: 'quantum_mechanic', name: '量子机械师', description: '使用量子护盾完全抵消10次攻击', condition: 'quantumShieldBlocks >= 10' },
+        { id: 'time_lord', name: '时间领主', description: '使用时空沙漏减缓时间累计60秒', condition: 'timeDilatedSeconds >= 60' },
+        { id: 'elemental_adept', name: '元素专家', description: '使用元素精通药水并击杀20个敌人', condition: 'elementalMasteryKills >= 20' },
+        { id: 'mythic_treasure', name: '神话宝藏', description: '同时拥有3件神话武器', condition: 'mythicTreasure' },
+        { id: 'boss_annihilator', name: 'Boss歼灭者', description: '连续击败5个Boss', condition: 'bossAnnihilation' },
+        { id: 'combo_destroyer', name: '连击破坏者', description: '单次攻击击败5个以上敌人', condition: 'massDestruction' },
+        { id: 'invincible_run', name: '无敌之旅', description: '达到第30关且从未生命值归零', condition: 'invincibleRun' },
+        { id: 'elemental_mastery', name: '元素掌握', description: '使用所有元素类型的武器各击杀10个敌人', condition: 'elementalMasteryComplete' }
+    ];
+    enhancedAchievementSystem.achievementList.push(...NEW_ACHIEVEMENTS);
 }
