@@ -4554,8 +4554,18 @@ function gameLoop() {
     // 更新控制器状态显示
     updateControllerStatus();
 
+    // 更新粒子系统
+    if (typeof updateParticles !== 'undefined') {
+        updateParticles();
+    }
+
     if (gameState.screenShake > 0) {
         ctx.restore(); // 恢复画布变换
+    }
+
+    // 绘制粒子系统
+    if (typeof drawParticles !== 'undefined') {
+        drawParticles(ctx);
     }
 
     requestAnimationFrame(gameLoop);
