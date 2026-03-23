@@ -1541,6 +1541,48 @@ const AudioManager = {
 
     isMusicEnabled() {
         return this.musicEnabled;
+    },
+
+    // 背景音乐相关
+    currentMusic: null,
+    musicVolume: 0.5,
+
+    // 播放背景音乐
+    playMusic(musicName) {
+        if (!this.musicEnabled) return;
+
+        // 停止当前音乐
+        this.stopMusic();
+
+        const musicPath = `assets/music/${musicName}.mp3`;
+        const music = new Audio(musicPath);
+        music.loop = true;
+        music.volume = this.musicVolume;
+
+        // 预防错误
+        music.addEventListener('error', (e) => {
+            console.warn(`音乐文件加载失败: ${musicPath}`, e);
+            // 这里可以实现程序生成的背景音乐作为回退
+        });
+
+        music.play().catch(e => console.warn('音乐播放失败:', e));
+        this.currentMusic = music;
+    },
+
+    // 停止背景音乐
+    stopMusic() {
+        if (this.currentMusic) {
+            this.currentMusic.pause();
+            this.currentMusic = null;
+        }
+    },
+
+    // 设置音乐音量
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        if (this.currentMusic) {
+            this.currentMusic.volume = this.musicVolume;
+        }
     }
 };
 
@@ -3015,6 +3057,87 @@ function updateUI() {
     const relicsList = gameState.relics.map(r => `${r.name}`).join(', ') || '空';
     document.getElementById('potions').textContent = `药水：${potionsList}`;
     document.getElementById('relics').textContent = `遗物：${relicsList}`;
+
+    // 添加控制器状态显示
+    updateControllerStatus();
+}
+
+// 更新控制器状态显示
+function updateControllerStatus() {
+    // 检查是否有游戏手柄连接
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const connected = Array.from(gamepads).some(gp => gp && gp.connected);
+
+    let controllerIndicator = document.getElementById('controller-status');
+
+    if (connected) {
+        // 如果还没有创建控制器状态元素，则创建它
+        if (!controllerIndicator) {
+            controllerIndicator = document.createElement('div');
+            controllerIndicator.id = 'controller-status';
+            controllerIndicator.style.position = 'absolute';
+            controllerIndicator.style.top = '10px';
+            controllerIndicator.style.right = '10px';
+            controllerIndicator.style.fontSize = '14px';
+            controllerIndicator.style.color = '#4ade80';
+            controllerIndicator.style.zIndex = '100';
+            controllerIndicator.style.background = 'rgba(0,0,0,0.5)';
+            controllerIndicator.style.padding = '5px 10px';
+            controllerIndicator.style.borderRadius = '5px';
+            controllerIndicator.style.fontFamily = 'monospace';
+            document.getElementById('game-container').appendChild(controllerIndicator);
+        }
+
+        controllerIndicator.textContent = '🎮 控制器已连接';
+
+        // 同时显示控制器操作提示
+        showControllerHints();
+    } else {
+        // 移除控制器状态元素（如果存在）
+        if (controllerIndicator) {
+            controllerIndicator.remove();
+        }
+
+        // 隐藏控制器提示
+        hideControllerHints();
+    }
+}
+
+// 显示控制器操作提示
+function showControllerHints() {
+    let hintsElement = document.getElementById('controller-hints');
+
+    if (!hintsElement) {
+        hintsElement = document.createElement('div');
+        hintsElement.id = 'controller-hints';
+        hintsElement.style.position = 'absolute';
+        hintsElement.style.bottom = '10px';
+        hintsElement.style.left = '10px';
+        hintsElement.style.fontSize = '12px';
+        hintsElement.style.color = '#ffffff';
+        hintsElement.style.zIndex = '100';
+        hintsElement.style.background = 'rgba(0,0,0,0.7)';
+        hintsElement.style.padding = '10px';
+        hintsElement.style.borderRadius = '5px';
+        hintsElement.style.fontFamily = 'monospace';
+        hintsElement.style.maxWidth = '250px';
+        hintsElement.innerHTML = `
+            <div>🎮 控制器操作提示:</div>
+            <div>• 左摇杆/方向键: 移动</div>
+            <div>• A键/X键: 普通攻击</div>
+            <div>• X/Y/B/A: 使用Q/W/E/R技能</div>
+            <div>• 开始键: 暂停游戏</div>
+        `;
+        document.getElementById('game-container').appendChild(hintsElement);
+    }
+}
+
+// 隐藏控制器操作提示
+function hideControllerHints() {
+    const hintsElement = document.getElementById('controller-hints');
+    if (hintsElement) {
+        hintsElement.remove();
+    }
 }
 
 // 攻击敌人
@@ -3535,6 +3658,9 @@ function gameLoop() {
     // 绘制技能冷却显示
     drawSkillCooldowns();
 
+    // 更新控制器状态显示
+    updateControllerStatus();
+
     if (gameState.screenShake > 0) {
         ctx.restore(); // 恢复画布变换
     }
@@ -3694,6 +3820,9 @@ function initGame() {
     // 播放游戏开始音效
     AudioManager.playSound('victory'); // 使用胜利音效表示新的冒险开始
 
+    // 播放游戏主音乐
+    AudioManager.playMusic('game_main');
+
     // 保存当前的游戏状态，以便在重新开始游戏时决定是否重置
     const shouldResetGame = !gameState.isPlaying; // 如果游戏没在进行中，表示是全新开始
 
@@ -3779,7 +3908,8 @@ function gameOver() {
     gameState.isPlaying = false;
     gameState.isGameOver = true;
 
-    // 播放游戏结束音效
+    // 停止背景音乐，播放游戏结束音效
+    AudioManager.stopMusic();
     AudioManager.playSound('gameOver');
 
     // 创建大量爆炸粒子效果
@@ -3840,6 +3970,8 @@ function winGame() {
 document.getElementById('start-btn').addEventListener('click', () => {
     // 播放菜单选择音效
     AudioManager.playSound('menu_select');
+    // 停止主菜单音乐，开始游戏音乐
+    AudioManager.stopMusic();
     startGame();
 });
 document.getElementById('restart-btn').addEventListener('click', () => {
@@ -3871,6 +4003,12 @@ function pauseGame() {
         gameState.isPlaying = false;
         document.getElementById('pause-menu').classList.remove('hidden');
 
+        // 暂停期间降低背景音乐音量
+        if (AudioManager.currentMusic) {
+            AudioManager.musicBeforePause = AudioManager.currentMusic.volume;
+            AudioManager.currentMusic.volume = AudioManager.musicVolume * 0.3; // 降低到30%
+        }
+
         // 暂停期间阻止游戏循环
         cancelAnimationFrame(gameLoopId);
     }
@@ -3882,6 +4020,11 @@ function resumeGame() {
         gamePaused = false;
         gameState.isPlaying = true;
         document.getElementById('pause-menu').classList.add('hidden');
+
+        // 恢复背景音乐音量
+        if (AudioManager.currentMusic) {
+            AudioManager.currentMusic.volume = AudioManager.musicBeforePause || AudioManager.musicVolume;
+        }
 
         // 重新开始游戏循环
         gameLoopId = requestAnimationFrame(gameLoop);
@@ -3911,10 +4054,13 @@ document.getElementById('main-menu-btn').addEventListener('click', () => {
     document.getElementById('pause-menu').classList.add('hidden');
     document.getElementById('start-screen').classList.remove('hidden');
 
-    // 取消动画帧
+    // 停止游戏循环
     if (gameLoopId) {
         cancelAnimationFrame(gameLoopId);
     }
+
+    // 播放主菜单背景音乐
+    AudioManager.playMusic('main_menu');
 });
 
 // 设置菜单按钮事件
