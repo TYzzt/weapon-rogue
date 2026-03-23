@@ -1643,10 +1643,33 @@ function drawSkillCooldowns() {
 
 // 获取随机稀有度
 function getRandomRarity() {
-    const totalWeight = Object.values(RARITY_WEIGHTS).reduce((sum, weight) => sum + weight, 0);
+    // 根据当前关卡动态调整稀有度权重
+    const level = gameState.level || 1;
+
+    // 使用sigmoid函数来平滑调整权重
+    const levelFactor = 1 / (1 + Math.exp(-0.1 * (level - 10))); // 在第10关左右开始显著变化
+
+    // 计算动态权重
+    const commonWeight = Math.max(30, 60 - (levelFactor * 30));  // 从60降到30
+    const uncommonWeight = 25;  // 保持不变
+    const rareWeight = 15 + (levelFactor * 10);  // 从15升到25
+    const epicWeight = 5 + (levelFactor * 10);   // 从5升到15
+    const legendaryWeight = 1 + (levelFactor * 5); // 从1升到6
+    const mythicWeight = 0.5 + (levelFactor * 2);  // 从0.5升到2.5
+
+    const dynamicWeights = {
+        common: commonWeight,
+        uncommon: uncommonWeight,
+        rare: rareWeight,
+        epic: epicWeight,
+        legendary: legendaryWeight,
+        mythic: mythicWeight
+    };
+
+    const totalWeight = Object.values(dynamicWeights).reduce((sum, weight) => sum + weight, 0);
     let random = Math.random() * totalWeight;
 
-    for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
+    for (const [rarity, weight] of Object.entries(dynamicWeights)) {
         random -= weight;
         if (random <= 0) {
             return rarity;
@@ -2376,10 +2399,10 @@ class Enemy {
         this.size = Math.floor(20 * this.config.size + randomInt(0, 15));
         this.x = Math.random() < 0.5 ? -this.size : canvas.width + this.size;
         this.y = randomInt(0, canvas.height);
-        this.speed = randomFloat(0.5 + this.config.speed, 1.5 + this.config.speed + level * 0.1);
-        this.hp = Math.floor((8 + level * 2.5) * this.config.hp); // 调整基础血量，降低初始血量增长速度
+        this.speed = randomFloat(0.5 + this.config.speed, 1.2 + this.config.speed + Math.log(level + 1) * 0.3); // 使用对数增长减缓速度提升
+        this.hp = Math.floor((10 + level * 2.2 + Math.pow(level * 0.3, 1.4)) * this.config.hp); // 使用幂函数调整血量增长曲线，使早期更易打，后期更有挑战
         this.maxHp = this.hp;
-        this.damage = Math.floor((1.8 + level * 0.7) * this.config.damage); // 调整基础伤害，降低初始伤害增长速度
+        this.damage = Math.floor((2.0 + level * 0.6 + Math.pow(level * 0.25, 1.3)) * this.config.damage); // 调整伤害增长曲线，使其更平衡
         this.color = this.getEnemyColor();
         this.weapon = generateWeapon();
 
@@ -3690,8 +3713,9 @@ function spawnEnemy() {
     // 随着关卡提高，生成速度加快（调整为更平缓的增长，使游戏体验更好）
     // 初始速度较慢，让新手玩家有适应期；后期增速更快，增加挑战性
     // 基础生成间隔随关卡增加逐渐缩短，但有一个最小值避免敌人过多
-    const baseSpawnRate = 8000 - (gameState.level * 50); // 减慢增长速度，避免后期过快 - 从原来的80改为50
-    const minSpawnRate = 1200; // 提高最小生成间隔，从1500改为1200，给玩家更多喘息机会但仍保持挑战
+    // 修改曲线为指数形式，使早期游戏更轻松，后期挑战更有节奏感
+    const baseSpawnRate = Math.max(7000 - (gameState.level * 30) - (gameState.level * gameState.level * 0.3), 1000); // 使用二次函数调整曲线，给玩家更好的适应过程
+    const minSpawnRate = 1000; // 略微提高最小生成间隔，确保玩家总有喘息机会
     const spawnRate = Math.max(minSpawnRate, baseSpawnRate);
 
     // 根据难度调整生成速率
