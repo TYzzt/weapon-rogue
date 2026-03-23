@@ -745,9 +745,14 @@ function useSkill(skillKey) {
 
                 if (distance <= aoeRadius) {
                     enemy.hp -= weaponDamage * 2; // 2倍武器伤害
-                    createParticles(enemy.x, enemy.y, '#FF4500', 8);
+
+                    // 创建增强的攻击效果
+                    enhancedAttackEffect(enemy.x, enemy.y, weaponDamage * 2, gameState.player.weapon);
 
                     if (enemy.hp <= 0) {
+                        // 创建增强的死亡效果
+                        enhancedDeathEffect(enemy.x, enemy.y, enemy.type);
+
                         // 敌人死亡处理
                         let enemyScore = Math.floor(enemy.maxHp / 10);
                         switch(enemy.type) {
@@ -819,6 +824,9 @@ function useSkill(skillKey) {
     }
 
     if (success) {
+        // 增加技能使用计数
+        gameState.skillsUsed = (gameState.skillsUsed || 0) + 1;
+
         // 通知成就系统使用了技能
         AchievementSystem.onSkillUsed();
 
@@ -936,23 +944,151 @@ function generateWeapon() {
 
 // ==================== 音效管理器 ====================
 const AudioManager = {
+    audioContext: null,
     sounds: {},
+    musicEnabled: true,
+    soundEnabled: true,
 
-    // 初始化音效对象（仅作为预留接口）
+    // 初始化音频上下文
     init() {
-        // 在这里可以加载各种音效
-        console.log('音效系统已初始化');
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('音效系统已初始化');
+
+            // 预加载一些基本音效
+            this.createBasicSounds();
+        } catch (e) {
+            console.warn('无法初始化Web Audio API，将使用简单音效:', e);
+        }
     },
 
-    // 播放音效的占位函数
-    playSound(soundName) {
-        // 预留接口，未来可以集成Web Audio API
-        // 例如: this.sounds[soundName]?.play();
+    // 创建基本音效
+    createBasicSounds() {
+        // 创建不同类型的音效
+        this.sounds['collect'] = this.createTone(523.25, 0.1); // C5 音符，用于收集物品
+        this.sounds['hurt'] = this.createTone(220.00, 0.2); // A3 音符，用于受伤
+        this.sounds['gameOver'] = this.createTone(110.00, 0.8); // A2 音符，用于游戏结束
+        this.sounds['victory'] = this.createChord([261.63, 329.63, 392.00], 1.0); // C-E-G 和弦，用于胜利
+        this.sounds['weapon_pickup'] = this.createTone(659.25, 0.15); // E5 音符，用于获得武器
+        this.sounds['attack'] = this.createWhiteNoise(0.05); // 白噪声，用于攻击
+        this.sounds['level_up'] = this.createChord([261.63, 329.63, 392.00, 523.25], 0.5); // C-E-G-C 和弦，用于升级
+        this.sounds['hit'] = this.createWhiteNoise(0.02); // 短促白噪声，用于击中
+    },
 
-        // 临时使用简单的振动反馈（在支持的设备上）
-        if (navigator.vibrate) {
-            navigator.vibrate(10); // 轻微震动10ms作为反馈
+    // 创建简单音调
+    createTone(frequency, duration) {
+        if (!this.audioContext) return null;
+
+        return () => {
+            if (!this.soundEnabled) return;
+
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            oscillator.type = 'square'; // 方波音色
+
+            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration);
+        };
+    },
+
+    // 创建和弦
+    createChord(frequencies, duration) {
+        if (!this.audioContext) return null;
+
+        return () => {
+            if (!this.soundEnabled) return;
+
+            frequencies.forEach(freq => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                oscillator.type = 'sine'; // 正弦波音色
+
+                gainNode.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            });
+        };
+    },
+
+    // 创建白噪声
+    createWhiteNoise(duration) {
+        if (!this.audioContext) return null;
+
+        return () => {
+            if (!this.soundEnabled) return;
+
+            const bufferSize = this.audioContext.sampleRate * duration;
+            const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+            const output = buffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = this.audioContext.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = this.audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+
+            const gainNode = this.audioContext.createGain();
+            gainNode.gain.value = 0.1;
+
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            noise.start(this.audioContext.currentTime);
+        };
+    },
+
+    // 播放音效
+    playSound(soundName) {
+        if (typeof soundName === 'string' && this.sounds[soundName]) {
+            this.sounds[soundName]();
+        } else if (typeof soundName === 'function') {
+            soundName();
         }
+
+        // 同时保留震动反馈
+        if (navigator.vibrate && this.soundEnabled) {
+            navigator.vibrate(10);
+        }
+    },
+
+    // 控制音效开关
+    setSoundEnabled(enabled) {
+        this.soundEnabled = enabled;
+    },
+
+    // 控制音乐开关
+    setMusicEnabled(enabled) {
+        this.musicEnabled = enabled;
+    },
+
+    // 获取音效状态
+    isSoundEnabled() {
+        return this.soundEnabled;
+    },
+
+    isMusicEnabled() {
+        return this.musicEnabled;
     }
 };
 
@@ -1522,7 +1658,7 @@ class Particle {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.type = type; // 'standard', 'sparkle', 'smoke', 'explosion'
+        this.type = type; // 'standard', 'sparkle', 'smoke', 'explosion', 'magic', 'impact', 'beam', 'comet', 'pulse'
 
         switch(type) {
             case 'sparkle':
@@ -1560,6 +1696,48 @@ class Particle {
                 this.angle = randomFloat(0, Math.PI * 2);
                 this.oscillationSpeed = randomFloat(0.05, 0.1);
                 break;
+            case 'impact': // 新增撞击特效
+                this.size = randomInt(2, 5);
+                this.speedX = randomFloat(-6, 6);
+                this.speedY = randomFloat(-6, 6);
+                this.life = 1;
+                this.decay = randomFloat(0.03, 0.06);
+                this.gravity = 0.05;
+                this.trail = []; // 轨迹数组
+                this.maxTrailLength = 5; // 最大轨迹长度
+                break;
+            case 'beam': // 新增光束特效
+                this.size = randomInt(1, 3);
+                this.speedX = randomFloat(-1, 1);
+                this.speedY = randomFloat(-1, 1);
+                this.life = 1;
+                this.decay = randomFloat(0.01, 0.02);
+                this.gravity = 0;
+                this.length = randomInt(20, 40); // 光束长度
+                this.angle = Math.atan2(this.speedY, this.speedX); // 光束角度
+                break;
+            case 'comet': // 新增彗星特效
+                this.size = randomInt(4, 8);
+                this.speedX = randomFloat(-15, 15);
+                this.speedY = randomFloat(-15, 15);
+                this.life = 1;
+                this.decay = randomFloat(0.005, 0.01);
+                this.gravity = 0;
+                this.trail = [];
+                this.maxTrailLength = 10;
+                this.trailDecay = randomFloat(0.85, 0.95); // 轨迹淡出速度
+                break;
+            case 'pulse': // 新增脉冲特效
+                this.size = randomInt(8, 12);
+                this.speedX = 0;
+                this.speedY = 0;
+                this.life = 1;
+                this.decay = randomFloat(0.02, 0.04);
+                this.gravity = 0;
+                this.originalSize = this.size; // 保存原始大小
+                this.pulseSpeed = randomFloat(0.2, 0.5); // 脉冲速度
+                this.pulsePhase = randomFloat(0, Math.PI * 2); // 脉冲相位
+                break;
             case 'standard':
             default:
                 this.size = randomInt(3, 8);
@@ -1584,16 +1762,24 @@ class Particle {
         // 阻力效果
         this.speedX *= 0.98;
         this.speedY *= 0.98;
+
+        // 更新轨迹效果
+        if (this.type === 'impact' || this.type === 'comet') {
+            this.trail.push({x: this.x, y: this.y, life: this.life, size: this.size});
+            if (this.trail.length > this.maxTrailLength) {
+                this.trail.shift();
+            }
+        }
     }
 
     draw() {
         ctx.globalAlpha = this.life;
-        ctx.fillStyle = this.color;
 
         // 根据粒子类型绘制不同的形状
         switch(this.type) {
             case 'sparkle':
                 // 绘制闪光点
+                ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -1607,6 +1793,7 @@ class Particle {
             case 'smoke':
                 // 绘制烟雾
                 ctx.globalAlpha = this.life * 0.5;
+                ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -1654,8 +1841,96 @@ class Particle {
                 // 恢复全局透明度
                 ctx.globalAlpha = this.life;
                 break;
+            case 'impact': // 撞击特效
+                // 绘制主体
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 绘制轨迹
+                for (let i = 0; i < this.trail.length; i++) {
+                    const point = this.trail[i];
+                    const trailAlpha = this.life * (i / this.trail.length);
+                    ctx.globalAlpha = trailAlpha;
+
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, point.size * (i / this.trail.length), 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = this.life;
+                break;
+            case 'beam': // 光束特效
+                // 保存当前变换状态
+                ctx.save();
+
+                // 移动到粒子位置并旋转
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // 创建渐变光束
+                const beamGradient = ctx.createLinearGradient(0, 0, this.length, 0);
+                beamGradient.addColorStop(0, this.color);
+                beamGradient.addColorStop(0.5, lightenColor(this.color, 70));
+                beamGradient.addColorStop(1, this.color);
+
+                ctx.fillStyle = beamGradient;
+
+                // 绘制光束
+                ctx.beginPath();
+                ctx.rect(0, -this.size/2, this.length, this.size);
+                ctx.fill();
+
+                // 恢复变换状态
+                ctx.restore();
+                break;
+            case 'comet': // 彗星特效
+                // 绘制主体
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 绘制尾巴
+                ctx.globalCompositeOperation = 'screen'; // 使用叠加混合模式
+                for (let i = 0; i < this.trail.length; i++) {
+                    const point = this.trail[i];
+                    const trailLife = point.life * Math.pow(this.trailDecay, this.trail.length - i);
+                    const trailSize = point.size * (i / this.trail.length);
+
+                    ctx.globalAlpha = trailLife;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, trailSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalCompositeOperation = 'source-over'; // 恢复正常混合模式
+
+                ctx.globalAlpha = this.life;
+                break;
+            case 'pulse': // 脉冲特效
+                // 计算脉冲大小
+                const pulseSize = this.originalSize + Math.sin(Date.now() / 1000 * this.pulseSpeed + this.pulsePhase) * 5;
+
+                // 创建脉冲效果
+                const pulseGradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, pulseSize
+                );
+                pulseGradient.addColorStop(0, lightenColor(this.color, 80));
+                pulseGradient.addColorStop(0.3, this.color);
+                pulseGradient.addColorStop(0.7, darkenColor(this.color, 30));
+                pulseGradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = pulseGradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, pulseSize, 0, Math.PI * 2);
+                ctx.fill();
+                break;
             case 'standard':
             default:
+                ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -1692,10 +1967,69 @@ function lightenColor(color, percent) {
     return color; // 如果不是十六进制颜色，返回原色
 }
 
+// 辅助函数：颜色变暗
+function darkenColor(color, percent) {
+    // 简化版本，如果输入的是十六进制颜色
+    if (color.startsWith('#')) {
+        let num = parseInt(color.slice(1), 16);
+        let amt = Math.round(2.55 * percent);
+        let R = (num >> 16) - amt;
+        let G = (num >> 8 & 0x00FF) - amt;
+        let B = (num & 0x0000FF) - amt;
+
+        R = (R > 0) ? R : 0;
+        G = (G > 0) ? G : 0;
+        B = (B > 0) ? B : 0;
+
+        const RR = ((R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16));
+        const GG = ((G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16));
+        const BB = ((B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16));
+
+        return "#" + RR + GG + BB;
+    }
+    // 如果是其他格式，直接返回原色
+    return color;
+}
+
 // 创建更丰富的粒子效果
 function createParticles(x, y, color, count, type = 'standard') {
     for (let i = 0; i < count; i++) {
         gameState.particles.push(new Particle(x, y, color, type));
+    }
+}
+
+// 创建武器获取的增强特效
+function createWeaponGetEffect(x, y, weapon) {
+    const color = weapon.color || '#ffffff';
+
+    // 创建多层特效
+    createParticles(x, y, color, 15, 'sparkle');  // 闪光效果
+    createParticles(x, y, color, 10, 'magic');    // 魔法效果
+    createParticles(x, y, color, 8, 'beam');      // 光束效果
+    createPulseEffect(x, y, color);               // 脉冲效果
+
+    // 根据武器稀有度添加额外特效
+    switch(weapon.rarity) {
+        case 'rare':
+            createParticles(x, y, '#4A90E2', 10, 'sparkle'); // 蓝色稀有特效
+            break;
+        case 'epic':
+            createParticles(x, y, '#9b5de5', 15, 'magic'); // 紫色史诗特效
+            createParticles(x, y, '#9b5de5', 8, 'beam');   // 紫色光束
+            break;
+        case 'legendary':
+            createParticles(x, y, '#FFD700', 20, 'sparkle'); // 金色传说特效
+            createParticles(x, y, '#FFA500', 15, 'magic');   // 橙色魔法
+            createParticles(x, y, '#FF69B4', 10, 'pulse');   // 粉色脉冲
+            shakeScreen(10, 200); // 轻微屏幕震动
+            break;
+        case 'mythic':
+            createParticles(x, y, '#FF00FF', 25, 'sparkle'); // 紫红色神话特效
+            createParticles(x, y, '#00FFFF', 20, 'magic');   // 青色魔法
+            createParticles(x, y, '#FFFF00', 15, 'beam');    // 黄色光束
+            createParticles(x, y, '#00FF00', 10, 'pulse');   // 绿色脉冲
+            shakeScreen(15, 300); // 中等屏幕震动
+            break;
     }
 }
 
@@ -1706,14 +2040,86 @@ function createMagicParticles(x, y, color, count = 8) {
     }
 }
 
-// 增强的屏幕震动功能 - 修正版本
+// 增强的屏幕震动功能
 function shakeScreen(intensity, duration) {
     gameState.screenShake = Math.max(gameState.screenShake, intensity);
     // 使用更平滑的震动衰减
-    setTimeout(() => {
-        // 震动会在duration时间内平滑衰减到0
-        // 在这里我们不会立即设置为0，而是依赖主循环中的自然衰减
-    }, duration);
+    const startTime = Date.now();
+    const decayInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= duration) {
+            clearInterval(decayInterval);
+        }
+    }, 10); // 更新间隔
+}
+
+// 增强的攻击效果
+function enhancedAttackEffect(x, y, damage, weapon) {
+    // 根据武器类型和伤害创建不同效果
+    const color = weapon?.color || '#ffffff';
+    const particleCount = Math.min(20, Math.max(5, damage / 2)); // 基于伤害调整粒子数量
+
+    // 创建主要的冲击波效果
+    createParticles(x, y, color, particleCount, 'impact');
+
+    // 如果伤害很高，添加额外的特效
+    if (damage > 20) {
+        createParticles(x, y, lightenColor(color, 30), particleCount * 2, 'sparkle');
+        // 添加光晕效果
+        createPulseEffect(x, y, color);
+    }
+
+    // 适中的屏幕震动
+    const shakeIntensity = Math.min(15, damage / 3);
+    shakeScreen(shakeIntensity, 200);
+}
+
+// 创建脉冲效果
+function createPulseEffect(x, y, color) {
+    // 创建脉冲环形效果
+    createParticles(x, y, color, 1, 'pulse');
+}
+
+// 增强的敌人死亡效果
+function enhancedDeathEffect(x, y, enemyType) {
+    const colors = {
+        'MELEE': '#FF6B6B',
+        'RANGED': '#4ECDC4',
+        'ELITE': '#FFE66D',
+        'BOSS': '#FF0000',
+        'TANK': '#888888',
+        'SUPPORT': '#9B5DE5'
+    };
+
+    const color = colors[enemyType] || '#FFFFFF';
+
+    // 根据敌人类型调整特效
+    switch(enemyType) {
+        case 'BOSS':
+            // Boss死亡时的大型爆炸
+            createParticles(x, y, color, 50, 'explosion');
+            createParticles(x, y, color, 30, 'magic');
+            createParticles(x, y, color, 20, 'beam');
+            shakeScreen(30, 500);
+            break;
+        case 'ELITE':
+            // 精英敌人死亡效果
+            createParticles(x, y, color, 25, 'explosion');
+            createParticles(x, y, color, 15, 'sparkle');
+            shakeScreen(15, 300);
+            break;
+        case 'TANK':
+            // 坦克敌人死亡效果
+            createParticles(x, y, color, 30, 'explosion');
+            createParticles(x, y, color, 20, 'smoke');
+            shakeScreen(20, 400);
+            break;
+        default:
+            // 普通敌人死亡效果
+            createParticles(x, y, color, 15, 'explosion');
+            createParticles(x, y, color, 8, 'sparkle');
+            break;
+    }
 }
 
 // ==================== 游戏逻辑 ====================
@@ -1782,6 +2188,9 @@ function replaceWeapon(newWeapon) {
 
     gameState.player.weapon = newWeapon;
 
+    // 增加获取的武器计数
+    gameState.weaponsAcquired = (gameState.weaponsAcquired || 0) + 1;
+
     // 通知成就系统获取了新武器
     AchievementSystem.onWeaponAcquired(newWeapon);
 
@@ -1792,11 +2201,14 @@ function replaceWeapon(newWeapon) {
     const logClass = newWeapon.damage > (oldWeapon?.damage || 0) ? 'weapon-get' : 'weapon-lose';
     showCombatLog(logMsg, logClass);
 
-    // 更好的粒子效果
-    createParticles(player.x, player.y, newWeapon.color, 20, 'explosion');
+    // 创建增强的武器获取特效
+    createWeaponGetEffect(player.x, player.y, newWeapon);
 }
 
 function usePotion(potion) {
+    // 增加使用的药水计数
+    gameState.potionsUsed = (gameState.potionsUsed || 0) + 1;
+
     // 通知成就系统使用了药水
     AchievementSystem.onPotionUsed(potion);
 
@@ -2013,6 +2425,9 @@ function attackEnemies() {
 
             // 如果敌人死亡
             if (enemy.hp <= 0) {
+                // 创建增强的死亡效果
+                enhancedDeathEffect(enemy.x, enemy.y, enemy.type);
+
                 // 增加得分
                 let enemyScore = Math.floor(enemy.maxHp / 10);
                 switch(enemy.type) {
@@ -2347,6 +2762,9 @@ function gameLoop() {
         return;
     }
 
+    // 检查教程进度
+    TutorialSystem.checkTutorial();
+
     // 应用屏幕震动
     if (gameState.screenShake > 0) {
         const shakeIntensity = Math.min(10, gameState.screenShake);
@@ -2488,6 +2906,136 @@ function startGame() {
     }
 }
 
+// 教程系统
+const TutorialSystem = {
+    tutorialSteps: [
+        {
+            title: "欢迎来到武器替换者!",
+            message: "在这个游戏中，你必须不断更换武器来应对敌人。",
+            condition: () => true,
+            highlight: null
+        },
+        {
+            title: "移动控制",
+            message: "使用鼠标控制角色移动，靠近武器即可自动拾取并替换当前武器。",
+            condition: () => true, // 初始显示
+            highlight: null
+        },
+        {
+            title: "战斗系统",
+            message: "靠近敌人即可自动攻击，注意躲避敌人的攻击。",
+            condition: () => gameState.enemies.length > 0,
+            highlight: null
+        },
+        {
+            title: "武器替换",
+            message: "重要提醒：敌人掉落的武器会**强制替换**你当前的武器，这是游戏的核心机制！",
+            condition: () => gameState.weaponsAcquired >= 1,
+            highlight: null
+        },
+        {
+            title: "生命与治疗",
+            message: "生命值会随时间缓慢恢复，也可以通过拾取生命药水来治疗。",
+            condition: () => gameState.potions.length > 0 || gameState.player.hp < gameState.player.maxHp,
+            highlight: null
+        },
+        {
+            title: "关卡目标",
+            message: "击败一定数量的敌人即可进入下一关，每关敌人都会变得更强大！",
+            condition: () => gameState.level > 1,
+            highlight: null
+        },
+        {
+            title: "技能系统",
+            message: "按 Q/W/E/R 键使用不同技能，每个技能有独立的冷却时间。",
+            condition: () => gameState.skillsUsed >= 1,
+            highlight: null
+        },
+        {
+            title: "教程完成",
+            message: "恭喜！你已经掌握了游戏的基本操作。尽情享受武器替换的乐趣吧！",
+            condition: () => gameState.level >= 3,
+            highlight: null
+        }
+    ],
+
+    currentStep: 0,
+    tutorialVisible: false,
+
+    init() {
+        this.currentStep = 0;
+        this.tutorialVisible = false;
+    },
+
+    checkTutorial() {
+        if (this.currentStep >= this.tutorialSteps.length || this.currentStep >= 8) { // 限制最大步骤
+            return; // 教程已完成
+        }
+
+        // 检查当前步骤的条件是否满足
+        const currentTime = Date.now();
+        if (currentTime - gameState.lastTutorialCheck < 2000) { // 防止频繁检查
+            return;
+        }
+        gameState.lastTutorialCheck = currentTime;
+
+        const currentStep = this.tutorialSteps[this.currentStep];
+        if (currentStep && currentStep.condition()) {
+            this.showTutorial(this.currentStep);
+            this.currentStep++;
+        }
+    },
+
+    showTutorial(stepIndex) {
+        if (stepIndex >= this.tutorialSteps.length || !this.tutorialSteps[stepIndex]) return;
+
+        const step = this.tutorialSteps[stepIndex];
+
+        // 创建教程弹窗
+        this.hideTutorial(); // 先隐藏之前的教程
+
+        const tutorialDiv = document.createElement('div');
+        tutorialDiv.id = 'tutorial-popup';
+        tutorialDiv.style.position = 'absolute';
+        tutorialDiv.style.top = '50%';
+        tutorialDiv.style.left = '50%';
+        tutorialDiv.style.transform = 'translate(-50%, -50%)';
+        tutorialDiv.style.background = 'rgba(10, 10, 30, 0.95)';
+        tutorialDiv.style.padding = '25px';
+        tutorialDiv.style.borderRadius = '15px';
+        tutorialDiv.style.border = '2px solid #ffd700';
+        tutorialDiv.style.zIndex = '400';
+        tutorialDiv.style.backdropFilter = 'blur(10px)';
+        tutorialDiv.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
+        tutorialDiv.style.textAlign = 'center';
+        tutorialDiv.style.maxWidth = '500px';
+        tutorialDiv.style.minWidth = '400px';
+
+        tutorialDiv.innerHTML = `
+            <h3 style="color: #ffd700; margin-top: 0; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);">${step.title}</h3>
+            <p style="font-size: 16px; line-height: 1.6; margin: 15px 0; color: #eee;">${step.message}</p>
+            <button id="tutorial-next" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; cursor: pointer; margin-top: 15px;">知道了</button>
+        `;
+
+        document.body.appendChild(tutorialDiv);
+
+        // 绑定下一步按钮事件
+        document.getElementById('tutorial-next').addEventListener('click', () => {
+            this.hideTutorial();
+        });
+
+        this.tutorialVisible = true;
+    },
+
+    hideTutorial() {
+        const existingTutorial = document.getElementById('tutorial-popup');
+        if (existingTutorial) {
+            document.body.removeChild(existingTutorial);
+        }
+        this.tutorialVisible = false;
+    }
+};
+
 function initGame() {
     // 保存当前的游戏状态，以便在重新开始游戏时决定是否重置
     const shouldResetGame = !gameState.isPlaying; // 如果游戏没在进行中，表示是全新开始
@@ -2520,6 +3068,16 @@ function initGame() {
         isPlaying: true,
         isGameOver: false,
         screenShake: 0, // 屏幕震动
+
+        // 新增教程相关状态
+        weaponsAcquired: 0, // 记录获取的武器数量
+        potionsUsed: 0,     // 记录使用的药水数量
+        skillsUsed: 0,      // 记录使用的技能数量
+        difficulty: 'normal', // 难度设置
+        enemySpawnRate: 1.0, // 敌人生成速率
+        enemyDamageMultiplier: 1.0, // 敌人伤害倍率
+        tutorialStep: 0,    // 教程步骤
+        lastTutorialCheck: 0 // 上次检查教程的时间
     };
 
     // 如果不是全新的游戏，尝试从localStorage恢复游戏状态
@@ -2528,6 +3086,9 @@ function initGame() {
     } else {
         // 如果是全新游戏，重置成就系统临时状态
         AchievementSystem.resetTempStats();
+
+        // 初始化教程
+        TutorialSystem.init();
     }
 
     // 重置技能冷却
@@ -2543,6 +3104,15 @@ function initGame() {
     document.getElementById('game-over').classList.add('hidden');
 
     spawnEnemy();
+
+    // 如果是新游戏，显示第一步教程
+    if (shouldResetGame) {
+        setTimeout(() => {
+            TutorialSystem.showTutorial(0);
+            TutorialSystem.currentStep = 1;
+        }, 1000);
+    }
+
     gameLoop();
 }
 
@@ -2607,6 +3177,156 @@ function winGame() {
 // 按钮事件
 document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('restart-btn').addEventListener('click', startGame);
+
+// 添加暂停菜单相关事件监听器
+let gamePaused = false;
+
+// ESC键暂停游戏
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (gameState.isPlaying && !gameState.isGameOver) {
+            if (gamePaused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        }
+    }
+});
+
+// 暂停游戏
+function pauseGame() {
+    if (gameState.isPlaying && !gameState.isGameOver && !gamePaused) {
+        gamePaused = true;
+        gameState.isPlaying = false;
+        document.getElementById('pause-menu').classList.remove('hidden');
+
+        // 暂停期间阻止游戏循环
+        cancelAnimationFrame(gameLoopId);
+    }
+}
+
+// 恢复游戏
+function resumeGame() {
+    if (gamePaused) {
+        gamePaused = false;
+        gameState.isPlaying = true;
+        document.getElementById('pause-menu').classList.add('hidden');
+
+        // 重新开始游戏循环
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+}
+
+// 暂停菜单按钮事件
+document.getElementById('continue-btn').addEventListener('click', resumeGame);
+document.getElementById('settings-btn').addEventListener('click', () => {
+    document.getElementById('pause-menu').classList.add('hidden');
+    document.getElementById('settings-menu').classList.remove('hidden');
+});
+
+document.getElementById('main-menu-btn').addEventListener('click', () => {
+    // 返回主菜单
+    gameState.isPlaying = false;
+    gameState.isGameOver = false;
+    gamePaused = false;
+    document.getElementById('pause-menu').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+
+    // 取消动画帧
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+    }
+});
+
+// 设置菜单按钮事件
+document.getElementById('back-to-pause').addEventListener('click', () => {
+    document.getElementById('settings-menu').classList.add('hidden');
+    document.getElementById('pause-menu').classList.remove('hidden');
+});
+
+// 设置菜单控件事件
+document.getElementById('sound-enabled').addEventListener('change', (e) => {
+    AudioManager.setSoundEnabled(e.target.checked);
+});
+
+document.getElementById('music-enabled').addEventListener('change', (e) => {
+    AudioManager.setMusicEnabled(e.target.checked);
+});
+
+document.getElementById('difficulty-select').addEventListener('change', (e) => {
+    gameState.difficulty = e.target.value;
+    // 根据难度调整游戏参数
+    switch(e.target.value) {
+        case 'easy':
+            gameState.enemySpawnRate = 1.5;  // 敌人生成速度较慢
+            gameState.enemyDamageMultiplier = 0.7;  // 敌人伤害较低
+            break;
+        case 'normal':
+            gameState.enemySpawnRate = 1.0;
+            gameState.enemyDamageMultiplier = 1.0;
+            break;
+        case 'hard':
+            gameState.enemySpawnRate = 0.7;  // 敌人生成速度较快
+            gameState.enemyDamageMultiplier = 1.3;  // 敌人伤害较高
+            break;
+    }
+});
+
+// 成就按钮事件
+if (document.getElementById('achievements-btn')) {
+    document.getElementById('achievements-btn').addEventListener('click', () => {
+        // 创建一个弹窗显示成就
+        const achievementsContainer = document.createElement('div');
+        achievementsContainer.id = 'achievements-popup';
+        achievementsContainer.style.position = 'absolute';
+        achievementsContainer.style.top = '50%';
+        achievementsContainer.style.left = '50%';
+        achievementsContainer.style.transform = 'translate(-50%, -50%)';
+        achievementsContainer.style.background = 'rgba(10, 10, 30, 0.95)';
+        achievementsContainer.style.padding = '30px';
+        achievementsContainer.style.borderRadius = '20px';
+        achievementsContainer.style.border = '3px solid #4a4a6a';
+        achievementsContainer.style.zIndex = '300';
+        achievementsContainer.style.backdropFilter = 'blur(10px)';
+        achievementsContainer.style.boxShadow = '0 0 40px rgba(100, 100, 255, 0.4)';
+        achievementsContainer.style.maxHeight = '80vh';
+        achievementsContainer.style.overflowY = 'auto';
+        achievementsContainer.style.textAlign = 'left';
+
+        const unlocked = AchievementSystem.getUnlockedCount();
+        const total = AchievementSystem.getTotalCount();
+
+        let achievementsHtml = `
+            <h2 style="text-align: center; margin-bottom: 20px; color: #ffd700;">🏆 游戏成就 (${unlocked}/${total})</h2>
+            <div style="max-height: 400px; overflow-y: auto;">
+        `;
+
+        for (const achievement of AchievementSystem.achievementList) {
+            const isUnlocked = AchievementSystem.achievements[achievement.id];
+            const status = isUnlocked ? '✅ 已解锁' : '🔒 未解锁';
+            const style = isUnlocked ? 'color: #4ade80;' : 'color: #94a3b8; opacity: 0.7;';
+
+            achievementsHtml += `
+                <div style="margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border-left: 3px solid ${isUnlocked ? '#4ade80' : '#94a3b8'}; ${style}">
+                    <strong>${achievement.name}</strong><br>
+                    <small>${achievement.description}</small><br>
+                    <em style="font-size: 0.9em;">[${status}]</em>
+                </div>
+            `;
+        }
+
+        achievementsHtml += '</div>';
+        achievementsHtml += '<button id="close-achievements" style="margin-top: 20px; padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; cursor: pointer;">关闭</button>';
+
+        achievementsContainer.innerHTML = achievementsHtml;
+        document.body.appendChild(achievementsContainer);
+
+        document.getElementById('close-achievements').addEventListener('click', () => {
+            document.body.removeChild(achievementsContainer);
+        });
+    });
+}
 
 // 初始绘制
 ctx.fillStyle = '#1a1a2e';

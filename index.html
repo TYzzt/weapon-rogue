@@ -48,6 +48,35 @@
             <p>最终得分：<span id="final-score">0</span></p>
             <button id="restart-btn">重新开始</button>
         </div>
+        <div id="pause-menu" class="hidden">
+            <h2>游戏暂停</h2>
+            <button id="continue-btn">继续游戏</button>
+            <button id="settings-btn">设置</button>
+            <button id="main-menu-btn">返回主菜单</button>
+        </div>
+        <div id="settings-menu" class="hidden">
+            <h2>游戏设置</h2>
+            <div class="setting-option">
+                <label>
+                    <input type="checkbox" id="sound-enabled" checked> 音效开启
+                </label>
+            </div>
+            <div class="setting-option">
+                <label>
+                    <input type="checkbox" id="music-enabled" checked> 音乐开启
+                </label>
+            </div>
+            <div class="setting-option">
+                <label>
+                    难度: <select id="difficulty-select">
+                        <option value="easy">简单</option>
+                        <option value="normal" selected>普通</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </label>
+            </div>
+            <button id="back-to-pause">返回暂停菜单</button>
+        </div>
         <div id="start-screen">
             <h1>🗡️ 武器替换者</h1>
             <p class="description">
@@ -56,6 +85,7 @@
                 收集药水和遗物来改变命运
             </p>
             <button id="start-btn">开始游戏</button>
+            <button id="achievements-btn">成就</button>
         </div>
     </div>
     <script src="game.js"></script>
