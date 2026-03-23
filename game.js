@@ -247,6 +247,41 @@ const WEAPONS = [
     { name: '工匠锤', damage: 14, rarity: 'uncommon', color: '#C0C0C0' },
     { name: '猎人小刀', damage: 12, rarity: 'uncommon', color: '#8B4513' },
     { name: '铁皮护腕', damage: 11, rarity: 'uncommon', color: '#696969' },
+
+    // 新增不常见武器
+    { name: '精灵短弓', damage: 13, rarity: 'uncommon', color: '#228B22' },
+    { name: '矮人战斧', damage: 18, rarity: 'uncommon', color: '#A0522D' },
+    { name: '游侠长鞭', damage: 14, rarity: 'uncommon', color: '#8FBC8F' },
+    { name: '盗贼匕首', damage: 15, rarity: 'uncommon', color: '#696969' },
+    { name: '牧师法杖', damage: 13, rarity: 'uncommon', color: '#FFD700' },
+
+    // 新增稀有武器
+    { name: '龙牙匕首', damage: 36, rarity: 'rare', color: '#3CB371' },
+    { name: '凤凰涅槃剑', damage: 40, rarity: 'rare', color: '#FF4500' },
+    { name: '雷霆之怒', damage: 38, rarity: 'rare', color: '#00BFFF' },
+    { name: '极光之刃', damage: 37, rarity: 'rare', color: '#7FFFD4' },
+    { name: '月华法杖', damage: 39, rarity: 'rare', color: '#F0E68C' },
+
+    // 新增史诗武器
+    { name: '银河战神剑', damage: 54, rarity: 'epic', color: '#4169E1' },
+    { name: '深渊恐惧', damage: 57, rarity: 'epic', color: '#2F4F4F' },
+    { name: '时间之主', damage: 61, rarity: 'epic', color: '#9370DB' },
+    { name: '空间撕裂者', damage: 59, rarity: 'epic', color: '#8A2BE2' },
+    { name: '真理追寻者', damage: 64, rarity: 'epic', color: '#FF1493' },
+
+    // 新增传说武器
+    { name: '造物之主', damage: 90, rarity: 'legendary', color: '#FFD700' },
+    { name: '虚无缥缈', damage: 86, rarity: 'legendary', color: '#F8F8FF' },
+    { name: '审判日', damage: 93, rarity: 'legendary', color: '#FFFFFF' },
+    { name: '世界之树', damage: 87, rarity: 'legendary', color: '#32CD32' },
+    { name: '混沌之核', damage: 91, rarity: 'legendary', color: '#FF00FF' },
+
+    // 新增神话武器
+    { name: '现实扭曲者', damage: 1100, rarity: 'mythic', color: '#FF69B4' },
+    { name: '维度支配者', damage: 1050, rarity: 'mythic', color: '#4682B4' },
+    { name: '概念抹除者', damage: 1300, rarity: 'mythic', color: '#9400D3' },
+    { name: '宇宙起源', damage: 1250, rarity: 'mythic', color: '#000000' },
+    { name: '存在意义', damage: 1150, rarity: 'mythic', color: '#0000FF' },
     { name: '锋利镰刀', damage: 15, rarity: 'uncommon', color: '#2F4F4F' },
     { name: '游侠短剑', damage: 13, rarity: 'uncommon', color: '#708090' },
     { name: '坚固战锤', damage: 16, rarity: 'uncommon', color: '#A9A9A9' },
@@ -1091,6 +1126,197 @@ const AchievementSystem = {
     }
 };
 
+// ==================== 里程碑系统 ====================
+
+const MilestoneSystem = {
+    milestones: {}, // 动态存储里程碑解锁状态
+
+    // 定义里程碑列表
+    milestoneList: [
+        // 新手里程碑
+        { id: 'milestone_newbie', name: '新手入门', description: '到达第3关', condition: 'level >= 3', reward: { hpBonus: 10 } },
+        { id: 'milestone_explorer', name: '初级探索者', description: '到达第7关', condition: 'level >= 7', reward: { weaponProtection: 1 } },
+
+        // 中级里程碑
+        { id: 'milestone_warrior', name: '初级战士', description: '到达第12关', condition: 'level >= 12', reward: { damageBonus: 5 } },
+        { id: 'milestone_collector', name: '收藏爱好者', description: '获得10种不同武器', condition: 'uniqueWeapons >= 10', reward: { hpBonus: 15 } },
+        { id: 'milestone_combo', name: '连击入门', description: '达成5连击', condition: 'maxCombo >= 5', reward: { attackSpeedBonus: 0.1 } },
+
+        // 高级里程碑
+        { id: 'milestone_veteran', name: '资深玩家', description: '到达第20关', condition: 'level >= 20', reward: { hpBonus: 25, damageBonus: 8 } },
+        { id: 'milestone_master', name: '大师级', description: '到达第30关', condition: 'level >= 30', reward: { damageBonus: 15, attackSpeedBonus: 0.2 } },
+        { id: 'milestone_legendary', name: '传说之路', description: '使用传说武器击杀50个敌人', condition: 'legendaryKills >= 50', reward: { critChance: 0.1 } },
+
+        // 专家里程碑
+        { id: 'milestone_elite', name: '精英玩家', description: '到达第40关', condition: 'level >= 40', reward: { hpBonus: 40, damageBonus: 20 } },
+        { id: 'milestone_perfectionist', name: '完美主义者', description: '到达第45关且生命值高于60', condition: 'level >= 45 && hp > 60', reward: { allBonuses: 1 } },
+        { id: 'milestone_legend', name: '传奇人物', description: '到达第50关', condition: 'level >= 50', reward: { ultimateBonus: 1 } },
+
+        // 挑战里程碑
+        { id: 'milestone_speedrunner', name: '速通专家', description: '在20分钟内到达第15关', condition: 'speedRun15', reward: { speedBonus: 0.3 } },
+        { id: 'milestone_combo_master', name: '连击大师', description: '达成30连击', condition: 'maxCombo >= 30', reward: { comboEffect: 1 } },
+        { id: 'milestone_luck_master', name: '幸运大师', description: '使用幸运药水击杀30个敌人', condition: 'luckyKills >= 30', reward: { luckBonus: 0.2 } }
+    ],
+
+    // 临时状态变量，用于跟踪复杂的里程碑条件
+    tempStats: {
+        speedRunStartLevel: 0,
+        speedRunStartTime: 0,
+        legendaryKills: 0,
+        luckyKills: 0,
+        uniqueWeaponsUsed: [],
+        lastLevelReached: 0
+    },
+
+    // 检查里程碑条件并解锁里程碑
+    checkMilestones: function() {
+        const newMilestones = [];
+
+        for (const milestone of this.milestoneList) {
+            if (!this.milestones[milestone.id]) {
+                // 检查里程碑条件是否满足
+                if (this.evaluateCondition(milestone.condition)) {
+                    this.unlock(milestone);
+                    newMilestones.push(milestone);
+
+                    // 应用里程碑奖励
+                    this.applyReward(milestone.reward);
+                }
+            }
+        }
+
+        return newMilestones;
+    },
+
+    // 评估里程碑条件
+    evaluateCondition: function(condition) {
+        try {
+            const context = {
+                level: gameState.level,
+                hp: gameState.player.hp,
+                maxCombo: gameState.player.maxCombo,
+                uniqueWeapons: this.tempStats.uniqueWeaponsUsed.length,
+                legendaryKills: this.tempStats.legendaryKills,
+                luckyKills: this.tempStats.luckyKills
+            };
+
+            // 简单条件评估
+            if (condition === 'level >= 3') return context.level >= 3;
+            if (condition === 'level >= 7') return context.level >= 7;
+            if (condition === 'level >= 12') return context.level >= 12;
+            if (condition === 'uniqueWeapons >= 10') return context.uniqueWeapons >= 10;
+            if (condition === 'maxCombo >= 5') return context.maxCombo >= 5;
+            if (condition === 'level >= 20') return context.level >= 20;
+            if (condition === 'level >= 30') return context.level >= 30;
+            if (condition === 'legendaryKills >= 50') return context.legendaryKills >= 50;
+            if (condition === 'level >= 40') return context.level >= 40;
+            if (condition === 'level >= 45 && hp > 60') return context.level >= 45 && context.hp > 60;
+            if (condition === 'level >= 50') return context.level >= 50;
+            if (condition === 'maxCombo >= 30') return context.maxCombo >= 30;
+            if (condition === 'luckyKills >= 30') return context.luckyKills >= 30;
+
+            return false;
+        } catch (e) {
+            console.error('评估里程碑条件时出错:', e);
+            return false;
+        }
+    },
+
+    // 解锁里程碑
+    unlock: function(milestone) {
+        this.milestones[milestone.id] = {
+            unlocked: true,
+            timestamp: Date.now(),
+            name: milestone.name,
+            description: milestone.description,
+            reward: milestone.reward
+        };
+
+        console.log(`里程碑解锁: ${milestone.name}`);
+        showCombatLog(`🎯 里程碑: ${milestone.name}`, 'weapon-get');
+
+        // 保存里程碑状态
+        SaveSystem.save();
+    },
+
+    // 获取已解锁里程碑的数量
+    getUnlockedCount: function() {
+        return Object.keys(this.milestones).filter(id => this.milestones[id].unlocked).length;
+    },
+
+    // 获取总里程碑数量
+    getTotalCount: function() {
+        return this.milestoneList.length;
+    },
+
+    // 应用里程碑奖励
+    applyReward: function(reward) {
+        if (!reward) return;
+
+        // 根据奖励类型应用不同的加成
+        if (reward.hpBonus) {
+            gameState.player.maxHp += reward.hpBonus;
+            gameState.player.hp += reward.hpBonus; // 立即恢复额外生命值
+        }
+        if (reward.damageBonus) {
+            // 对于伤害加成，我们将其作为全局乘数处理
+            if (!gameState.player.damageBonus) {
+                gameState.player.damageBonus = 0;
+            }
+            gameState.player.damageBonus += reward.damageBonus;
+        }
+        if (reward.attackSpeedBonus) {
+            if (!gameState.player.attackSpeedBonus) {
+                gameState.player.attackSpeedBonus = 1.0;
+            }
+            gameState.player.attackSpeedBonus += reward.attackSpeedBonus;
+        }
+        if (reward.speedBonus) {
+            if (!gameState.player.speedBonus) {
+                gameState.player.speedBonus = 0;
+            }
+            gameState.player.speedBonus += reward.speedBonus;
+        }
+    },
+
+    // 当玩家达到新等级时调用
+    onLevelUp: function(level) {
+        // 更新最高等级记录
+        if (level > this.tempStats.lastLevelReached) {
+            this.tempStats.lastLevelReached = level;
+
+            // 如果是第15关开始记录速通数据
+            if (level === 15 && this.tempStats.speedRunStartLevel === 0) {
+                this.tempStats.speedRunStartTime = Date.now();
+                this.tempStats.speedRunStartLevel = 15;
+            }
+
+            // 检查里程碑
+            this.checkMilestones();
+        }
+    },
+
+    // 当玩家使用传说武器击杀敌人时调用
+    onLegendaryKill: function() {
+        this.tempStats.legendaryKills++;
+        this.checkMilestones();
+    },
+
+    // 当玩家使用幸运药水击杀敌人时调用
+    onLuckyKill: function() {
+        this.tempStats.luckyKills++;
+        this.checkMilestones();
+    },
+
+    // 当玩家获得新武器时调用
+    onWeaponAcquired: function(weapon) {
+        if (weapon && !this.tempStats.uniqueWeaponsUsed.includes(weapon.name)) {
+            this.tempStats.uniqueWeaponsUsed.push(weapon.name);
+            this.checkMilestones();
+        }
+    }
+};
+
 // ==================== 工具函数 ====================
 
 function randomInt(min, max) {
@@ -1197,6 +1423,12 @@ function useSkill(skillKey) {
 
                         if (gameState.kills % killsNeededForLevel === 0) {
                             gameState.level++;
+
+                            // 通知里程碑系统玩家升级
+                            if (typeof MilestoneSystem !== 'undefined') {
+                                MilestoneSystem.onLevelUp(gameState.level);
+                            }
+
                             showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
 
                             // 增强的升级视觉效果
@@ -1994,9 +2226,23 @@ const ENEMY_TYPES = {
     PLANET: { name: '行星守护者', speed: 0.1, hp: 8.0, damage: 2.5, size: 4.0, behavior: 'ranged' }, // 巨大型敌人，极难击败
     COSMOS: { name: '宇宙意志', speed: 0.3, hp: 6.0, damage: 3.5, size: 3.5, behavior: 'mixed' }, // 全能型终极敌人
 
-    // 新增更多敌人类型 (第五波)
-    ANGEL: { name: '天使', speed: 0.8, hp: 2.5, damage: 2.8, size: 1.8, behavior: 'ranged' }, // 光属性敌人，远程攻击
-    PIRATE: { name: '海盗', speed: 1.4, hp: 1.5, damage: 1.9, size: 1.4, behavior: 'melee' }, // 快速近战敌人，带钩爪
+    // 新增更多敌人类型 (第六波)
+    NINJA: { name: '忍者', speed: 2.0, hp: 0.7, damage: 2.2, size: 0.8, behavior: 'melee' }, // 快速潜行攻击者
+    DRUID: { name: '德鲁伊', speed: 0.7, hp: 1.8, damage: 2.0, size: 1.4, behavior: 'ranged' }, // 自然系法师，可治疗附近敌人
+    WEREWOLF: { name: '狼人', speed: 1.5, hp: 2.2, damage: 2.4, size: 1.8, behavior: 'melee' }, // 夜晚增强型敌人
+    PHOENIX: { name: '凤凰', speed: 1.2, hp: 1.5, damage: 2.5, size: 1.6, behavior: 'ranged' }, // 可重生一次的敌人
+    KRAKEN: { name: '海怪', speed: 0.5, hp: 4.5, damage: 2.8, size: 3.0, behavior: 'ranged' }, // 大型远程攻击敌人
+    GARGOYLE: { name: '石像鬼', speed: 1.0, hp: 3.0, damage: 1.2, size: 1.7, behavior: 'melee' }, // 白天静止，夜晚活动
+    HARPY: { name: '鹰身女妖', speed: 1.7, hp: 1.0, damage: 1.8, size: 1.3, behavior: 'ranged' }, // 飞行单位，会干扰玩家移动
+
+    // 新增更多敌人类型 (第七波)
+    DRACOLICH: { name: '龙巫妖', speed: 0.8, hp: 5.0, damage: 3.2, size: 2.8, behavior: 'ranged' }, // 不死龙，极其危险
+    VOID_TERROR: { name: '虚空恐魔', speed: 1.9, hp: 2.0, damage: 3.5, size: 2.2, behavior: 'melee' }, // 吞噬一切的虚空生物
+    DEMIGORGON: { name: '深渊领主', speed: 1.1, hp: 6.0, damage: 3.8, size: 3.2, behavior: 'mixed' }, // 混合攻击的顶级敌人
+    LEVIATHAN: { name: '利维坦', speed: 0.4, hp: 7.0, damage: 3.0, size: 3.5, behavior: 'ranged' }, // 巨大水系敌人
+    COLOSSUS: { name: '巨人', speed: 0.9, hp: 8.0, damage: 4.0, size: 4.0, behavior: 'melee' }, // 陆地最强敌人
+    CHAOS_LORD: { name: '混沌领主', speed: 0.6, hp: 9.0, damage: 4.5, size: 3.8, behavior: 'mixed' }, // 混乱属性敌人，能力不定
+    REALITY_WEAVER: { name: '现实编织者', speed: 0.2, hp: 10.0, damage: 5.0, size: 4.5, behavior: 'ranged' }, // 最终BOSS级敌人
     NINJA: { name: '忍者', speed: 2.3, hp: 0.6, damage: 2.8, size: 0.8, behavior: 'melee' }, // 极速高伤害低血量
     CYBORG: { name: '机械战士', speed: 1.1, hp: 2.2, damage: 2.0, size: 1.7, behavior: 'ranged' }, // 机械化敌人，远程攻击
     ELF: { name: '精灵', speed: 1.5, hp: 1.2, damage: 2.2, size: 1.1, behavior: 'ranged' }, // 精灵弓箭手，高精准度
@@ -3174,8 +3420,13 @@ function replaceWeapon(newWeapon) {
     // 检查概念融合
     checkConceptFusion(newWeapon);
 
-    // 通知成就系统获取了新武器
+    // 通知成就系统和里程碑系统获取了新武器
     AchievementSystem.onWeaponAcquired(newWeapon);
+
+    // 通知里程碑系统获取了新武器
+    if (typeof MilestoneSystem !== 'undefined') {
+        MilestoneSystem.onWeaponAcquired(newWeapon);
+    }
 
     const logMsg = oldWeapon
         ? `💔 失去 ${oldWeapon.name} → ⚔️ 获得 ${newWeapon.name}`
@@ -3330,6 +3581,12 @@ function usePotion(potion) {
 
                         if (gameState.kills % killsNeededForLevel === 0) {
                             gameState.level++;
+
+                            // 通知里程碑系统玩家升级
+                            if (typeof MilestoneSystem !== 'undefined') {
+                                MilestoneSystem.onLevelUp(gameState.level);
+                            }
+
                             showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
                             AudioManager.playSound('level_up');
 
@@ -3527,6 +3784,13 @@ function updateUI() {
     const relicsList = gameState.relics.map(r => `${r.name}`).join(', ') || '空';
     document.getElementById('potions').textContent = `药水：${potionsList}`;
     document.getElementById('relics').textContent = `遗物：${relicsList}`;
+
+    // 更新里程碑进度
+    if (typeof MilestoneSystem !== 'undefined') {
+        const unlockedMilestones = MilestoneSystem.getUnlockedCount();
+        const totalMilestones = MilestoneSystem.getTotalCount();
+        document.getElementById('milestones').textContent = `里程碑：${unlockedMilestones}/${totalMilestones}`;
+    }
 
     // 添加控制器状态显示
     updateControllerStatus();
@@ -3727,12 +3991,22 @@ function attackEnemies() {
                 if (usedLuck) {
                     AchievementSystem.onLuckyKill();
                     AchievementSystem.onLuckyKillStreak();
+
+                    // 通知里程碑系统玩家使用幸运药水击杀敌人
+                    if (typeof MilestoneSystem !== 'undefined') {
+                        MilestoneSystem.onLuckyKill();
+                    }
                 }
 
                 // 如果使用传说及以上级别的武器击杀敌人，记录传奇武器击杀
                 if (gameState.player.weapon &&
                     (gameState.player.weapon.rarity === 'legendary' || gameState.player.weapon.rarity === 'mythic')) {
                     AchievementSystem.onLegendaryWeaponKill();
+
+                    // 通知里程碑系统玩家使用传说武器击杀敌人
+                    if (typeof MilestoneSystem !== 'undefined') {
+                        MilestoneSystem.onLegendaryKill();
+                    }
                 }
             } else {
                 // 只是击中敌人但未杀死
@@ -4005,6 +4279,12 @@ function checkCollisions() {
 
                         if (gameState.kills % killsNeededForLevel === 0) {
                             gameState.level++;
+
+                            // 通知里程碑系统玩家升级
+                            if (typeof MilestoneSystem !== 'undefined') {
+                                MilestoneSystem.onLevelUp(gameState.level);
+                            }
+
                             showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
                             AudioManager.playSound('level_up');
                         }
