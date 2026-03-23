@@ -412,6 +412,18 @@ const WEAPONS = [
     { name: '鱼叉', damage: 18, rarity: 'uncommon', color: '#4682B4' },
     { name: '三节棍', damage: 14, rarity: 'uncommon', color: '#DAA520' },
 
+    // Steam发布新增不常见武器 (10个)
+    { name: '消防斧', damage: 19, rarity: 'uncommon', color: '#B22222' },
+    { name: '撬棍', damage: 16, rarity: 'uncommon', color: '#2F4F4F' },
+    { name: '手电筒', damage: 12, rarity: 'uncommon', color: '#DAA520' },
+    { name: '登山绳', damage: 11, rarity: 'uncommon', color: '#8B4513' },
+    { name: '指南针', damage: 10, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '望远镜', damage: 13, rarity: 'uncommon', color: '#2F4F4F' },
+    { name: '瑞士军刀', damage: 15, rarity: 'uncommon', color: '#696969' },
+    { name: '工字锉', damage: 14, rarity: 'uncommon', color: '#708090' },
+    { name: '平口钳', damage: 13, rarity: 'uncommon', color: '#A9A9A9' },
+    { name: '钢锯', damage: 16, rarity: 'uncommon', color: '#666666' },
+
     // 新增的稀有武器
     { name: '符文短剑', damage: 22, rarity: 'rare', color: '#4169E1' },
     { name: '月牙铲', damage: 25, rarity: 'rare', color: '#7FFFD4' },
@@ -423,6 +435,18 @@ const WEAPONS = [
     { name: '朱雀之翼', damage: 29, rarity: 'rare', color: '#FF4500' },
     { name: '麒麟角', damage: 30, rarity: 'rare', color: '#F0E68C' },
     { name: '貔貅牙', damage: 25, rarity: 'rare', color: '#DAA520' },
+
+    // Steam发布新增稀有武器 (10个)
+    { name: '雷神 hammer', damage: 32, rarity: 'rare', color: '#F0E68C' },
+    { name: '凤凰涅槃', damage: 33, rarity: 'rare', color: '#FF4500' },
+    { name: '龙鳞战甲', damage: 31, rarity: 'rare', color: '#4169E1' },
+    { name: '虎符令', damage: 29, rarity: 'rare', color: '#CD5C5C' },
+    { name: '凤鸣琴', damage: 30, rarity: 'rare', color: '#F5DEB3' },
+    { name: '麒麟玉佩', damage: 28, rarity: 'rare', color: '#8FBC8F' },
+    { name: '玄武石印', damage: 34, rarity: 'rare', color: '#2F4F4F' },
+    { name: '饕餮纹鼎', damage: 35, rarity: 'rare', color: '#696969' },
+    { name: '伏魔杵', damage: 32, rarity: 'rare', color: '#8B0000' },
+    { name: '降妖杖', damage: 31, rarity: 'rare', color: '#228B22' },
 
     // 新增的史诗武器
     { name: '天罡北斗阵', damage: 35, rarity: 'epic', color: '#483D8B' },
@@ -436,6 +460,18 @@ const WEAPONS = [
     { name: '道法自然', damage: 43, rarity: 'epic', color: '#228B22' },
     { name: '无极生太极', damage: 44, rarity: 'epic', color: '#F0F8FF' },
 
+    // Steam发布新增史诗武器 (10个)
+    { name: '开天辟地斧', damage: 45, rarity: 'epic', color: '#8B0000' },
+    { name: '补天神石', damage: 46, rarity: 'epic', color: '#228B22' },
+    { name: '移山填海鞭', damage: 47, rarity: 'epic', color: '#DAA520' },
+    { name: '呼风唤雨扇', damage: 48, rarity: 'epic', color: '#00BFFF' },
+    { name: '撒豆成兵旗', damage: 49, rarity: 'epic', color: '#FF1493' },
+    { name: '起死回生丹', damage: 50, rarity: 'epic', color: '#FF69B4' },
+    { name: '千里眼镜', damage: 45, rarity: 'epic', color: '#4169E1' },
+    { name: '顺风耳环', damage: 46, rarity: 'epic', color: '#FFD700' },
+    { name: '腾云驾雾靴', damage: 44, rarity: 'epic', color: '#9370DB' },
+    { name: '缩地成寸带', damage: 47, rarity: 'epic', color: '#32CD32' },
+
     // 新增的传说武器
     { name: '三界之主', damage: 55, rarity: 'legendary', color: '#FF1493' },
     { name: '六道轮回', damage: 58, rarity: 'legendary', color: '#8A2BE2' },
@@ -443,10 +479,30 @@ const WEAPONS = [
     { name: '四象归一', damage: 57, rarity: 'legendary', color: '#FFA500' },
     { name: '五行逆天', damage: 59, rarity: 'legendary', color: '#FF0000' },
 
+    // Steam发布新增传说武器 (5个)
+    { name: '创世神剑', damage: 65, rarity: 'legendary', color: '#FFD700' },
+    { name: '灭世魔刀', damage: 67, rarity: 'legendary', color: '#8B0000' },
+    { name: '造化神鼎', damage: 63, rarity: 'legendary', color: '#228B22' },
+    { name: '轮回天盘', damage: 64, rarity: 'legendary', color: '#4169E1' },
+    { name: '混沌珠琏', damage: 66, rarity: 'legendary', color: '#9370DB' }
+
     // 新增的神话武器
     { name: '大道至简', damage: 850, rarity: 'mythic', color: '#FFFF00' },
     { name: '无为而治', damage: 820, rarity: 'mythic', color: '#00FF00' },
-    { name: '万物归一', damage: 900, rarity: 'mythic', color: '#FF00FF' }
+    { name: '万物归一', damage: 900, rarity: 'mythic', color: '#FF00FF' },
+
+    // Steam发布新增武器 (符合1-2小时游戏内容目标)
+    // 新增普通武器 (10个)
+    { name: '旧雨伞', damage: 5, rarity: 'common', color: '#800000' },
+    { name: '晾衣杆', damage: 4, rarity: 'common', color: '#8B4513' },
+    { name: '橡皮鸭', damage: 1, rarity: 'common', color: '#FFFF00' },
+    { name: '计算器', damage: 2, rarity: 'common', color: '#C0C0C0' },
+    { name: '圆规', damage: 3, rarity: 'common', color: '#0000FF' },
+    { name: '放大镜', damage: 2, rarity: 'common', color: '#F5DEB3' },
+    { name: '打气筒', damage: 3, rarity: 'common', color: '#A9A9A9' },
+    { name: '订书机', damage: 4, rarity: 'common', color: '#696969' },
+    { name: '台灯', damage: 2, rarity: 'common', color: '#DAA520' },
+    { name: '鼠标', damage: 1, rarity: 'common', color: '#000000' }
 ];
 
 // 引入额外内容 - 从外部文件加载，这里定义备用内容
@@ -581,13 +637,14 @@ const RARITY_WEIGHTS = {
 };
 
 // 调整稀有度权重，使游戏更有挑战性和成就感
+// 根据Steam计划进行平衡性调整，确保游戏中后期有更好的稀有装备掉落率
 const RARITY_WEIGHTS = {
-    common: 45,
-    uncommon: 30,
-    rare: 15,
-    epic: 7,
-    legendary: 2.5,
-    mythic: 0.5
+    common: 38,      // 稍微降低常见武器比例
+    uncommon: 27,    // 稍微降低不常见武器比例
+    rare: 20,        // 提高稀有武器比例，增加中期游戏乐趣
+    epic: 10,        // 提高史诗武器比例，让玩家更有目标感
+    legendary: 4,    // 稍微提高传说武器比例，保持珍贵感的同时不过于稀少
+    mythic: 0.5      // 神话武器保持极低概率
 };
 
 // 药水系统
@@ -628,12 +685,12 @@ const RELICS = [
 let gameState = {
     // 玩家状态
     player: {
-        hp: 150,  // 增加玩家初始生命值，应对更多敌人
-        maxHp: 150,  // 同步最大生命值
+        hp: 120,  // 调整玩家初始生命值到适中水平，增加游戏挑战性
+        maxHp: 120,  // 同步最大生命值
         weapon: null,
         weapons: [], // 双持时用
         lastWeapon: null, // 记忆水晶用
-        attackRange: 90, // 增加攻击范围，提高操作手感
+        attackRange: 70, // 调整攻击范围到合理范围，提高游戏操作手感
         attackCooldown: 0, // 攻击冷却
         lastHitTime: 0, // 上次命中时间
         combo: 0, // 连击数
@@ -2407,6 +2464,18 @@ const ENEMY_TYPES = {
     COCKATRICE: { name: '鸡蛇怪', speed: 1.1, hp: 1.8, damage: 2.6, size: 1.2, behavior: 'ranged' }, // 小型石化生物
     CHIMERA: { name: '奇美拉', speed: 1.2, hp: 3.5, damage: 2.4, size: 2.2, behavior: 'mixed' }, // 多头混合生物，多重攻击
     BANSHEE: { name: '女妖', speed: 1.8, hp: 1.2, damage: 3.0, size: 1.0, behavior: 'ranged' }, // 高速精神攻击者
+
+    // Steam发布新增敌人类型 (10个)
+    WEREWOLF: { name: '狼人', speed: 1.7, hp: 2.4, damage: 2.6, size: 1.9, behavior: 'melee' }, // 变身敌人，夜晚更强
+    MERMAID: { name: '美人鱼', speed: 0.9, hp: 1.8, damage: 2.2, size: 1.3, behavior: 'ranged' }, // 水系敌人，治疗附近敌人
+    GARGOYLE: { name: '石像鬼', speed: 0.3, hp: 3.2, damage: 1.8, size: 1.6, behavior: 'ranged' }, // 白天石化，晚上攻击
+    FAIRY: { name: '仙女', speed: 1.6, hp: 0.8, damage: 1.5, size: 0.7, behavior: 'support' }, // 辅助敌人，增强附近敌人
+    HARPY: { name: '鹰身女妖', speed: 1.8, hp: 1.2, damage: 2.0, size: 1.2, behavior: 'ranged' }, // 飞行单位，干扰玩家
+    CRYPTID: { name: '神秘生物', speed: 1.3, hp: 2.0, damage: 2.8, size: 1.4, behavior: 'mixed' }, // 未知生物，随机行为
+    CONSTRUCT: { name: '构造体', speed: 0.5, hp: 4.5, damage: 2.0, size: 2.0, behavior: 'melee' }, // 机械单位，高血量
+    ENT: { name: '树人', speed: 0.6, hp: 5.0, damage: 2.5, size: 2.5, behavior: 'melee' }, // 森林守护者，巨大体型
+    SHADOW_DOPPELGANGER: { name: '暗影分身', speed: 2.1, hp: 1.0, damage: 3.2, size: 0.9, behavior: 'melee' }, // 快速多变的敌人
+    ETHEREAL_BEING: { name: '灵体生物', speed: 1.0, hp: 1.5, damage: 2.5, size: 1.1, behavior: 'ranged' } // 穿透攻击的敌人
 };
 
 class Enemy {
@@ -2495,6 +2564,29 @@ class Enemy {
             enemyWeights['COCKATRICE'] = Math.min(0.0001, 0.000002 + (level * 0.000008)); // 鸡蛇怪随等级提高而增加
             enemyWeights['CHIMERA'] = Math.min(0.00008, 0.000001 + (level * 0.000005)); // 奇美拉随等级提高而增加
             enemyWeights['BANSHEE'] = Math.min(0.00008, 0.000001 + (level * 0.000005)); // 女妖随等级提高而增加
+        }
+
+        // 为Steam发布新增的敌人类型添加权重（等级更高的时候出现）
+        if (level > 30) {
+            enemyWeights['WEREWOLF'] = Math.min(0.0001, 0.00001 + (level * 0.00002)); // 狼人随等级提高而增加
+            enemyWeights['MERMAID'] = Math.min(0.0001, 0.00001 + (level * 0.00002)); // 美人鱼随等级提高而增加
+        }
+
+        if (level > 35) {
+            enemyWeights['GARGOYLE'] = Math.min(0.00008, 0.000005 + (level * 0.00001)); // 石像鬼随等级提高而增加
+            enemyWeights['FAIRY'] = Math.min(0.00008, 0.000005 + (level * 0.00001)); // 仙女随等级提高而增加
+            enemyWeights['HARPY'] = Math.min(0.00008, 0.000005 + (level * 0.00001)); // 鹰身女妖随等级提高而增加
+        }
+
+        if (level > 45) {
+            enemyWeights['CRYPTID'] = Math.min(0.00005, 0.000003 + (level * 0.000008)); // 神秘生物随等级提高而增加
+            enemyWeights['CONSTRUCT'] = Math.min(0.00005, 0.000003 + (level * 0.000008)); // 构造体随等级提高而增加
+        }
+
+        if (level > 50) {
+            enemyWeights['ENT'] = Math.min(0.00003, 0.000001 + (level * 0.000005)); // 树人随等级提高而增加
+            enemyWeights['SHADOW_DOPPELGANGER'] = Math.min(0.00003, 0.000001 + (level * 0.000005)); // 暗影分身随等级提高而增加
+            enemyWeights['ETHEREAL_BEING'] = Math.min(0.00003, 0.000001 + (level * 0.000005)); // 灵体生物随等级提高而增加
         }
 
         // 随机选择敌人类型，基于权重
