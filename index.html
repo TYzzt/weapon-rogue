@@ -9,9 +9,15 @@
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
+
+        <!-- 生命值条 -->
+        <div id="health-bar-container" class="health-bar-container">
+            <div id="health-bar" class="health-bar" style="width: 100%;"></div>
+        </div>
+
         <div id="ui-overlay">
             <div id="stats">
-                <div>❤️ 生命：<span id="hp">120</span></div>
+                <div>❤️ 生命：<span id="hp">150</span>/<span id="maxHp">150</span></div>
                 <div>⚔️ 武器：<span id="weapon">无</span></div>
                 <div>🏆 关卡：<span id="level">1</span></div>
                 <div>🎯 目标：<span id="goal">击杀5敌升级</span></div>
@@ -26,6 +32,15 @@
                 <div id="relics"></div>
             </div>
         </div>
+
+        <!-- 技能冷却指示器 -->
+        <div id="skill-cooldown" class="skill-cooldown">
+            <div class="skill-indicator" id="q-skill">Q<div class="skill-cooldown-circle" id="q-cooldown"></div></div>
+            <div class="skill-indicator" id="w-skill">W<div class="skill-cooldown-circle" id="w-cooldown"></div></div>
+            <div class="skill-indicator" id="e-skill">E<div class="skill-cooldown-circle" id="e-cooldown"></div></div>
+            <div class="skill-indicator" id="r-skill">R<div class="skill-cooldown-circle" id="r-cooldown"></div></div>
+        </div>
+
         <div id="game-over" class="hidden">
             <h2>游戏结束</h2>
             <p>你到达了第 <span id="final-level">0</span> 关</p>

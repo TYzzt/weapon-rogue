@@ -197,6 +197,39 @@ const WEAPONS = [
     { name: '平衡之锤', damage: 150, rarity: 'mythic', color: '#7B68EE' },
     { name: '创世神之刃', damage: 1200, rarity: 'mythic', color: '#9370DB' },
     { name: '宇宙之心', damage: 800, rarity: 'mythic', color: '#00FFFF' },
+
+    // 新增武器类型
+    // 新增传说武器
+    { name: '光明审判剑', damage: 95, rarity: 'legendary', color: '#FDFD96' },
+    { name: '暗夜魔刃', damage: 88, rarity: 'legendary', color: '#663399' },
+    { name: '自然之怒', damage: 85, rarity: 'legendary', color: '#32CD32' },
+    { name: '地狱火镰', damage: 92, rarity: 'legendary', color: '#FF4500' },
+
+    // 新增神话武器
+    { name: '创世之剑', damage: 1000, rarity: 'mythic', color: '#9370DB' },
+    { name: '终焉之枪', damage: 950, rarity: 'mythic', color: '#000000' },
+
+    // 新增稀有武器
+    { name: '龙血长矛', damage: 41, rarity: 'rare', color: '#FF6347' },
+    { name: '雷神战斧', damage: 43, rarity: 'rare', color: '#B0C4DE' },
+    { name: '精灵魔弓', damage: 39, rarity: 'rare', color: '#228B22' },
+    { name: '恶魔权杖', damage: 45, rarity: 'rare', color: '#8B0000' },
+    { name: '天使之翼', damage: 38, rarity: 'rare', color: '#F5FFFA' },
+    { name: '冰霜之心', damage: 42, rarity: 'rare', color: '#E0F6FF' },
+
+    // 新增不常见武器
+    { name: '钢骨利刃', damage: 19, rarity: 'uncommon', color: '#778899' },
+    { name: '野兽之牙', damage: 17, rarity: 'uncommon', color: '#DAA520' },
+    { name: '钢铁巨锤', damage: 21, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '毒藤鞭', damage: 16, rarity: 'uncommon', color: '#2E8B57' },
+    { name: '沙漠弯刀', damage: 18, rarity: 'uncommon', color: '#F4A460' },
+
+    // 新增普通武器
+    { name: '生锈的战锤', damage: 7, rarity: 'common', color: '#696969' },
+    { name: '破烂法袍', damage: 1, rarity: 'common', color: '#483D8B' },
+    { name: '朽木长矛', damage: 5, rarity: 'common', color: '#8FBC8F' },
+    { name: '破锅盖', damage: 3, rarity: 'common', color: '#C0C0C0' },
+    { name: '生锈的链枷', damage: 6, rarity: 'common', color: '#A9A9A9' },
 ];
 
 // 更新稀有度权重，调整为更合理的平衡性分布
@@ -209,13 +242,14 @@ const RARITY_WEIGHTS = {
     mythic: 0.5
 };
 
+// 调整稀有度权重，使游戏更有挑战性和成就感
 const RARITY_WEIGHTS = {
-    common: 50,
+    common: 45,
     uncommon: 30,
     rare: 15,
-    epic: 4,
-    legendary: 0.9,
-    mythic: 0.1
+    epic: 7,
+    legendary: 2.5,
+    mythic: 0.5
 };
 
 // 药水系统
@@ -247,12 +281,12 @@ const RELICS = [
 
 let gameState = {
     player: {
-        hp: 120,  // 增加玩家初始生命值
-        maxHp: 120,  // 同步最大生命值
+        hp: 150,  // 增加玩家初始生命值，应对更多敌人
+        maxHp: 150,  // 同步最大生命值
         weapon: null,
         weapons: [], // 双持时用
         lastWeapon: null, // 记忆水晶用
-        attackRange: 80, // 攻击范围
+        attackRange: 90, // 增加攻击范围，提高操作手感
         attackCooldown: 0, // 攻击冷却
         lastHitTime: 0, // 上次命中时间
         combo: 0, // 连击数
@@ -396,6 +430,18 @@ const AchievementSystem = {
         { id: 'berserker', name: '狂战士', description: '连续使用狂暴技能3次', condition: 'berserkStreak' },
         { id: 'skill_master', name: '技能大师', description: '成功使用所有4个技能各10次', condition: 'skillsUsed >= 40' },
         { id: 'elemental_master', name: '元素大师', description: '使用所有类型的药水', condition: 'usedAllPotions' },
+
+        // 新增成就 (第二波)
+        { id: 'survival_expert', name: '生存专家', description: '在第40关时生命值仍然大于70', condition: 'level >= 40 && hp > 70' },
+        { id: 'combo_legend', name: '连击传说', description: '达成50连击', condition: 'maxCombo >= 50' },
+        { id: 'lucky_strike', name: '幸运一击', description: '使用幸运药水状态下击杀Boss', condition: 'luckyBossKill' },
+        { id: 'weapon_connoisseur', name: '武器鉴赏家', description: '使用过50种不同的武器', condition: 'uniqueWeapons >= 50' },
+        { id: 'one_hit_kill', name: '一击必杀', description: '使用传说及以上武器一击击杀Boss', condition: 'oneHitBossKill' },
+        { id: 'phoenix_rebirth', name: '凤凰重生', description: '连续3次在濒死状态使用生命药水', condition: 'triplePhoenix' },
+        { id: 'invincible', name: '无敌', description: '到达第25关且从未生命值归零', condition: 'level >= 25 && neverTookFullDamage' },
+        { id: 'berserker_legend', name: '狂战传说', description: '连续使用狂暴技能10次', condition: 'berserkLegend' },
+        { id: 'elemental_warden', name: '元素守护者', description: '获得所有药水类型的各5瓶', condition: 'collectAllPotions' },
+        { id: 'relic_collector', name: '遗物收藏家', description: '收集全部7种遗物', condition: 'collectAllRelics' },
     ],
 
     // 临时状态变量，用于跟踪复杂的成就条件
@@ -491,8 +537,19 @@ const AchievementSystem = {
             if (condition === 'uniqueWeapons >= 20') {
                 return this.tempStats.uniqueWeaponsUsed.size >= 20;
             }
+            if (condition === 'uniqueWeapons >= 50') {
+                return this.tempStats.uniqueWeaponsUsed.size >= 50;
+            }
             if (condition === 'luckyKills >= 5') {
                 return this.tempStats.luckyKillCount >= 5;
+            }
+
+            // 新增成就条件
+            if (condition === 'level >= 40 && hp > 70') {
+                return context.level >= 40 && context.hp > 70;
+            }
+            if (condition === 'maxCombo >= 50') {
+                return context.maxCombo >= 50;
             }
 
             return false;
@@ -566,6 +623,36 @@ const AchievementSystem = {
         this.checkAchievements();
     },
 
+    // 当玩家使用幸运药水击杀敌人时调用
+    onLuckyBossKill: function() {
+        this.tempStats.luckyBossKill = true;
+        this.checkAchievements();
+    },
+
+    // 当玩家一击击杀Boss时调用
+    onOneHitBossKill: function() {
+        this.tempStats.oneHitBossKill = true;
+        this.checkAchievements();
+    },
+
+    // 当玩家连续三次濒死时使用生命药水
+    onTriplePhoenix: function() {
+        this.tempStats.triplePhoenix = (this.tempStats.triplePhoenix || 0) + 1;
+        this.checkAchievements();
+    },
+
+    // 当玩家从未完全死亡时调用
+    onNeverTookFullDamage: function() {
+        this.tempStats.neverTookFullDamage = true;
+        this.checkAchievements();
+    },
+
+    // 当玩家连续使用狂暴技能时调用
+    onBerserkLegend: function() {
+        this.tempStats.berserkLegend = (this.tempStats.berserkLegend || 0) + 1;
+        this.checkAchievements();
+    },
+
     // 重置临时统计数据（通常在游戏重启时）
     resetTempStats: function() {
         this.tempStats = {
@@ -576,7 +663,12 @@ const AchievementSystem = {
             skillsUsed: 0,
             usedPotionTypes: new Set(),
             berserkStreak: 0,
-            lastBerserkTime: 0
+            lastBerserkTime: 0,
+            luckyBossKill: false,
+            oneHitBossKill: false,
+            triplePhoenix: 0,
+            neverTookFullDamage: false,
+            berserkLegend: 0
         };
     }
 };
@@ -601,25 +693,25 @@ function getDistance(a, b) {
 const SKILLS = {
     Q: {
         name: '旋风斩',
-        cooldown: 300, // 5秒 (60fps * 5)
+        cooldown: 360, // 6秒 (调整冷却时间以优化平衡性)
         effect: 'aoe_damage',
         description: '对周围所有敌人造成2倍武器伤害'
     },
     W: {
         name: '治疗光环',
-        cooldown: 480, // 8秒
+        cooldown: 600, // 10秒 (调整冷却时间以优化平衡性)
         effect: 'heal',
         description: '恢复30%最大生命值'
     },
     E: {
         name: '闪现',
-        cooldown: 240, // 4秒
+        cooldown: 300, // 5秒 (调整冷却时间以优化平衡性)
         effect: 'teleport',
         description: '瞬间传送到鼠标位置'
     },
     R: {
         name: '狂暴',
-        cooldown: 600, // 10秒
+        cooldown: 720, // 12秒 (调整冷却时间以优化平衡性)
         effect: 'berserk',
         description: '接下来5秒内伤害翻倍'
     }
@@ -741,6 +833,33 @@ function updateSkillCooldowns() {
     for (const key in skillCooldowns) {
         if (skillCooldowns[key] > 0) {
             skillCooldowns[key]--;
+        }
+    }
+
+    // 同步更新HTML元素的冷却显示
+    updateHtmlSkillCooldowns();
+}
+
+// 更新HTML形式的技能冷却显示
+function updateHtmlSkillCooldowns() {
+    const skillKeys = ['Q', 'W', 'E', 'R'];
+    for (const key of skillKeys) {
+        const cooldown = skillCooldowns[key];
+        const maxCooldown = SKILLS[key].cooldown;
+        const elementId = key.toLowerCase() + '-cooldown';
+        const cooldownElement = document.getElementById(elementId);
+
+        if (cooldownElement) {
+            if (cooldown > 0) {
+                const percent = (cooldown / maxCooldown) * 100;
+                const angle = 360 * (percent / 100);
+                const clipPath = `conic-gradient(from 0deg, #667eea 0deg ${angle}deg, transparent ${angle}deg 360deg)`;
+
+                cooldownElement.style.setProperty('--clip-path', clipPath);
+                cooldownElement.style.display = 'block';
+            } else {
+                cooldownElement.style.display = 'none';
+            }
         }
     }
 }
@@ -993,6 +1112,14 @@ const ENEMY_TYPES = {
     SHADOW: { name: '暗影刺客', speed: 2.5, hp: 0.5, damage: 3.0, size: 0.6, behavior: 'melee' }, // 极速高伤低血
     TROLL: { name: '巨魔', speed: 0.6, hp: 3.5, damage: 1.8, size: 2.4, behavior: 'melee' }, // 超高血量中伤害
     LICH: { name: '巫妖王', speed: 0.3, hp: 2.8, damage: 3.0, size: 2.0, behavior: 'ranged' }, // 高血高伤害远程
+
+    // 新增敌人类型 (第三波)
+    ANGEL: { name: '天使', speed: 0.8, hp: 3.0, damage: 2.8, size: 2.2, behavior: 'ranged' }, // 高血高伤神圣单位
+    PIRATE: { name: '海盗', speed: 1.4, hp: 1.6, damage: 2.2, size: 1.4, behavior: 'melee' }, // 中速高伤近战
+    NINJA: { name: '忍者', speed: 2.3, hp: 0.6, damage: 2.8, size: 0.8, behavior: 'melee' }, // 极速高伤低血
+    CYBORG: { name: '机械战士', speed: 1.1, hp: 2.5, damage: 2.0, size: 1.8, behavior: 'ranged' }, // 机械单位，远程攻击
+    ELF: { name: '精灵', speed: 1.6, hp: 1.2, damage: 2.4, size: 1.0, behavior: 'ranged' }, // 精灵射手，高攻速
+    DRUID: { name: '德鲁伊', speed: 0.9, hp: 2.2, damage: 2.1, size: 1.5, behavior: 'mixed' }, // 混合型敌人，可近可远
 };
 
 class Enemy {
@@ -1038,11 +1165,21 @@ class Enemy {
                 type = 'TROLL'; // 新增巨魔敌人
             } else if (level < 40 && rand < 0.996) {
                 type = 'LICH'; // 新增巫妖王敌人
-            } else if (level < 42 && rand < 0.998) {
-                type = 'CRYSTAL'; // 新增水晶守护者敌人
-            } else if (rand < 0.999) {
-                type = 'SHADOW'; // 新增暗影刺客敌人
+            } else if (level < 42 && rand < 0.997) {
+                type = 'ANGEL'; // 新增天使敌人
+            } else if (level < 44 && rand < 0.998) {
+                type = 'PIRATE'; // 新增海盗敌人
+            } else if (level < 46 && rand < 0.9985) {
+                type = 'NINJA'; // 新增忍者敌人
+            } else if (level < 48 && rand < 0.999) {
+                type = 'CYBORG'; // 新增机械战士敌人
+            } else if (level < 50 && rand < 0.9992) {
+                type = 'ELF'; // 新增精灵敌人
+            } else if (level < 52 && rand < 0.9994) {
+                type = 'DRUID'; // 新增德鲁伊敌人
             } else if (rand < 0.9995) {
+                type = 'SHADOW'; // 新增暗影刺客敌人
+            } else if (rand < 0.9996) {
                 type = 'BOSS';
             } else if (rand < 0.9998) {
                 type = 'DEMON'; // 小恶魔
@@ -1774,7 +1911,7 @@ function spawnEnemy() {
 
     // 随着关卡提高，生成速度加快（调整为更平缓的增长，使游戏体验更好）
     // 初始速度较慢，让新手玩家有适应期；后期增速更快，增加挑战性
-    const spawnRate = Math.max(800, 6000 - gameState.level * 150); // 调整增长速率以优化平衡性
+    const spawnRate = Math.max(1000, 8000 - gameState.level * 120); // 调整增长速率以优化平衡性
     setTimeout(spawnEnemy, spawnRate);
 }
 
@@ -1800,12 +1937,17 @@ function updateBuffs() {
 
 function updateUI() {
     document.getElementById('hp').textContent = gameState.player.hp;
+    document.getElementById('maxHp').textContent = gameState.player.maxHp;  // 更新最大生命值显示
     document.getElementById('weapon').textContent = gameState.player.weapon?.name || '无';
     document.getElementById('level').textContent = gameState.level;
-    document.getElementById('goal').textContent = `击杀${Math.min(25, 5 + Math.floor(gameState.level * 1.5) + Math.floor(gameState.level / 5) * 2)}敌升级`;
+    document.getElementById('goal').textContent = `击杀${Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3)}敌升级`;
     document.getElementById('kills').textContent = gameState.kills;
     document.getElementById('combo').textContent = gameState.player.combo;
     document.getElementById('score').textContent = gameState.player.score;
+
+    // 更新生命值条
+    const healthPercent = (gameState.player.hp / gameState.player.maxHp) * 100;
+    document.getElementById('health-bar').style.width = `${healthPercent}%`;
 
     // 更新BUFF显示
     if (gameState.buffs.length > 0) {
@@ -1907,7 +2049,7 @@ function attackEnemies() {
 
                 // 根据当前关卡决定升级所需的击杀数，使其与UI显示一致
                 // 优化升级公式：前期增长较慢，让玩家有适应期；后期增长加快，保持挑战性
-                const killsNeededForLevel = Math.min(25, 5 + Math.floor(gameState.level * 1.5) + Math.floor(gameState.level / 5) * 2);
+                const killsNeededForLevel = Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3);
 
                 if (gameState.kills % killsNeededForLevel === 0) {
                     gameState.level++;
@@ -2359,7 +2501,7 @@ function initGame() {
             weapon: null,
             weapons: [],
             lastWeapon: null,
-            attackRange: 80, // 攻击范围
+            attackRange: 90, // 增加攻击范围，提高操作手感
             attackCooldown: 0, // 攻击冷却
             lastHitTime: 0, // 上次命中时间
             combo: 0, // 连击数
