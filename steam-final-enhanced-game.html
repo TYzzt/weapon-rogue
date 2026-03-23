@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title">武器替换者 - Steam版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e6e6e6;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            box-shadow: 0 0 40px rgba(100, 100, 255, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            display: block;
+            border-radius: 12px;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #stats {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid #4a4a8a;
+            font-size: 15px;
+            line-height: 1.8;
+            backdrop-filter: blur(5px);
+        }
+
+        #stats div {
+            margin: 5px 0;
+        }
+
+        #start-screen, #game-over, #pause-menu, #settings-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 30, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #4cc9f0;
+            text-align: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            min-width: 500px;
+            box-shadow: 0 0 40px rgba(76, 201, 240, 0.3);
+        }
+
+        h1 {
+            color: #4cc9f0;
+            margin-bottom: 20px;
+            font-size: 36px;
+            text-shadow: 0 0 15px rgba(76, 201, 240, 0.5);
+        }
+
+        h2 {
+            color: #f72585;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .description {
+            font-size: 18px;
+            color: #a9d6e5;
+            margin: 20px 0 30px;
+            line-height: 1.7;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            min-width: 180px;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.6);
+            background: linear-gradient(135deg, #3a0ca3 0%, #4361ee 100%);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #6a6a8f 0%, #4a4a6a 100%);
+        }
+
+        button.secondary:hover {
+            background: linear-gradient(135deg, #4a4a6a 0%, #6a6a8f 100%);
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .menu-button {
+            width: 100%;
+            max-width: 300px;
+            padding: 18px;
+            font-size: 18px;
+        }
+
+        .menu-button.primary {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        }
+
+        .menu-button.primary:hover {
+            background: linear-gradient(135deg, #b5179e 0%, #f72585 100%);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .setting-option {
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .setting-option label {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .setting-option input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.3);
+        }
+
+        .setting-option select {
+            margin-left: 15px;
+            padding: 8px 15px;
+            border-radius: 8px;
+            background: #2d2d44;
+            color: white;
+            border: 1px solid #4a4a6a;
+            font-size: 16px;
+        }
+
+        .game-stats {
+            background: rgba(30, 30, 50, 0.7);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border: 1px solid #4a4a6a;
+        }
+
+        .game-stats p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        #combat-log {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 14px;
+            z-index: 20;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+            border-radius: 3px;
+        }
+
+        .weapon-get { background: rgba(0, 255, 0, 0.2); }
+        .weapon-lose { background: rgba(255, 0, 0, 0.2); }
+        .level-up { background: rgba(255, 215, 0, 0.2); }
+        .enemy-death { background: rgba(255, 140, 0, 0.2); }
+        .achievement-unlock { background: rgba(138, 43, 226, 0.2); }
+        .potion_pickup { background: rgba(0, 191, 255, 0.2); }
+        .save-success { background: rgba(0, 255, 127, 0.2); }
+        .save-error { background: rgba(255, 99, 71, 0.2); }
+        .load-success { background: rgba(65, 105, 225, 0.2); }
+        .load-error { background: rgba(220, 20, 60, 0.2); }
+        .special-event { background: rgba(218, 165, 32, 0.3); }
+        .level-milestone { background: rgba(139, 0, 139, 0.3); }
+        .combo-reward { background: rgba(0, 255, 255, 0.2); }
+        .blessing { background: rgba(50, 205, 50, 0.3); }
+        .curse { background: rgba(139, 0, 0, 0.3); }
+        .treasure { background: rgba(255, 215, 0, 0.3); }
+        .challenge { background: rgba(255, 0, 255, 0.3); }
+
+        .health-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s ease;
+        }
+
+        .elite-enemy {
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 5px #ff00ff; }
+            to { box-shadow: 0 0 20px #ff00ff; }
+        }
+
+        /* 添加语言选择器样式 */
+        #language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+        #language-selector select {
+            background: #2d2d44;
+            color: white;
+            border: 1px solid #4a4a6a;
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 语言选择器 -->
+    <div id="language-selector">
+        <label for="lang-select">Language / 语言: </label>
+        <select id="lang-select">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="ui-overlay">
+            <div id="stats">
+                <div><span id="level-label">等级</span>: <span id="level">1</span></div>
+                <div><span id="kills-label">击杀</span>: <span id="kills">0</span></div>
+                <div><span id="combo-label">连击</span>: <span id="combo">0</span></div>
+                <div><span id="score-label">分数</span>: <span id="score">0</span></div>
+                <div><span id="hp-label">生命</span>: <span id="hp">150</span>/<span id="maxHp">150</span></div>
+                <div><span id="weapon-label">武器</span>: <span id="weapon">无</span></div>
+                <div><span id="enemyCount-label">当前关卡敌人</span>: <span id="enemyCount">0</span></div>
+
+                <div class="health-bar">
+                    <div class="health-fill" id="healthBar" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="combat-log"></div>
+
+        <div id="start-screen">
+            <h1 id="welcome-title">⚔️ 武器替换者 ⚔️</h1>
+            <p class="description" id="game-description">在这款独特的 Roguelike 游戏中，每次拾取新武器都会替换当前武器。<br/>利用不同武器的特性战胜越来越强的敌人！</p>
+
+            <div class="game-stats">
+                <p id="controls-move">🎮 <strong>操作说明:</strong> WASD 或方向键移动</p>
+                <p id="controls-attack">💥 <strong>战斗:</strong> 靠近敌人自动攻击</p>
+                <p id="controls-weapon">⚔️ <strong>武器系统:</strong> 拾取新武器自动替换当前武器</p>
+                <p id="controls-objective">🎯 <strong>目标:</strong> 生存并达到更高关卡</p>
+            </div>
+
+            <div class="menu-buttons">
+                <button id="start-btn" class="menu-button primary" data-translate="startGame">开始游戏</button>
+                <button id="continue-btn" class="menu-button secondary" data-translate="continueGame">继续游戏</button>
+                <button id="settings-btn" class="menu-button secondary" data-translate="settings">游戏设置</button>
+                <button id="achievements-btn" class="menu-button secondary" data-translate="achievements">成就系统</button>
+            </div>
+        </div>
+
+        <div id="game-over" class="hidden">
+            <h2 id="game-over-title">游戏结束</h2>
+            <p id="final-level-text">你达到了第 <span id="final-level">1</span> 关</p>
+            <p id="final-kills-text">总共击杀 <span id="final-kills">0</span> 个敌人</p>
+            <p id="final-score-text">获得了 <span id="final-score">0</span> 分</p>
+            <p id="final-combo-text">最大连击数: <span id="final-combo">0</span></p>
+
+            <div class="menu-buttons">
+                <button id="restart-btn" class="menu-button primary" data-translate="restart">重新开始</button>
+                <button id="main-menu-btn" class="menu-button secondary" data-translate="mainMenu">主菜单</button>
+            </div>
+        </div>
+
+        <div id="settings-menu" class="hidden">
+            <h2 id="settings-title">游戏设置</h2>
+
+            <div class="setting-option">
+                <label>
+                    <input type="checkbox" id="sound-enabled"> <span id="sound-label">音效开启</span>
+                </label>
+            </div>
+
+            <div class="setting-option">
+                <label>
+                    <input type="checkbox" id="music-enabled"> <span id="music-label">音乐开启</span>
+                </label>
+            </div>
+
+            <div class="setting-option">
+                <label>
+                    <span id="difficulty-label">难度:</span>
+                    <select id="difficulty-select">
+                        <option value="easy" data-translate="easy">简单</option>
+                        <option value="normal" selected data-translate="normal">普通</option>
+                        <option value="hard" data-translate="hard">困难</option>
+                        <option value="insane" data-translate="insane">疯狂</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="menu-buttons">
+                <button id="apply-settings-btn" class="menu-button primary" data-translate="apply">应用设置</button>
+                <button id="back-to-main-btn" class="menu-button secondary" data-translate="menuBack">返回主菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏逻辑脚本 -->
+    <script src="game.js"></script>
+
+    <!-- 各种增强系统 -->
+    <script src="comprehensive-save-system.js"></script>
+    <script src="complete-achievement-system.js"></script>
+    <script src="steam-audio-system.js"></script>
+    <script src="steam-menu-system.js"></script>
+    <script src="steam-tutorial-system.js"></script>
+    <script src="player-growth-enhancement.js"></script>
+    <script src="core-gameplay-enhancements.js"></script>
+    <script src="content-expansion-enhancement.js"></script>
+    <script src="enhanced-core-gameplay.js"></script>
+    <script src="weapon-balance-enhancement.js"></script>
+
+    <!-- 新增的增强系统 -->
+    <script src="steam-game-enhancement.js"></script>
+    <script src="steam-content-expansion.js"></script>
+    <script src="steam-graphics-enhancement.js"></script>
+    <script src="steam-controller-support.js"></script>
+    <script src="steam-localization.js"></script>
+
+    <script>
+        // 游戏主逻辑增强
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化语言选择器
+            const langSelect = document.getElementById('lang-select');
+
+            // 设置默认选中语言
+            if (window.steamLocalization) {
+                langSelect.value = window.steamLocalization.getCurrentLanguage();
+
+                // 绑定语言切换事件
+                langSelect.addEventListener('change', function() {
+                    window.switchLanguage(this.value);
+                });
+            }
+
+            // 在游戏开始时应用所有增强
+            if (typeof steamGameEnhancement !== 'undefined') {
+                console.log("Steam版增强已激活");
+            }
+
+            // 如果有音频系统，初始化
+            if (typeof steamAudioSystem !== 'undefined') {
+                // 设置音效开关
+                document.getElementById('sound-enabled').onchange = (e) => {
+                    steamAudioSystem.setSoundEnabled(e.target.checked);
+                };
+
+                document.getElementById('music-enabled').onchange = (e) => {
+                    steamAudioSystem.setMusicEnabled(e.target.checked);
+                };
+            }
+
+            // 绑定UI更新函数
+            if (typeof gameState !== 'undefined') {
+                // 创建一个函数定期更新UI
+                function updateUI() {
+                    if (gameState.player) {
+                        document.getElementById('hp').textContent = Math.ceil(gameState.player.hp);
+                        document.getElementById('maxHp').textContent = Math.ceil(gameState.player.maxHp);
+
+                        // 更新生命条
+                        const healthPercent = (gameState.player.hp / gameState.player.maxHp) * 100;
+                        document.getElementById('healthBar').style.width = healthPercent + '%';
+
+                        // 更新武器显示
+                        if (gameState.player.weapon) {
+                            document.getElementById('weapon').textContent = gameState.player.weapon.name;
+                        } else {
+                            document.getElementById('weapon').textContent = window.t('weapon') || '无';
+                        }
+                    }
+
+                    document.getElementById('level').textContent = gameState.level || 1;
+                    document.getElementById('kills').textContent = gameState.kills || 0;
+                    document.getElementById('combo').textContent = gameState.player?.combo || 0;
+                    document.getElementById('score').textContent = gameState.score || 0;
+                    document.getElementById('enemyCount').textContent = gameState.enemies ? gameState.enemies.length : 0;
+
+                    requestAnimationFrame(updateUI);
+                }
+
+                // 启动UI更新
+                updateUI();
+            }
+
+            // 绑定开始游戏按钮
+            document.getElementById('start-btn').onclick = () => {
+                document.getElementById('start-screen').classList.add('hidden');
+                if (typeof startGame !== 'undefined') {
+                    startGame();
+                }
+            };
+
+            // 绑定继续游戏按钮
+            document.getElementById('continue-btn').onclick = () => {
+                if (typeof comprehensiveSaveSystem !== 'undefined') {
+                    if (comprehensiveSaveSystem.hasSave()) {
+                        comprehensiveSaveSystem.load();
+                        document.getElementById('start-screen').classList.add('hidden');
+                        if (typeof resumeGame !== 'undefined') {
+                            resumeGame();
+                        }
+                    } else {
+                        // 如果没有存档，开始新游戏
+                        document.getElementById('start-screen').classList.add('hidden');
+                        if (typeof startGame !== 'undefined') {
+                            startGame();
+                        }
+                    }
+                }
+            };
+
+            // 绑定设置按钮
+            document.getElementById('settings-btn').onclick = () => {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('settings-menu').classList.remove('hidden');
+
+                // 加载当前设置
+                if (typeof soundEnabled !== 'undefined') {
+                    document.getElementById('sound-enabled').checked = soundEnabled;
+                }
+                if (typeof musicEnabled !== 'undefined') {
+                    document.getElementById('music-enabled').checked = musicEnabled;
+                }
+            };
+
+            // 绑定成就按钮
+            document.getElementById('achievements-btn').onclick = () => {
+                if (typeof steamMenuSystem !== 'undefined') {
+                    steamMenuSystem.showAchievementsMenu();
+                }
+            };
+
+            // 绑定应用设置按钮
+            document.getElementById('apply-settings-btn').onclick = () => {
+                if (typeof steamAudioSystem !== 'undefined') {
+                    steamAudioSystem.setSoundEnabled(document.getElementById('sound-enabled').checked);
+                    steamAudioSystem.setMusicEnabled(document.getElementById('music-enabled').checked);
+                }
+
+                // 应用难度设置
+                window.selectedDifficulty = document.getElementById('difficulty-select').value;
+
+                // 返回主菜单
+                document.getElementById('settings-menu').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+            };
+
+            // 绑定返回主菜单按钮
+            document.getElementById('back-to-main-btn').onclick = () => {
+                document.getElementById('settings-menu').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+            };
+
+            // 绑定重启按钮
+            document.getElementById('restart-btn').onclick = () => {
+                document.getElementById('game-over').classList.add('hidden');
+                document.getElementById('start-screen').classList.add('hidden');
+                if (typeof startGame !== 'undefined') {
+                    startGame();
+                }
+            };
+
+            // 绑定返回主菜单按钮（游戏结束界面）
+            document.getElementById('main-menu-btn').onclick = () => {
+                document.getElementById('game-over').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+            };
+
+            // 初始化音频设置
+            if (typeof steamAudioSystem !== 'undefined') {
+                document.getElementById('sound-enabled').checked = steamAudioSystem.isSoundEnabled();
+                document.getElementById('music-enabled').checked = steamAudioSystem.isMusicEnabled();
+            }
+
+            // 如果有存档，更新继续游戏按钮状态
+            if (typeof comprehensiveSaveSystem !== 'undefined') {
+                if (!comprehensiveSaveSystem.hasSave()) {
+                    document.getElementById('continue-btn').disabled = true;
+                    document.getElementById('continue-btn').textContent = window.t('continueGame') + " (无存档)";
+                }
+            }
+
+            // 每次语言更改时更新所有UI文本
+            if (window.steamLocalization) {
+                window.steamLocalization.updateAllUIText();
+            }
+
+            console.log("游戏UI已初始化，Steam版所有增强功能已加载");
+        });
+
+        // 游戏性能监控
+        let lastUpdateTime = Date.now();
+        let frameCount = 0;
+        let fps = 0;
+
+        // FPS监测
+        function updateFPS() {
+            const now = Date.now();
+            frameCount++;
+
+            if (now >= lastUpdateTime + 1000) {
+                fps = Math.round((frameCount * 1000) / (now - lastUpdateTime));
+                frameCount = 0;
+                lastUpdateTime = now;
+
+                // 在开发环境中显示FPS
+                if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                    console.log(`FPS: ${fps}`);
+                }
+            }
+
+            requestAnimationFrame(updateFPS);
+        }
+
+        updateFPS();
+    </script>
+</body>
+</html>
