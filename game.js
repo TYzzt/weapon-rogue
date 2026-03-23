@@ -291,7 +291,67 @@ const WEAPONS = [
     { name: '现实扭曲器', damage: 700, rarity: 'mythic', color: '#00FA9A' },
     { name: '维度棱镜', damage: 650, rarity: 'mythic', color: '#FF69B4' },
     { name: '因果律武器', damage: 750, rarity: 'mythic', color: '#4169E1' },
-    { name: '观测者之眼', damage: 680, rarity: 'mythic', color: '#3CB371' }
+    { name: '观测者之眼', damage: 680, rarity: 'mythic', color: '#3CB371' },
+
+    // 新增普通武器
+    { name: '铁铲', damage: 4, rarity: 'common', color: '#A0522D' },
+    { name: '木尺', damage: 3, rarity: 'common', color: '#D2B48C' },
+    { name: '竹签', damage: 2, rarity: 'common', color: '#9ACD32' },
+    { name: '扫帚柄', damage: 3, rarity: 'common', color: '#8B4513' },
+    { name: '菜刀', damage: 5, rarity: 'common', color: '#C0C0C0' },
+    { name: '擀面杖', damage: 4, rarity: 'common', color: '#D2B48C' },
+    { name: '筷子', damage: 2, rarity: 'common', color: '#8B4513' },
+    { name: '锅铲', damage: 4, rarity: 'common', color: '#C0C0C0' },
+    { name: '钥匙扣', damage: 3, rarity: 'common', color: '#FFD700' },
+    { name: '衣架', damage: 2, rarity: 'common', color: '#C0C0C0' },
+
+    // 新增不常见武器
+    { name: '银针', damage: 12, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '钢丝', damage: 11, rarity: 'uncommon', color: '#A9A9A9' },
+    { name: '铁钳', damage: 14, rarity: 'uncommon', color: '#708090' },
+    { name: '铜管', damage: 13, rarity: 'uncommon', color: '#B87333' },
+    { name: '石斧', damage: 15, rarity: 'uncommon', color: '#808080' },
+    { name: '骨锥', damage: 16, rarity: 'uncommon', color: '#F5F5DC' },
+    { name: '钢爪', damage: 17, rarity: 'uncommon', color: '#696969' },
+    { name: '铁钩', damage: 15, rarity: 'uncommon', color: '#2F4F4F' },
+    { name: '铜哨', damage: 12, rarity: 'uncommon', color: '#CD853F' },
+    { name: '铁刺', damage: 14, rarity: 'uncommon', color: '#778899' },
+
+    // 新增稀有武器
+    { name: '水晶匕首', damage: 25, rarity: 'rare', color: '#B0E0E6' },
+    { name: '月牙刃', damage: 27, rarity: 'rare', color: '#FFE4C4' },
+    { name: '星辉剑', damage: 29, rarity: 'rare', color: '#FFFACD' },
+    { name: '日轮斧', damage: 31, rarity: 'rare', color: '#FFD700' },
+    { name: '海神叉', damage: 33, rarity: 'rare', color: '#00CED1' },
+    { name: '雷神锤', damage: 32, rarity: 'rare', color: '#F0E68C' },
+    { name: '风神扇', damage: 28, rarity: 'rare', color: '#87CEEB' },
+    { name: '土神锤', damage: 35, rarity: 'rare', color: '#DAA520' },
+    { name: '火龙鞭', damage: 34, rarity: 'rare', color: '#FF4500' },
+    { name: '冰晶刃', damage: 30, rarity: 'rare', color: '#87CEFA' },
+
+    // 新增史诗武器
+    { name: '创世之弓', damage: 40, rarity: 'epic', color: '#FFB6C1' },
+    { name: '灭世之矛', damage: 42, rarity: 'epic', color: '#CD5C5C' },
+    { name: '封神之印', damage: 44, rarity: 'epic', color: '#F0FFF0' },
+    { name: '诛仙之剑', damage: 46, rarity: 'epic', color: '#7FFFD4' },
+    { name: '戮仙之斧', damage: 48, rarity: 'epic', color: '#DEB887' },
+    { name: '陷仙之锤', damage: 45, rarity: 'epic', color: '#D8BFD8' },
+    { name: '绝仙之刃', damage: 47, rarity: 'epic', color: '#DDA0DD' },
+    { name: '盘古斧', damage: 49, rarity: 'epic', color: '#BDB76B' },
+    { name: '女娲石', damage: 43, rarity: 'epic', color: '#F5DEB3' },
+    { name: '伏羲琴', damage: 41, rarity: 'epic', color: '#DAA520' },
+
+    // 新增传说武器
+    { name: '鸿蒙剑', damage: 60, rarity: 'legendary', color: '#32CD32' },
+    { name: '太初刀', damage: 62, rarity: 'legendary', color: '#BA55D3' },
+    { name: '混元锤', damage: 64, rarity: 'legendary', color: '#48D1CC' },
+    { name: '太极扇', damage: 58, rarity: 'legendary', color: '#F4A460' },
+    { name: '阴阳镜', damage: 66, rarity: 'legendary', color: '#663399' },
+    { name: '八卦炉', damage: 55, rarity: 'legendary', color: '#FF0000' },
+    { name: '乾坤鼎', damage: 68, rarity: 'legendary', color: '#20B2AA' },
+    { name: '轮回盘', damage: 65, rarity: 'legendary', color: '#FF69B4' },
+    { name: '造化果', damage: 57, rarity: 'legendary', color: '#FF1493' },
+    { name: '混沌珠', damage: 70, rarity: 'legendary', color: '#9370DB' }
 ];
 
 // 更新稀有度权重，调整为更合理的平衡性分布
@@ -363,6 +423,10 @@ let gameState = {
         combo: 0, // 连击数
         maxCombo: 0, // 最大连击数
         score: 0, // 得分
+        // 连击奖励属性
+        comboDamageMultiplier: 1.0, // 连击伤害倍率
+        comboAttackSpeed: 1.0, // 连击攻击速度倍率
+        comboDefense: 1.0 // 连击防御倍率（受伤减少）
     },
     // 游戏进度
     level: 1,
@@ -1066,7 +1130,12 @@ function useSkill(skillKey) {
                         gameState.player.score += enemyScore;
 
                         gameState.kills++;
-                        if (gameState.kills % 10 === 0) {
+
+                        // 根据当前关卡决定升级所需的击杀数，使其与UI显示一致
+                        // 优化升级公式：前期增长较慢，让玩家有适应期；后期增长加快，保持挑战性
+                        const killsNeededForLevel = Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3);
+
+                        if (gameState.kills % killsNeededForLevel === 0) {
                             gameState.level++;
                             showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
 
@@ -1080,6 +1149,20 @@ function useSkill(skillKey) {
                             }
 
                             AudioManager.playSound('level_up');
+
+                            // 升级时增加玩家生命值
+                            // 每升一级增加一定生命值，但增长递减
+                            const baseHpIncrease = 8; // 基础生命值增加量
+                            const levelMultiplier = Math.max(0.3, 1.0 - (gameState.level * 0.005)); // 随等级增长递减
+                            const hpIncrease = Math.floor(baseHpIncrease * levelMultiplier);
+
+                            gameState.player.maxHp += hpIncrease;
+                            gameState.player.hp += hpIncrease; // 同时恢复相应生命值
+
+                            // 限制最大生命值，避免过度膨胀
+                            const maxHpLimit = 500; // 设定最大生命值上限
+                            gameState.player.maxHp = Math.min(gameState.player.maxHp, maxHpLimit);
+                            gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
                         }
 
                         gameState.enemies.splice(i, 1);
@@ -1847,6 +1930,18 @@ const ENEMY_TYPES = {
     DEMIGOD: { name: '半神', speed: 0.5, hp: 5.0, damage: 4.0, size: 3.0, behavior: 'mixed' }, // 极高血量极高伤害的顶级敌人
     PLANET: { name: '行星守护者', speed: 0.1, hp: 8.0, damage: 2.5, size: 4.0, behavior: 'ranged' }, // 巨大型敌人，极难击败
     COSMOS: { name: '宇宙意志', speed: 0.3, hp: 6.0, damage: 3.5, size: 3.5, behavior: 'mixed' }, // 全能型终极敌人
+
+    // 新增更多敌人类型 (第五波)
+    ANGEL: { name: '天使', speed: 0.8, hp: 2.5, damage: 2.8, size: 1.8, behavior: 'ranged' }, // 光属性敌人，远程攻击
+    PIRATE: { name: '海盗', speed: 1.4, hp: 1.5, damage: 1.9, size: 1.4, behavior: 'melee' }, // 快速近战敌人，带钩爪
+    NINJA: { name: '忍者', speed: 2.3, hp: 0.6, damage: 2.8, size: 0.8, behavior: 'melee' }, // 极速高伤害低血量
+    CYBORG: { name: '机械战士', speed: 1.1, hp: 2.2, damage: 2.0, size: 1.7, behavior: 'ranged' }, // 机械化敌人，远程攻击
+    ELF: { name: '精灵', speed: 1.5, hp: 1.2, damage: 2.2, size: 1.1, behavior: 'ranged' }, // 精灵弓箭手，高精准度
+    DRUID: { name: '德鲁伊', speed: 0.7, hp: 1.8, damage: 2.5, size: 1.4, behavior: 'ranged' }, // 自然法师，可召唤
+    ZOMBIE: { name: '僵尸', speed: 0.5, hp: 1.6, damage: 1.2, size: 1.2, behavior: 'melee' }, // 缓慢但耐打的亡灵
+    ORGE: { name: '食人魔', speed: 0.7, hp: 2.8, damage: 2.2, size: 2.2, behavior: 'melee' }, // 大型近战怪物
+    PHOENIX: { name: '凤凰', speed: 1.2, hp: 1.0, damage: 2.4, size: 1.3, behavior: 'ranged' }, // 火系飞行敌人，会重生
+    KRAKEN: { name: '海怪', speed: 0.4, hp: 4.5, damage: 1.5, size: 2.8, behavior: 'ranged' }, // 大型水域敌人，触手攻击
 };
 
 class Enemy {
@@ -1891,6 +1986,27 @@ class Enemy {
         let totalWeight = 0;
         for (const weight of Object.values(enemyWeights)) {
             totalWeight += weight;
+        }
+
+        // 随着关卡提高，添加新的敌人类型
+        // 为新添加的敌人类型添加权重
+        if (level > 8) { // 只有在较高的关卡才出现新敌人
+            enemyWeights['ANGEL'] = Math.min(0.005, 0.0001 + (level * 0.0002)); // 天使随等级提高而增加
+            enemyWeights['PIRATE'] = Math.min(0.005, 0.0001 + (level * 0.0002)); // 海盗随等级提高而增加
+            enemyWeights['NINJA'] = Math.min(0.005, 0.0001 + (level * 0.0003)); // 忍者随等级提高而增加
+            enemyWeights['CYBORG'] = Math.min(0.004, 0.0001 + (level * 0.0002)); // 机械战士随等级提高而增加
+            enemyWeights['ELF'] = Math.min(0.004, 0.0001 + (level * 0.0002)); // 精灵随等级提高而增加
+            enemyWeights['DRUID'] = Math.min(0.004, 0.0001 + (level * 0.0002)); // 德鲁伊随等级提高而增加
+        }
+
+        if (level > 12) { // 更高的关卡才出现以下敌人
+            enemyWeights['ZOMBIE'] = Math.min(0.003, 0.0001 + (level * 0.0001)); // 僵尸随等级提高而增加
+            enemyWeights['ORGE'] = Math.min(0.002, 0.00005 + (level * 0.0001)); // 食人魔随等级提高而增加
+        }
+
+        if (level > 20) { // 非常高的关卡才出现以下敌人
+            enemyWeights['PHOENIX'] = Math.min(0.001, 0.00005 + (level * 0.00008)); // 凤凰随等级提高而增加
+            enemyWeights['KRAKEN'] = Math.min(0.0005, 0.00002 + (level * 0.00005)); // 海怪随等级提高而增加
         }
 
         // 随机选择敌人类型，基于权重
@@ -3110,10 +3226,28 @@ function usePotion(potion) {
 
                         gameState.kills++;
 
-                        // 每 10 杀升级
-                        if (gameState.kills % 10 === 0) {
+                        // 根据当前关卡决定升级所需的击杀数，使其与UI显示一致
+                        // 优化升级公式：前期增长较慢，让玩家有适应期；后期增长加快，保持挑战性
+                        const killsNeededForLevel = Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3);
+
+                        if (gameState.kills % killsNeededForLevel === 0) {
                             gameState.level++;
-                            showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                            showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
+                            AudioManager.playSound('level_up');
+
+                            // 升级时增加玩家生命值
+                            // 每升一级增加一定生命值，但增长递减
+                            const baseHpIncrease = 8; // 基础生命值增加量
+                            const levelMultiplier = Math.max(0.3, 1.0 - (gameState.level * 0.005)); // 随等级增长递减
+                            const hpIncrease = Math.floor(baseHpIncrease * levelMultiplier);
+
+                            gameState.player.maxHp += hpIncrease;
+                            gameState.player.hp += hpIncrease; // 同时恢复相应生命值
+
+                            // 限制最大生命值，避免过度膨胀
+                            const maxHpLimit = 500; // 设定最大生命值上限
+                            gameState.player.maxHp = Math.min(gameState.player.maxHp, maxHpLimit);
+                            gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
                         }
 
                         gameState.enemies.splice(i, 1);
@@ -3198,8 +3332,8 @@ function spawnEnemy() {
     // 随着关卡提高，生成速度加快（调整为更平缓的增长，使游戏体验更好）
     // 初始速度较慢，让新手玩家有适应期；后期增速更快，增加挑战性
     // 基础生成间隔随关卡增加逐渐缩短，但有一个最小值避免敌人过多
-    const baseSpawnRate = 8000 - (gameState.level * 80); // 减慢增长速度，避免后期过快
-    const minSpawnRate = 1500; // 提高最小生成间隔，给玩家更多喘息机会
+    const baseSpawnRate = 8000 - (gameState.level * 50); // 减慢增长速度，避免后期过快 - 从原来的80改为50
+    const minSpawnRate = 1200; // 提高最小生成间隔，从1500改为1200，给玩家更多喘息机会但仍保持挑战
     const spawnRate = Math.max(minSpawnRate, baseSpawnRate);
 
     // 根据难度调整生成速率
@@ -3391,6 +3525,9 @@ function attackEnemies() {
     const berserkBuff = gameState.buffs.find(b => b.effect === 'berserk_damage');
     if (berserkBuff) damage *= berserkBuff.value;
 
+    // 应用连击伤害倍数
+    damage *= gameState.player.comboDamageMultiplier;
+
     // 检查是否使用了幸运药水
     const luckBuff = gameState.buffs.find(b => b.effect === 'luck');
     let usedLuck = luckBuff !== undefined;
@@ -3465,8 +3602,22 @@ function attackEnemies() {
 
                 if (gameState.kills % killsNeededForLevel === 0) {
                     gameState.level++;
-                    showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                    showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
                     AudioManager.playSound('level_up');
+
+                    // 升级时增加玩家生命值
+                    // 每升一级增加一定生命值，但增长递减
+                    const baseHpIncrease = 8; // 基础生命值增加量
+                    const levelMultiplier = Math.max(0.3, 1.0 - (gameState.level * 0.005)); // 随等级增长递减
+                    const hpIncrease = Math.floor(baseHpIncrease * levelMultiplier);
+
+                    gameState.player.maxHp += hpIncrease;
+                    gameState.player.hp += hpIncrease; // 同时恢复相应生命值
+
+                    // 限制最大生命值，避免过度膨胀
+                    const maxHpLimit = 500; // 设定最大生命值上限
+                    gameState.player.maxHp = Math.min(gameState.player.maxHp, maxHpLimit);
+                    gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
                 }
 
                 gameState.enemies.splice(i, 1);
@@ -3497,10 +3648,12 @@ function attackEnemies() {
         updateCombo(currentTime);
 
         // 显示连击信息
-        showCombatLog(`⚔️ 攻击造成 ${damage} 点伤害!`, 'weapon-get');
+        showCombatLog(`⚔️ 攻击造成 ${Math.floor(damage)} 点伤害!`, 'weapon-get');
 
         // 设置攻击冷却
-        gameState.player.attackCooldown = 15; // 15帧冷却
+        // 应用连击攻击速度加成
+        const baseCooldown = 15; // 基础冷却
+        gameState.player.attackCooldown = Math.floor(baseCooldown * gameState.player.comboAttackSpeed); // 15帧冷却
 
         // 屏幕轻微震动
         gameState.screenShake = 5;
@@ -3551,6 +3704,9 @@ function updateCombo(currentTime) {
         if (gameState.player.combo > gameState.player.maxCombo) {
             gameState.player.maxCombo = gameState.player.combo;
         }
+
+        // 根据连击数提供奖励效果
+        applyComboRewards();
     } else {
         // 否则重置连击
         gameState.player.combo = 1;
@@ -3558,13 +3714,69 @@ function updateCombo(currentTime) {
 
     gameState.player.lastHitTime = currentTime;
 
-    // 连击奖励得分
-    gameState.player.score += gameState.player.combo;
+    // 连击奖励得分（根据连击数增加得分倍率）
+    const comboScoreBonus = Math.floor(gameState.player.combo * 0.5); // 基础奖励
+    gameState.player.score += 1 + comboScoreBonus; // 基础得分为1加上连击奖励
 
-    // 显示连击信息
-    if (gameState.player.combo >= 2) {
+    // 显示连击信息（仅在特定连击数显示特殊提示）
+    if (gameState.player.combo >= 2 &&
+        (gameState.player.combo === 5 ||
+         gameState.player.combo === 10 ||
+         gameState.player.combo >= 20 && gameState.player.combo % 10 === 0)) {
         showCombatLog(`🔥 ${gameState.player.combo} 连击!`, 'weapon-get');
+
+        // 播放特殊的连击音效
+        if (gameState.player.combo >= 20) {
+            AudioManager.playSound('critical_hit'); // 高连击特殊音效
+        } else if (gameState.player.combo >= 10) {
+            AudioManager.playSound('level_up'); // 高连击音效
+        } else if (gameState.player.combo >= 5) {
+            AudioManager.playSound('collect'); // 连击音效
+        }
     }
+}
+
+// 应用连击奖励效果
+function applyComboRewards() {
+    // 不同连击阶段提供不同奖励
+    if (gameState.player.combo >= 50) {
+        // 50+连击: 伤害增加50%，攻击速度提升
+        gameState.player.comboDamageMultiplier = 1.5;
+        gameState.player.comboAttackSpeed = 0.7; // 攻击间隔减少30%
+        gameState.player.comboDefense = 1.0; // 受伤减少10%
+    } else if (gameState.player.combo >= 30) {
+        // 30+连击: 伤害增加40%，攻击速度提升
+        gameState.player.comboDamageMultiplier = 1.4;
+        gameState.player.comboAttackSpeed = 0.75;
+        gameState.player.comboDefense = 1.0;
+    } else if (gameState.player.combo >= 20) {
+        // 20+连击: 伤害增加30%，轻微防御加成
+        gameState.player.comboDamageMultiplier = 1.3;
+        gameState.player.comboAttackSpeed = 0.85;
+        gameState.player.comboDefense = 0.8; // 受伤减少20%
+    } else if (gameState.player.combo >= 10) {
+        // 10+连击: 伤害增加20%
+        gameState.player.comboDamageMultiplier = 1.2;
+        gameState.player.comboAttackSpeed = 1.0;
+        gameState.player.comboDefense = 1.0;
+    } else if (gameState.player.combo >= 5) {
+        // 5+连击: 伤害增加10%
+        gameState.player.comboDamageMultiplier = 1.1;
+        gameState.player.comboAttackSpeed = 1.0;
+        gameState.player.comboDefense = 1.0;
+    } else {
+        // 低于5连击: 无奖励
+        gameState.player.comboDamageMultiplier = 1.0;
+        gameState.player.comboAttackSpeed = 1.0;
+        gameState.player.comboDefense = 1.0;
+    }
+}
+
+// 重置连击奖励
+function resetComboRewards() {
+    gameState.player.comboDamageMultiplier = 1.0;
+    gameState.player.comboAttackSpeed = 1.0;
+    gameState.player.comboDefense = 1.0;
 }
 
 // 重置连击
@@ -3574,6 +3786,9 @@ function resetCombo() {
         AudioManager.playSound('combo_break');
     }
     gameState.player.combo = 0;
+
+    // 同时重置连击奖励
+    resetComboRewards();
 }
 
 // 检测敌人的碰撞（保持原有的碰撞检测）
@@ -3624,6 +3839,9 @@ function checkCollisions() {
 
             // 播放受伤音效
             AudioManager.playSound('hurt');
+
+            // 应用连击防御加成
+            damage *= gameState.player.comboDefense;
 
             // 如果最终伤害仍大于0，减少玩家生命值
             if (damage > 0) {
@@ -3680,10 +3898,14 @@ function checkCollisions() {
 
                         gameState.kills++;
 
-                        // 每 10 杀升级
-                        if (gameState.kills % 10 === 0) {
+                        // 根据当前关卡决定升级所需的击杀数，使其与UI显示一致
+                        // 优化升级公式：前期增长较慢，让玩家有适应期；后期增长加快，保持挑战性
+                        const killsNeededForLevel = Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3);
+
+                        if (gameState.kills % killsNeededForLevel === 0) {
                             gameState.level++;
-                            showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                            showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
+                            AudioManager.playSound('level_up');
                         }
                     }
                 }
@@ -3740,6 +3962,9 @@ function checkCollisions() {
                 projArmorReduction = Math.floor(gameState.player.weapon.damage * 0.1);
                 projDamage = Math.max(1, projDamage - projArmorReduction);
             }
+
+            // 应用连击防御加成
+            projDamage *= gameState.player.comboDefense;
 
             gameState.player.hp -= projDamage;
 
