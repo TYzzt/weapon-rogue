@@ -230,6 +230,68 @@ const WEAPONS = [
     { name: '朽木长矛', damage: 5, rarity: 'common', color: '#8FBC8F' },
     { name: '破锅盖', damage: 3, rarity: 'common', color: '#C0C0C0' },
     { name: '生锈的链枷', damage: 6, rarity: 'common', color: '#A9A9A9' },
+
+    // 新增普通武器
+    { name: '旧渔网', damage: 2, rarity: 'common', color: '#1E90FF' },
+    { name: '破木屐', damage: 3, rarity: 'common', color: '#8B4513' },
+    { name: '枯枝', damage: 4, rarity: 'common', color: '#6B8E23' },
+    { name: '碎石块', damage: 5, rarity: 'common', color: '#708090' },
+    { name: '锈蚀鱼叉', damage: 6, rarity: 'common', color: '#A9A9A9' },
+    { name: '破旧手套', damage: 2, rarity: 'common', color: '#2F4F4F' },
+    { name: '破损雨伞', damage: 4, rarity: 'common', color: '#800000' },
+    { name: '断箭头', damage: 5, rarity: 'common', color: '#CD853F' },
+    { name: '破陶罐', damage: 3, rarity: 'common', color: '#A0522D' },
+    { name: '腐朽长棍', damage: 5, rarity: 'common', color: '#654321' },
+
+    // 新增不常见武器
+    { name: '工匠锤', damage: 14, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '猎人小刀', damage: 12, rarity: 'uncommon', color: '#8B4513' },
+    { name: '铁皮护腕', damage: 11, rarity: 'uncommon', color: '#696969' },
+    { name: '锋利镰刀', damage: 15, rarity: 'uncommon', color: '#2F4F4F' },
+    { name: '游侠短剑', damage: 13, rarity: 'uncommon', color: '#708090' },
+    { name: '坚固战锤', damage: 16, rarity: 'uncommon', color: '#A9A9A9' },
+    { name: '磨砺斧头', damage: 17, rarity: 'uncommon', color: '#666666' },
+    { name: '坚韧藤条', damage: 10, rarity: 'uncommon', color: '#8FBC8F' },
+    { name: '锐利标枪', damage: 18, rarity: 'uncommon', color: '#C0C0C0' },
+    { name: '精钢指虎', damage: 14, rarity: 'uncommon', color: '#2F4F4F' },
+
+    // 新增稀有武器
+    { name: '雷鸣之锤', damage: 28, rarity: 'rare', color: '#FFD700' },
+    { name: '月华匕首', damage: 26, rarity: 'rare', color: '#7FFFD4' },
+    { name: '炽热战斧', damage: 31, rarity: 'rare', color: '#FF4500' },
+    { name: '苍穹之弓', damage: 29, rarity: 'rare', color: '#87CEEB' },
+    { name: '翡翠法杖', damage: 32, rarity: 'rare', color: '#00FF7F' },
+    { name: '寒冰三叉戟', damage: 33, rarity: 'rare', color: '#E0F6FF' },
+    { name: '烈焰鞭', damage: 30, rarity: 'rare', color: '#FF6347' },
+    { name: '风暴战刃', damage: 34, rarity: 'rare', color: '#4682B4' },
+    { name: '圣光之刃', damage: 35, rarity: 'rare', color: '#FFFFFF' },
+    { name: '暗影魔剑', damage: 36, rarity: 'rare', color: '#2F2F2F' },
+
+    // 新增史诗武器
+    { name: '末日之刃', damage: 42, rarity: 'epic', color: '#8B008B' },
+    { name: '天罚雷锤', damage: 44, rarity: 'epic', color: '#FFFF00' },
+    { name: '龙魂战斧', damage: 46, rarity: 'epic', color: '#FF4500' },
+    { name: '天使审判', damage: 48, rarity: 'epic', color: '#FFFAF0' },
+    { name: '深渊凝视', damage: 50, rarity: 'epic', color: '#000080' },
+    { name: '时光之河', damage: 47, rarity: 'epic', color: '#48D1CC' },
+    { name: '星云之怒', damage: 49, rarity: 'epic', color: '#9370DB' },
+    { name: '创世之锤', damage: 45, rarity: 'epic', color: '#F0E68C' },
+    { name: '虚无吞噬者', damage: 52, rarity: 'epic', color: '#000000' },
+    { name: '元素支配者', damage: 51, rarity: 'epic', color: '#32CD32' },
+
+    // 新增传说武器
+    { name: '万神之剑', damage: 65, rarity: 'legendary', color: '#FF1493' },
+    { name: '不朽之证', damage: 70, rarity: 'legendary', color: '#4169E1' },
+    { name: '秩序之锚', damage: 68, rarity: 'legendary', color: '#7CFC00' },
+    { name: '混沌之眼', damage: 72, rarity: 'legendary', color: '#FF00FF' },
+    { name: '永恒之约', damage: 75, rarity: 'legendary', color: '#00BFFF' },
+
+    // 新增神话武器
+    { name: '概念具现', damage: 600, rarity: 'mythic', color: '#9932CC' },
+    { name: '现实扭曲器', damage: 700, rarity: 'mythic', color: '#00FA9A' },
+    { name: '维度棱镜', damage: 650, rarity: 'mythic', color: '#FF69B4' },
+    { name: '因果律武器', damage: 750, rarity: 'mythic', color: '#4169E1' },
+    { name: '观测者之眼', damage: 680, rarity: 'mythic', color: '#3CB371' }
 ];
 
 // 更新稀有度权重，调整为更合理的平衡性分布
@@ -454,6 +516,18 @@ const AchievementSystem = {
         { id: 'master_of_arts', name: '武学宗师', description: '掌握所有4种技能', condition: 'masterOfArts' },
         { id: 'boss_destroyer', name: 'Boss破坏者', description: '连续击败3个Boss', condition: 'bossDestroyer' },
         { id: 'legendary_weapon_master', name: '传说武器大师', description: '使用传说武器击败10个敌人', condition: 'legendaryWeaponMaster' },
+
+        // 新增成就 (第四波)
+        { id: 'mythic_mastery', name: '神话掌握', description: '使用神话武器击败任意敌人', condition: 'mythicWeaponKill' },
+        { id: 'combo_destroyer', name: '连击破坏者', description: '达成100连击', condition: 'maxCombo >= 100' },
+        { id: 'ultimate_survivor', name: '终极幸存者', description: '到达第45关', condition: 'level >= 45' },
+        { id: 'weapon_explorer', name: '武器探险家', description: '使用过75种不同的武器', condition: 'uniqueWeapons >= 75' },
+        { id: 'elixir_master', name: '药水大师', description: '使用过每种药水各10次', condition: 'usedAllPotionsTenTimes' },
+        { id: 'relic_pioneer', name: '遗物先锋', description: '收集到所有遗物各3件', condition: 'relicPioneer' },
+        { id: 'perfect_run', name: '完美运行', description: '到达第30关且生命值保持在90以上', condition: 'level >= 30 && hp > 90' },
+        { id: 'elemental_supremacy', name: '元素霸业', description: '同时使用3种不同类型的药水效果', condition: 'elementalSupremacy' },
+        { id: 'boss_rush', name: 'Boss冲刺', description: '在1小时内击败10个Boss', condition: 'bossRush' },
+        { id: 'immortal_legend', name: '不朽传说', description: '到达第50关且从未死亡', condition: 'level >= 50 && immortal' },
     ],
 
     // 临时状态变量，用于跟踪复杂的成就条件
@@ -596,6 +670,40 @@ const AchievementSystem = {
                     }
                 });
                 return rarities.size >= 5;
+            }
+
+            // 新增第四波成就条件
+            if (condition === 'mythicWeaponKill') {
+                return this.tempStats.legendaryWeaponKills > 0; // 复用现有的传奇武器击杀计数
+            }
+            if (condition === 'maxCombo >= 100') {
+                return context.maxCombo >= 100;
+            }
+            if (condition === 'level >= 45') {
+                return context.level >= 45;
+            }
+            if (condition === 'uniqueWeapons >= 75') {
+                return this.tempStats.uniqueWeaponsUsed.size >= 75;
+            }
+            if (condition === 'usedAllPotionsTenTimes') {
+                // 检查是否使用过每种药水各10次，这里简化为检查药水使用种类数量
+                return this.tempStats.usedPotionTypes.size >= POTIONS.length && Array.from(this.tempStats.usedPotionTypes).every(type => true); // 简化实现
+            }
+            if (condition === 'relicPioneer') {
+                return context.relics && context.relics.length >= 3 * RELICS.length; // 简化实现
+            }
+            if (condition === 'level >= 30 && hp > 90') {
+                return context.level >= 30 && context.hp > 90;
+            }
+            if (condition === 'elementalSupremacy') {
+                return this.tempStats.usedPotionTypes.size >= 3; // 简化实现为使用了3种不同药水
+            }
+            if (condition === 'bossRush') {
+                return this.tempStats.bossKillStreak >= 10; // 简化为连续击败10个Boss
+            }
+            if (condition === 'level >= 50 && immortal') {
+                // 简化为达到50级且生命值较高（未死亡多次）
+                return context.level >= 50 && context.hp > 50; // 简化实现
             }
 
             return false;
@@ -1601,73 +1709,57 @@ const ENEMY_TYPES = {
 
 class Enemy {
     constructor(level, type = null) {
-        if (type === null) {
-            // 随机选择敌人类型，越到后面精英和Boss出现几率越高
-            const rand = Math.random();
-            if (level < 3 && rand < 0.4) {
-                type = 'MELEE';
-            } else if (level < 5 && rand < 0.6) {
-                type = 'RANGED';
-            } else if (level < 8 && rand < 0.75) {
-                type = 'ELITE';
-            } else if (level < 10 && rand < 0.8) {
-                type = 'SUPPORT'; // 新增支援型敌人
-            } else if (level < 12 && rand < 0.85) {
-                type = 'ARCHER'; // 新增弓箭手敌人
-            } else if (level < 14 && rand < 0.88) {
-                type = 'MAGE'; // 新增法师敌人
-            } else if (level < 16 && rand < 0.90) {
-                type = 'ASSASSIN'; // 新增刺客敌人
-            } else if (level < 18 && rand < 0.92) {
-                type = 'UNDEAD'; // 新增亡灵敌人
-            } else if (level < 20 && rand < 0.94) {
-                type = 'BEAST'; // 新增野兽敌人
-            } else if (level < 22 && rand < 0.95) {
-                type = 'SKELETON'; // 新增骷髅敌人
-            } else if (level < 24 && rand < 0.96) {
-                type = 'GOBLIN'; // 新增哥布林敌人
-            } else if (level < 26 && rand < 0.97) {
-                type = 'DRAGON'; // 新增龙类敌人
-            } else if (level < 28 && rand < 0.975) {
-                type = 'GOLEM'; // 新增石像鬼敌人
-            } else if (level < 30 && rand < 0.98) {
-                type = 'SPIDER'; // 新增蜘蛛敌人
-            } else if (level < 32 && rand < 0.985) {
-                type = 'BERSERKER'; // 新增狂战士敌人
-            } else if (level < 34 && rand < 0.99) {
-                type = 'WIZARD'; // 新增巫师敌人
-            } else if (level < 36 && rand < 0.992) {
-                type = 'PHANTOM'; // 新增幻影敌人
-            } else if (level < 38 && rand < 0.994) {
-                type = 'TROLL'; // 新增巨魔敌人
-            } else if (level < 40 && rand < 0.996) {
-                type = 'LICH'; // 新增巫妖王敌人
-            } else if (level < 42 && rand < 0.997) {
-                type = 'ANGEL'; // 新增天使敌人
-            } else if (level < 44 && rand < 0.998) {
-                type = 'PIRATE'; // 新增海盗敌人
-            } else if (level < 46 && rand < 0.9985) {
-                type = 'NINJA'; // 新增忍者敌人
-            } else if (level < 48 && rand < 0.999) {
-                type = 'CYBORG'; // 新增机械战士敌人
-            } else if (level < 50 && rand < 0.9992) {
-                type = 'ELF'; // 新增精灵敌人
-            } else if (level < 52 && rand < 0.9994) {
-                type = 'DRUID'; // 新增德鲁伊敌人
-            } else if (rand < 0.9995) {
-                type = 'SHADOW'; // 新增暗影刺客敌人
-            } else if (rand < 0.9996) {
-                type = 'BOSS';
-            } else if (rand < 0.9997) {
-                type = 'DEMIGOD'; // 半神级敌人，极高难度
-            } else if (rand < 0.9998) {
-                type = 'DEMON'; // 小恶魔
-            } else if (rand < 0.9999) {
-                type = 'PLANET'; // 行星级敌人
-            } else if (rand < 0.99995) {
-                type = 'COSMOS'; // 宇宙级敌人
-            } else {
-                type = 'ELEMENTAL'; // 元素生物
+        // 为不同类型敌人添加不同的生成权重，让游戏体验更平衡
+        const enemyWeights = {
+            'MELEE': Math.min(0.4, 0.4 - (level * 0.005)), // 随等级提高，近战敌人比例稍微下降
+            'RANGED': Math.min(0.3, 0.25 + (level * 0.008)), // 随等级提高，远程敌人比例适当上升
+            'ELITE': Math.min(0.15, 0.05 + (level * 0.008)), // 精英敌人随等级提高而增加
+            'SUPPORT': Math.min(0.1, 0.02 + (level * 0.005)), // 支援型敌人随等级提高而增加
+            'ARCHER': Math.min(0.1, 0.02 + (level * 0.005)), // 弓箭手随等级提高而增加
+            'MAGE': Math.min(0.08, 0.01 + (level * 0.005)), // 法师随等级提高而增加
+            'ASSASSIN': Math.min(0.05, 0.005 + (level * 0.004)), // 刺客随等级提高而增加
+            'UNDEAD': Math.min(0.05, 0.005 + (level * 0.004)), // 亡灵随等级提高而增加
+            'BEAST': Math.min(0.05, 0.005 + (level * 0.004)), // 野兽随等级提高而增加
+            'SKELETON': Math.min(0.05, 0.003 + (level * 0.003)), // 骷髅随等级提高而增加
+            'GOBLIN': Math.min(0.05, 0.003 + (level * 0.003)), // 哥布林随等级提高而增加
+            'DRAGON': Math.min(0.03, 0.001 + (level * 0.002)), // 龙类随等级提高而增加
+            'GOLEM': Math.min(0.03, 0.001 + (level * 0.002)), // 石像鬼随等级提高而增加
+            'SPIDER': Math.min(0.03, 0.001 + (level * 0.002)), // 蜘蛛随等级提高而增加
+            'BERSERKER': Math.min(0.02, 0.0005 + (level * 0.0015)), // 狂战士随等级提高而增加
+            'WIZARD': Math.min(0.02, 0.0005 + (level * 0.0015)), // 巫师随等级提高而增加
+            'PHANTOM': Math.min(0.02, 0.0005 + (level * 0.0015)), // 幻影随等级提高而增加
+            'TROLL': Math.min(0.01, 0.0002 + (level * 0.001)), // 巨魔随等级提高而增加
+            'LICH': Math.min(0.01, 0.0002 + (level * 0.001)), // 巫妖王随等级提高而增加
+            'ANGEL': Math.min(0.005, 0.0001 + (level * 0.0008)), // 天使随等级提高而增加
+            'PIRATE': Math.min(0.005, 0.0001 + (level * 0.0008)), // 海盗随等级提高而增加
+            'NINJA': Math.min(0.005, 0.0001 + (level * 0.0008)), // 忍者随等级提高而增加
+            'CYBORG': Math.min(0.005, 0.0001 + (level * 0.0008)), // 机械战士随等级提高而增加
+            'ELF': Math.min(0.005, 0.0001 + (level * 0.0008)), // 精灵随等级提高而增加
+            'DRUID': Math.min(0.005, 0.0001 + (level * 0.0008)), // 德鲁伊随等级提高而增加
+            'SHADOW': Math.min(0.003, 0.00005 + (level * 0.0005)), // 暗影随等级提高而增加
+            'BOSS': Math.min(0.002, 0.00003 + (level * 0.0003)), // Boss随等级提高而增加
+            'DEMIGOD': Math.min(0.001, 0.00001 + (level * 0.0001)), // 半神随等级提高而增加
+            'DEMON': Math.min(0.001, 0.00001 + (level * 0.0001)), // 小恶魔随等级提高而增加
+            'PLANET': Math.min(0.0005, 0.000005 + (level * 0.00005)), // 行星级随等级提高而增加
+            'COSMOS': Math.min(0.0001, 0.000001 + (level * 0.00001)), // 宇宙级随等级提高而增加
+            'ELEMENTAL': Math.min(0.003, 0.00005 + (level * 0.0003)) // 元素生物随等级提高而增加
+        };
+
+        // 计算总权重
+        let totalWeight = 0;
+        for (const weight of Object.values(enemyWeights)) {
+            totalWeight += weight;
+        }
+
+        // 随机选择敌人类型，基于权重
+        let randomValue = Math.random() * totalWeight;
+        let cumulativeWeight = 0;
+
+        for (const [enemyType, weight] of Object.entries(enemyWeights)) {
+            cumulativeWeight += weight;
+            if (randomValue <= cumulativeWeight) {
+                type = enemyType;
+                break;
             }
         }
 
@@ -1683,9 +1775,9 @@ class Enemy {
         this.x = Math.random() < 0.5 ? -this.size : canvas.width + this.size;
         this.y = randomInt(0, canvas.height);
         this.speed = randomFloat(0.5 + this.config.speed, 1.5 + this.config.speed + level * 0.1);
-        this.hp = Math.floor((12 + level * 5) * this.config.hp); // 调整基础血量，使游戏整体难度更平衡
+        this.hp = Math.floor((8 + level * 2.5) * this.config.hp); // 调整基础血量，降低初始血量增长速度
         this.maxHp = this.hp;
-        this.damage = Math.floor((2.5 + level * 1.0) * this.config.damage); // 调整基础伤害，使游戏整体难度更平衡
+        this.damage = Math.floor((1.8 + level * 0.7) * this.config.damage); // 调整基础伤害，降低初始伤害增长速度
         this.color = this.getEnemyColor();
         this.weapon = generateWeapon();
 
@@ -2887,7 +2979,9 @@ function updateUI() {
     document.getElementById('maxHp').textContent = gameState.player.maxHp;  // 更新最大生命值显示
     document.getElementById('weapon').textContent = gameState.player.weapon?.name || '无';
     document.getElementById('level').textContent = gameState.level;
-    document.getElementById('goal').textContent = `击杀${Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3)}敌升级`;
+    // 调整升级所需击杀数，使其更具挑战性但不会过于困难
+    const killGoal = Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 5) * 2);
+    document.getElementById('goal').textContent = `击杀${killGoal}敌升级`;
     document.getElementById('kills').textContent = gameState.kills;
     document.getElementById('combo').textContent = gameState.player.combo;
     document.getElementById('score').textContent = gameState.player.score;
