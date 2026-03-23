@@ -350,6 +350,7 @@ const RELICS = [
 // ==================== 游戏状态 ====================
 
 let gameState = {
+    // 玩家状态
     player: {
         hp: 150,  // 增加玩家初始生命值，应对更多敌人
         maxHp: 150,  // 同步最大生命值
@@ -363,96 +364,130 @@ let gameState = {
         maxCombo: 0, // 最大连击数
         score: 0, // 得分
     },
+    // 游戏进度
     level: 1,
     kills: 0,
+    // 道具
     potions: [],
     relics: [],
     buffs: [],
+    // 游戏实体
     enemies: [],
     drops: [],
     projectiles: [],
     particles: [],
+    // 游戏状态
     isPlaying: false,
     isGameOver: false,
     screenShake: 0, // 屏幕震动
     lastHealTime: 0, // 上次自然恢复时间
+    // 存档扩展数据
+    highestLevel: 1,        // 历史最高关卡
+    totalKills: 0,          // 历史总击杀数
+    totalGames: 0,          // 总游戏次数
+    winCount: 0,            // 获胜次数
+    highScores: [],         // 高分榜
+    weaponStats: {},        // 武器使用统计
+    totalPlayTime: 0,       // 总游戏时间
+    gamesPlayed: 0,         // 已玩游戏数
+    totalDamageDealt: 0,    // 总造成伤害
+    totalDamageTaken: 0,    // 总受到伤害
+    skillsUsed: { Q: 0, W: 0, E: 0, R: 0 }, // 技能使用统计
+    // 当前游戏开始时间
+    currentGameStartTime: 0,
 };
 
 // ==================== 存档系统 ====================
 
+// 保留旧的接口以兼容现有代码
 const SaveSystem = {
     saveKey: 'weaponRogueSave',
 
-    // 保存游戏状态
+    // 保存游戏状态 - 使用新的SaveManager
     save: function() {
-        const saveData = {
-            gameState: {
-                level: gameState.level,
-                kills: gameState.kills,
-                player: {
-                    hp: gameState.player.hp,
-                    maxHp: gameState.player.maxHp,
-                    weapon: gameState.player.weapon,
-                    score: gameState.player.score,
-                    maxCombo: gameState.player.maxCombo
+        if (typeof saveManager !== 'undefined') {
+            return saveManager.save();
+        } else {
+            // 如果新的存档系统不可用，使用简化版本
+            const saveData = {
+                gameState: {
+                    level: gameState.level,
+                    kills: gameState.kills,
+                    player: {
+                        hp: gameState.player.hp,
+                        maxHp: gameState.player.maxHp,
+                        weapon: gameState.player.weapon,
+                        score: gameState.player.score,
+                        maxCombo: gameState.player.maxCombo
+                    },
+                    relics: gameState.relics,
+                    achievements: AchievementSystem.achievements // 保存成就状态
                 },
-                relics: gameState.relics,
-                achievements: AchievementSystem.achievements // 保存成就状态
-            },
-            timestamp: Date.now()
-        };
+                timestamp: Date.now()
+            };
 
-        try {
-            localStorage.setItem(this.saveKey, JSON.stringify(saveData));
-            console.log('游戏进度已保存');
-            showCombatLog('💾 进度已自动保存', 'weapon-get');
-        } catch (error) {
-            console.error('保存失败:', error);
-            showCombatLog('⚠️ 保存失败', 'weapon-lose');
-        }
-    },
-
-    // 加载游戏状态
-    load: function() {
-        try {
-            const saveData = localStorage.getItem(this.saveKey);
-            if (saveData) {
-                const parsedData = JSON.parse(saveData);
-
-                // 恢复游戏状态
-                gameState.level = parsedData.gameState.level || 1;
-                gameState.kills = parsedData.gameState.kills || 0;
-                gameState.player.hp = parsedData.gameState.player.hp || 120;
-                gameState.player.maxHp = parsedData.gameState.player.maxHp || 120;
-                gameState.player.weapon = parsedData.gameState.player.weapon || null;
-                gameState.player.score = parsedData.gameState.player.score || 0;
-                gameState.player.maxCombo = parsedData.gameState.player.maxCombo || 0;
-                gameState.relics = parsedData.gameState.relics || [];
-
-                // 恢复成就状态
-                if (parsedData.gameState.achievements) {
-                    AchievementSystem.achievements = parsedData.gameState.achievements;
-                }
-
-                console.log('游戏进度已加载');
-                showCombatLog('📂 进度已加载', 'weapon-get');
-                return true;
+            try {
+                localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+                console.log('游戏进度已保存');
+                showCombatLog('💾 进度已自动保存', 'weapon-get');
+            } catch (error) {
+                console.error('保存失败:', error);
+                showCombatLog('⚠️ 保存失败', 'weapon-lose');
             }
-        } catch (error) {
-            console.error('加载失败:', error);
-            showCombatLog('⚠️ 读取存档失败', 'weapon-lose');
         }
-        return false;
     },
 
-    // 删除存档
+    // 加载游戏状态 - 使用新的SaveManager
+    load: function() {
+        if (typeof saveManager !== 'undefined') {
+            return saveManager.load();
+        } else {
+            // 如果新的存档系统不可用，使用简化版本
+            try {
+                const saveData = localStorage.getItem(this.saveKey);
+                if (saveData) {
+                    const parsedData = JSON.parse(saveData);
+
+                    // 恢复游戏状态
+                    gameState.level = parsedData.gameState.level || 1;
+                    gameState.kills = parsedData.gameState.kills || 0;
+                    gameState.player.hp = parsedData.gameState.player.hp || 120;
+                    gameState.player.maxHp = parsedData.gameState.player.maxHp || 120;
+                    gameState.player.weapon = parsedData.gameState.player.weapon || null;
+                    gameState.player.score = parsedData.gameState.player.score || 0;
+                    gameState.player.maxCombo = parsedData.gameState.player.maxCombo || 0;
+                    gameState.relics = parsedData.gameState.relics || [];
+
+                    // 恢复成就状态
+                    if (parsedData.gameState.achievements) {
+                        AchievementSystem.achievements = parsedData.gameState.achievements;
+                    }
+
+                    console.log('游戏进度已加载');
+                    showCombatLog('📂 进度已加载', 'weapon-get');
+                    return true;
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+                showCombatLog('⚠️ 读取存档失败', 'weapon-lose');
+            }
+            return false;
+        }
+    },
+
+    // 删除存档 - 使用新的SaveManager
     clear: function() {
-        try {
-            localStorage.removeItem(this.saveKey);
-            console.log('存档已删除');
-            showCombatLog('🗑️ 存档已清除', 'weapon-get');
-        } catch (error) {
-            console.error('清除失败:', error);
+        if (typeof saveManager !== 'undefined') {
+            return saveManager.clear();
+        } else {
+            // 如果新的存档系统不可用，使用简化版本
+            try {
+                localStorage.removeItem(this.saveKey);
+                console.log('存档已删除');
+                showCombatLog('🗑️ 存档已清除', 'weapon-get');
+            } catch (error) {
+                console.error('清除失败:', error);
+            }
         }
     }
 };
@@ -541,12 +576,12 @@ const AchievementSystem = {
 
     // 临时状态变量，用于跟踪复杂的成就条件
     tempStats: {
-        uniqueWeaponsUsed: new Set(), // 追踪使用的不同武器
+        uniqueWeaponsUsed: [], // 追踪使用的不同武器 - 使用数组而非Set
         luckyKillCount: 0, // 幸运转杀计数
         lowHpReviveCount: 0, // 濒死复活计数
         relicsCollected: 0, // 收集的遗物数量
         skillsUsed: 0, // 使用技能的总数
-        usedPotionTypes: new Set(), // 使用过的药水类型
+        usedPotionTypes: [], // 使用过的药水类型 - 使用数组而非Set
         berserkStreak: 0, // 狂暴连击数
         lastBerserkTime: 0, // 上次使用狂暴的时间
         consecutiveLuckyKills: 0, // 连续幸运击杀
@@ -637,13 +672,13 @@ const AchievementSystem = {
 
             // 检查复杂条件
             if (condition === 'uniqueWeapons >= 10') {
-                return this.tempStats.uniqueWeaponsUsed.size >= 10;
+                return this.tempStats.uniqueWeaponsUsed.length >= 10;
             }
             if (condition === 'uniqueWeapons >= 20') {
-                return this.tempStats.uniqueWeaponsUsed.size >= 20;
+                return this.tempStats.uniqueWeaponsUsed.length >= 20;
             }
             if (condition === 'uniqueWeapons >= 50') {
-                return this.tempStats.uniqueWeaponsUsed.size >= 50;
+                return this.tempStats.uniqueWeaponsUsed.length >= 50;
             }
             if (condition === 'luckyKills >= 5') {
                 return this.tempStats.luckyKillCount >= 5;
@@ -692,11 +727,11 @@ const AchievementSystem = {
                 return context.level >= 45;
             }
             if (condition === 'uniqueWeapons >= 75') {
-                return this.tempStats.uniqueWeaponsUsed.size >= 75;
+                return this.tempStats.uniqueWeaponsUsed.length >= 75;
             }
             if (condition === 'usedAllPotionsTenTimes') {
                 // 检查是否使用过每种药水各10次，这里简化为检查药水使用种类数量
-                return this.tempStats.usedPotionTypes.size >= POTIONS.length && Array.from(this.tempStats.usedPotionTypes).every(type => true); // 简化实现
+                return this.tempStats.usedPotionTypes.length >= POTIONS.length && this.tempStats.usedPotionTypes.every(type => true); // 简化实现
             }
             if (condition === 'relicPioneer') {
                 return context.relics && context.relics.length >= 3 * RELICS.length; // 简化实现
@@ -751,7 +786,10 @@ const AchievementSystem = {
     // 当玩家获得新武器时调用
     onWeaponAcquired: function(weapon) {
         if (weapon) {
-            this.tempStats.uniqueWeaponsUsed.add(weapon.name);
+            // 记录使用的不同武器（避免重复）
+            if (!this.tempStats.uniqueWeaponsUsed.includes(weapon.name)) {
+                this.tempStats.uniqueWeaponsUsed.push(weapon.name);
+            }
             this.checkAchievements();
         }
     },
@@ -782,7 +820,10 @@ const AchievementSystem = {
 
     // 当玩家使用药水时调用
     onPotionUsed: function(potion) {
-        this.tempStats.usedPotionTypes.add(potion.name);
+        // 记录使用的不同药水类型（避免重复）
+        if (!this.tempStats.usedPotionTypes.includes(potion.name)) {
+            this.tempStats.usedPotionTypes.push(potion.name);
+        }
         this.checkAchievements();
     },
 
@@ -895,12 +936,12 @@ const AchievementSystem = {
     // 重置临时统计数据（通常在游戏重启时）
     resetTempStats: function() {
         this.tempStats = {
-            uniqueWeaponsUsed: new Set(),
+            uniqueWeaponsUsed: [],  // 使用数组而非Set，以便于序列化
             luckyKillCount: 0,
             lowHpReviveCount: 0,
             relicsCollected: 0,
             skillsUsed: 0,
-            usedPotionTypes: new Set(),
+            usedPotionTypes: [],  // 使用数组而非Set，以便于序列化
             berserkStreak: 0,
             lastBerserkTime: 0,
             luckyBossKill: false,
@@ -4077,11 +4118,26 @@ function initGame() {
         isGameOver: false,
         screenShake: 0, // 屏幕震动
 
+        // 存档扩展数据 - 保留这些值不会重置
+        highestLevel: gameState.highestLevel || 1,        // 历史最高关卡
+        totalKills: gameState.totalKills || 0,            // 历史总击杀数
+        totalGames: gameState.totalGames || 0,            // 总游戏次数
+        winCount: gameState.winCount || 0,                // 获胜次数
+        highScores: gameState.highScores || [],           // 高分榜
+        weaponStats: gameState.weaponStats || {},         // 武器使用统计
+        totalPlayTime: gameState.totalPlayTime || 0,      // 总游戏时间
+        gamesPlayed: gameState.gamesPlayed || 0,          // 已玩游戏数
+        totalDamageDealt: gameState.totalDamageDealt || 0,// 总造成伤害
+        totalDamageTaken: gameState.totalDamageTaken || 0,// 总受到伤害
+        skillsUsed: gameState.skillsUsed || { Q: 0, W: 0, E: 0, R: 0 }, // 技能使用统计
+        // 当前游戏开始时间
+        currentGameStartTime: Date.now(),
+
         // 新增教程相关状态
         weaponsAcquired: 0, // 记录获取的武器数量
         potionsUsed: 0,     // 记录使用的药水数量
-        skillsUsed: 0,      // 记录使用的技能数量
-        difficulty: 'normal', // 难度设置
+        skillsUsedCount: 0,      // 记录使用的技能数量
+        difficulty: gameState.difficulty || 'normal', // 难度设置
         enemySpawnRate: 1.0, // 敌人生成速率
         enemyDamageMultiplier: 1.0, // 敌人伤害倍率
         tutorialStep: 0,    // 教程步骤
@@ -4130,6 +4186,21 @@ function gameOver() {
     gameState.isPlaying = false;
     gameState.isGameOver = true;
 
+    // 更新游戏统计数据
+    gameState.totalGames = (gameState.totalGames || 0) + 1;
+    gameState.totalKills = (gameState.totalKills || 0) + gameState.kills;
+
+    // 更新最高关卡
+    if (gameState.level > (gameState.highestLevel || 0)) {
+        gameState.highestLevel = gameState.level;
+    }
+
+    // 计算当前游戏的持续时间并更新总游戏时间
+    if (gameState.currentGameStartTime) {
+        const currentGameDuration = Date.now() - gameState.currentGameStartTime;
+        gameState.totalPlayTime = (gameState.totalPlayTime || 0) + currentGameDuration;
+    }
+
     // 停止背景音乐，播放游戏结束音效
     AudioManager.stopMusic();
     AudioManager.playSound('gameOver');
@@ -4149,6 +4220,9 @@ function gameOver() {
 
     // 检查成就
     AchievementSystem.checkAchievements();
+
+    // 保存游戏进度
+    SaveSystem.save();
 }
 
 function winGame() {
@@ -4166,6 +4240,27 @@ function winGame() {
 
     // 显示胜利信息
     showCombatLog(`🎊 恭喜通关！达到第 ${gameState.level} 关！`, 'weapon-get');
+
+    // 更新游戏统计数据
+    gameState.totalGames = (gameState.totalGames || 0) + 1;
+    gameState.winCount = (gameState.winCount || 0) + 1;
+    gameState.totalKills = (gameState.totalKills || 0) + gameState.kills;
+
+    // 更新最高关卡
+    if (gameState.level > (gameState.highestLevel || 0)) {
+        gameState.highestLevel = gameState.level;
+    }
+
+    // 计算当前游戏的持续时间并更新总游戏时间
+    if (gameState.currentGameStartTime) {
+        const currentGameDuration = Date.now() - gameState.currentGameStartTime;
+        gameState.totalPlayTime = (gameState.totalPlayTime || 0) + currentGameDuration;
+    }
+
+    // 更新高分榜
+    if (typeof saveManager !== 'undefined') {
+        saveManager.addHighScore(gameState.player.score, gameState.level);
+    }
 
     // 更新UI并显示游戏结束界面（胜利）
     document.getElementById('final-level').textContent = gameState.level;
@@ -4186,6 +4281,9 @@ function winGame() {
 
     // 检查成就
     AchievementSystem.checkAchievements();
+
+    // 保存游戏进度
+    SaveSystem.save();
 }
 
 // 按钮事件
