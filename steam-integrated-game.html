@@ -1,0 +1,2473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武器替换者 - Steam增强版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e6e6e6;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            box-shadow: 0 0 40px rgba(100, 100, 255, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            display: block;
+            border-radius: 12px;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #stats {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid #4a4a8a;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        #stats div {
+            margin: 3px 0;
+        }
+
+        #controls {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid #4a4a8a;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        #combat-log {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #e6e6e6;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid #4a4a8a;
+            min-width: 300px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        #main-menu, #pause-menu, #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .menu-content {
+            background: rgba(30, 30, 60, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #6a5acd;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(106, 90, 205, 0.6);
+        }
+
+        h1 {
+            color: #8a2be2;
+            font-size: 42px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+        }
+
+        h2 {
+            color: #4fc3f7;
+            font-size: 28px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            display: block;
+            width: 250px;
+            padding: 15px;
+            margin: 15px auto;
+            background: linear-gradient(135deg, #6a5acd, #8a2be2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(138, 43, 226, 0.5);
+            background: linear-gradient(135deg, #8a2be2, #6a5acd);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        #achievements-list, #high-scores {
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+
+        .achievement-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(106, 90, 205, 0.2);
+            border-radius: 5px;
+            border-left: 3px solid #8a2be2;
+        }
+
+        .achievement-unlocked {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 3px solid #4caf50;
+        }
+
+        #tutorial-steps {
+            max-height: 400px;
+            overflow-y: auto;
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+
+        .tutorial-step {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #4a4a8a;
+        }
+
+        .tutorial-step:last-child {
+            border-bottom: none;
+        }
+
+        .highlight {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+
+        .damage-popup {
+            position: absolute;
+            color: #ff5252;
+            font-weight: bold;
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 15;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .weapon-get-effect {
+            position: absolute;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 15;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .combo-effect {
+            position: absolute;
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 22px;
+            pointer-events: none;
+            z-index: 15;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* 隐藏未激活的菜单 */
+        .hidden {
+            display: none;
+        }
+
+        /* 设置页面样式 */
+        .settings-panel {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .setting-label {
+            flex: 1;
+        }
+
+        .setting-control {
+            flex: 1;
+            text-align: right;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            background: #2c2c54;
+            color: white;
+            border: 1px solid #4a4a8a;
+        }
+
+        /* 语言切换按钮 */
+        #language-switch {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #e6e6e6;
+            border: 1px solid #4a4a8a;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <!-- 游戏UI -->
+        <div id="ui-overlay">
+            <div id="stats">
+                <div>生命值: <span id="hp">120</span>/<span id="maxHp">120</span></div>
+                <div>武器: <span id="weapon">无</span></div>
+                <div>连击: <span id="combo">0</span></div>
+                <div>分数: <span id="score">0</span></div>
+                <div>关卡: <span id="level">1</span></div>
+                <div>击杀: <span id="kills">0</span></div>
+                <div>里程碑: <span id="milestones">0/0</span></div>
+            </div>
+
+            <div id="controls">
+                <div>鼠标: 移动</div>
+                <div>左键: 攻击</div>
+                <div>Q/E/R: 技能</div>
+                <div>ESC: 暂停</div>
+                <div>空格: 暂停/继续</div>
+            </div>
+        </div>
+
+        <!-- 战斗日志 -->
+        <div id="combat-log">欢迎来到武器替换者！</div>
+
+        <!-- 语言切换 -->
+        <button id="language-switch">CN/EN</button>
+    </div>
+
+    <!-- 主菜单 -->
+    <div id="main-menu">
+        <div class="menu-content">
+            <h1>⚔️ 武器替换者 ⚔️</h1>
+            <h2>Steam增强版</h2>
+            <button id="start-game-btn" class="btn">开始游戏</button>
+            <button id="tutorial-btn" class="btn">游戏教程</button>
+            <button id="achievements-btn" class="btn">成就系统</button>
+            <button id="high-scores-btn" class="btn">高分榜</button>
+            <button id="settings-btn" class="btn">游戏设置</button>
+            <button id="quit-btn" class="btn">退出游戏</button>
+        </div>
+    </div>
+
+    <!-- 暂停菜单 -->
+    <div id="pause-menu" class="hidden">
+        <div class="menu-content">
+            <h2>游戏暂停</h2>
+            <button id="resume-btn" class="btn">继续游戏</button>
+            <button id="restart-btn" class="btn">重新开始</button>
+            <button id="main-menu-btn" class="btn">返回主菜单</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束画面 -->
+    <div id="game-over" class="hidden">
+        <div class="menu-content">
+            <h2>游戏结束</h2>
+            <div>最终分数: <span id="final-score">0</span></div>
+            <div>最终关卡: <span id="final-level">0</span></div>
+            <div>总击杀数: <span id="final-kills">0</span></div>
+            <button id="retry-btn" class="btn">再次挑战</button>
+            <button id="endless-mode-btn" class="btn">无尽模式</button>
+            <button id="main-menu-end-btn" class="btn">主菜单</button>
+        </div>
+    </div>
+
+    <!-- 教程界面 -->
+    <div id="tutorial-screen" class="hidden">
+        <div class="menu-content" style="max-width: 700px;">
+            <h2>🎮 游戏教程</h2>
+            <div id="tutorial-steps">
+                <div class="tutorial-step">
+                    <strong>🎯 游戏目标:</strong> <span class="highlight">在无尽的战斗中生存下来，击败尽可能多的敌人！</span>
+                </div>
+                <div class="tutorial-step">
+                    <strong>⚔️ 武器系统:</strong> 每次获得新武器都会<span class="highlight">替换当前武器</span>，带来不确定性的刺激
+                </div>
+                <div class="tutorial-step">
+                    <strong>🐭 操作方法:</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li>移动鼠标控制角色</li>
+                        <li>点击鼠标左键使用当前武器攻击</li>
+                        <li>Q/E/R键释放技能</li>
+                        <li>ESC键暂停游戏</li>
+                    </ul>
+                </div>
+                <div class="tutorial-step">
+                    <strong>🧪 药水系统:</strong> 击败敌人可能掉落药水，提供更多策略选择
+                </div>
+                <div class="tutorial-step">
+                    <strong>🏅 遗物系统:</strong> 特殊掉落的遗物提供永久增益效果
+                </div>
+                <div class="tutorial-step">
+                    <strong>📊 进度系统:</strong> 通过击败敌人升级，解锁里程碑和成就
+                </div>
+                <div class="tutorial-step">
+                    <strong>🔥 连击系统:</strong> 连续击败敌人可建立连击，获得攻击加成
+                </div>
+                <div class="tutorial-step">
+                    <strong>✨ 特殊活动:</strong> 高等级时会出现特殊活动，如元素风暴、时间扭曲等
+                </div>
+            </div>
+            <button id="tutorial-back-btn" class="btn" style="width: 150px; margin-top: 20px;">返回</button>
+        </div>
+    </div>
+
+    <!-- 成就界面 -->
+    <div id="achievements-screen" class="hidden">
+        <div class="menu-content" style="max-width: 600px;">
+            <h2>🏆 成就系统</h2>
+            <div id="achievements-list">
+                <!-- 成就列表将通过JavaScript填充 -->
+            </div>
+            <button id="achievements-back-btn" class="btn" style="width: 150px; margin-top: 20px;">返回</button>
+        </div>
+    </div>
+
+    <!-- 高分榜界面 -->
+    <div id="high-scores-screen" class="hidden">
+        <div class="menu-content" style="max-width: 500px;">
+            <h2>📈 高分榜</h2>
+            <div id="high-scores">
+                <!-- 高分会通过JavaScript填充 -->
+            </div>
+            <button id="high-scores-back-btn" class="btn" style="width: 150px; margin-top: 20px;">返回</button>
+        </div>
+    </div>
+
+    <!-- 设置界面 -->
+    <div id="settings-screen" class="hidden">
+        <div class="menu-content" style="max-width: 500px;">
+            <h2>⚙️ 游戏设置</h2>
+            <div class="settings-panel">
+                <div class="setting-row">
+                    <div class="setting-label">音效音量</div>
+                    <div class="setting-control">
+                        <input type="range" id="sfx-volume" min="0" max="100" value="70">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">音乐音量</div>
+                    <div class="setting-control">
+                        <input type="range" id="music-volume" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">语言</div>
+                    <div class="setting-control">
+                        <select id="language-select">
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">难度</div>
+                    <div class="setting-control">
+                        <select id="difficulty-select">
+                            <option value="easy">简单</option>
+                            <option value="normal" selected>普通</option>
+                            <option value="hard">困难</option>
+                            <option value="insane">疯狂</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">特效质量</div>
+                    <div class="setting-control">
+                        <select id="effects-quality">
+                            <option value="low">低</option>
+                            <option value="medium" selected>中</option>
+                            <option value="high">高</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button id="settings-back-btn" class="btn" style="width: 150px; margin-top: 20px;">返回</button>
+        </div>
+    </div>
+
+    <script>
+        // 武器库 - 从垃圾到神器
+        const WEAPONS = [
+            // Common weapons (普通)
+            { name: '生锈的刀', damage: 5, rarity: 'common', color: '#888' },
+            { name: '木棍', damage: 3, rarity: 'common', color: '#8B4513' },
+            { name: '破布条', damage: 2, rarity: 'common', color: '#aaa' },
+            { name: '旧扫帚', damage: 4, rarity: 'common', color: '#A0522D' },
+            { name: '石头', damage: 6, rarity: 'common', color: '#808080' },
+            { name: '生锈的叉子', damage: 4, rarity: 'common', color: '#C0C0C0' },
+            { name: '破碎的瓶子', damage: 5, rarity: 'common', color: '#7CFC00' },
+            { name: '铁勺', damage: 3, rarity: 'common', color: '#696969' },
+            { name: '木板', damage: 6, rarity: 'common', color: '#D2B48C' },
+            { name: '废纸团', damage: 1, rarity: 'common', color: '#FFFFE0' },
+            { name: '削尖的树枝', damage: 4, rarity: 'common', color: '#8FBC8F' },
+            { name: '旧拖鞋', damage: 2, rarity: 'common', color: '#696969' },
+            { name: '生锈的剪刀', damage: 5, rarity: 'common', color: '#C0C0C0' },
+            { name: '玻璃片', damage: 7, rarity: 'common', color: '#00CED1' },
+            { name: '破碗碎片', damage: 5, rarity: 'common', color: '#F5DEB3' },
+
+            // 新增普通武器
+            { name: '钝剑', damage: 8, rarity: 'common', color: '#C0C0C0' },
+            { name: '破旧的锤子', damage: 7, rarity: 'common', color: '#A9A9A9' },
+            { name: '木棒', damage: 4, rarity: 'common', color: '#8B4513' },
+            { name: '破损的镰刀', damage: 6, rarity: 'common', color: '#696969' },
+            { name: '旧匕首', damage: 5, rarity: 'common', color: '#708090' },
+            { name: '断掉的剑', damage: 3, rarity: 'common', color: '#808080' },
+            { name: '生锈的镰刀', damage: 6, rarity: 'common', color: '#2F4F4F' },
+            { name: '粗糙的短斧', damage: 7, rarity: 'common', color: '#666666' },
+            { name: '废弃的钩爪', damage: 5, rarity: 'common', color: '#A9A9A9' },
+            { name: '木制长矛', damage: 6, rarity: 'common', color: '#8B4513' },
+
+            // Uncommon weapons (不常见)
+            { name: '铁剑', damage: 10, rarity: 'uncommon', color: '#silver' },
+            { name: '钢斧', damage: 15, rarity: 'uncommon', color: '#666' },
+            { name: '长矛', damage: 12, rarity: 'uncommon', color: '#888888' },
+            { name: '铜制短剑', damage: 11, rarity: 'uncommon', color: '#B87333' },
+            { name: '精制弓箭', damage: 14, rarity: 'uncommon', color: '#8B4513' },
+            { name: '小手斧', damage: 13, rarity: 'uncommon', color: '#A9A9A9' },
+            { name: '猎人之弩', damage: 16, rarity: 'uncommon', color: '#654321' },
+            { name: '钢钉锤', damage: 12, rarity: 'uncommon', color: '#2F4F4F' },
+            { name: '双刃匕首', damage: 13, rarity: 'uncommon', color: '#DCDCDC' },
+            { name: '轻便弯刀', damage: 11, rarity: 'uncommon', color: '#FFD700' },
+            { name: '青铜战锤', damage: 14, rarity: 'uncommon', color: '#CD853F' },
+            { name: '强化木杖', damage: 10, rarity: 'uncommon', color: '#DAA520' },
+            { name: '双头长枪', damage: 15, rarity: 'uncommon', color: '#C0C0C0' },
+            { name: '硬皮盾牌', damage: 8, rarity: 'uncommon', color: '#8B4513', defensive: true },
+            { name: '锋利鱼叉', damage: 17, rarity: 'uncommon', color: '#C0C0C0' },
+            { name: '工匠之锤', damage: 13, rarity: 'uncommon', color: '#A9A9A9' },
+
+            // Rare weapons (稀有)
+            { name: '银制长剑', damage: 22, rarity: 'rare', color: '#C0C0C0' },
+            { name: '精灵短弓', damage: 20, rarity: 'rare', color: '#228B22' },
+            { name: '魔法法杖', damage: 18, rarity: 'rare', color: '#9370DB' },
+            { name: '巨斧', damage: 25, rarity: 'rare', color: '#696969' },
+            { name: '贵族佩剑', damage: 23, rarity: 'rare', color: '#FFD700' },
+            { name: '附魔匕首', damage: 21, rarity: 'rare', color: '#4169E1' },
+            { name: '骑士长枪', damage: 24, rarity: 'rare', color: '#FFA500' },
+            { name: '秘银剑', damage: 28, rarity: 'rare', color: '#E6E6FA' },
+            { name: '龙鳞剑', damage: 26, rarity: 'rare', color: '#8FBC8F' },
+            { name: '寒冰法杖', damage: 19, rarity: 'rare', color: '#87CEEB' },
+            { name: '烈焰之剑', damage: 27, rarity: 'rare', color: '#FF4500' },
+            { name: '雷鸣锤', damage: 24, rarity: 'rare', color: '#B0C4DE' },
+            { name: '影刃', damage: 22, rarity: 'rare', color: '#4B0082' },
+            { name: '治愈之杖', damage: 15, rarity: 'rare', color: '#98FB98', healing: true },
+            { name: '灵魂收割者', damage: 30, rarity: 'rare', color: '#660066' },
+            { name: '风暴之刃', damage: 25, rarity: 'rare', color: '#F0E68C' },
+
+            // Epic weapons (史诗)
+            { name: '圣剑·艾克斯卡利布尔', damage: 35, rarity: 'epic', color: '#FFD700' },
+            { name: '龙怒', damage: 40, rarity: 'epic', color: '#FF4500' },
+            { name: '泰拉之怒', damage: 38, rarity: 'epic', color: '#32CD32' },
+            { name: '暗影猎手', damage: 36, rarity: 'epic', color: '#2F4F4F' },
+            { name: '雷神之锤', damage: 42, rarity: 'epic', color: '#DAA520' },
+            { name: '凤凰羽扇', damage: 33, rarity: 'epic', color: '#FF6347' },
+            { name: '冰霜之王', damage: 37, rarity: 'epic', color: '#87CEEB' },
+            { name: '风暴使者', damage: 39, rarity: 'epic', color: '#87CEFA' },
+            { name: '时间之刃', damage: 34, rarity: 'epic', color: '#9370DB' },
+            { name: '星辰法杖', damage: 32, rarity: 'epic', color: '#4169E1' },
+            { name: '末日审判', damage: 45, rarity: 'epic', color: '#8A2BE2' },
+            { name: '创世之剑', damage: 41, rarity: 'epic', color: '#7CFC00' },
+            { name: '深渊之触', damage: 38, rarity: 'epic', color: '#00008B' },
+            { name: '永恒荣耀', damage: 36, rarity: 'epic', color: '#FFE4B5' },
+            { name: '宇宙法则', damage: 43, rarity: 'epic', color: '#1E90FF' },
+            { name: '虚无权杖', damage: 35, rarity: 'epic', color: '#6A5ACD' },
+
+            // Legendary weapons (传说)
+            { name: '神罚', damage: 55, rarity: 'legendary', color: '#FFA500' },
+            { name: '破晓', damage: 52, rarity: 'legendary', color: '#FFD700' },
+            { name: '末世灾厄', damage: 60, rarity: 'legendary', color: '#8B0000' },
+            { name: '真理之口', damage: 50, rarity: 'legendary', color: '#4169E1' },
+            { name: '永恒切片', damage: 58, rarity: 'legendary', color: '#7CFC00' },
+            { name: '创世纪', damage: 56, rarity: 'legendary', color: '#9370DB' },
+            { name: '天启', damage: 62, rarity: 'legendary', color: '#2F4F4F' },
+            { name: '天穹之剑', damage: 54, rarity: 'legendary', color: '#87CEEB' },
+            { name: '时空之刃', damage: 57, rarity: 'legendary', color: '#9400D3' },
+            { name: '万物终结', damage: 65, rarity: 'legendary', color: '#000000' },
+            { name: '绝对领域', damage: 53, rarity: 'legendary', color: '#FF69B4' },
+            { name: '概念武装', damage: 59, rarity: 'legendary', color: '#00BFFF' },
+            { name: '因果律武器', damage: 63, rarity: 'legendary', color: '#FF00FF' },
+            { name: '现实修改器', damage: 51, rarity: 'legendary', color: '#00FFFF' },
+            { name: '存在抹除', damage: 64, rarity: 'legendary', color: '#FF0000' },
+            { name: '无限手套', damage: 70, rarity: 'legendary', color: '#6A0DAD' },
+
+            // Mythic weapons (神话)
+            { name: '阿斯加德之剑', damage: 80, rarity: 'mythic', color: '#FFD700' },
+            { name: '概念实体', damage: 75, rarity: 'mythic', color: '#7CFC00' },
+            { name: '现实破坏者', damage: 85, rarity: 'mythic', color: '#00BFFF' },
+            { name: '虚无化身', damage: 78, rarity: 'mythic', color: '#9400D3' },
+            { name: '超越界限', damage: 82, rarity: 'mythic', color: '#FF00FF' },
+            { name: '存在论', damage: 77, rarity: 'mythic', color: '#FFA500' },
+            { name: '万有理论', damage: 84, rarity: 'mythic', color: '#0000FF' },
+            { name: '第一因', damage: 88, rarity: 'mythic', color: '#4B0082' },
+            { name: '宇宙意识', damage: 86, rarity: 'mythic', color: '#32CD32' },
+            { name: '终极武器', damage: 90, rarity: 'mythic', color: '#000000' }
+        ];
+
+        // 预定义的稀有度颜色
+        const rarityColors = {
+            common: [200, 200, 200],     // 白色
+            uncommon: [100, 200, 100],   // 绿色
+            rare: [100, 150, 255],       // 蓝色
+            epic: [200, 100, 255],       // 紫色
+            legendary: [255, 150, 50],   // 橙色
+            mythic: [255, 50, 200]       // 粉色
+        };
+
+        // 画布和上下文
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 预加载所有精灵图像
+        const imageCache = {};
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                if (imageCache[src]) {
+                    resolve(imageCache[src]);
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    imageCache[src] = img;
+                    resolve(img);
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        // 尝试加载图像，失败时使用回退方案
+        async function loadGameImages() {
+            const imagesToLoad = [
+                'assets/sprites/weapon_sword.png',
+                'assets/sprites/enemy_slime.png',
+                'assets/sprites/enemies.png',
+                'assets/sprites/potions.png'
+            ];
+
+            const promises = imagesToLoad.map(src => loadImage(src).catch(() => {
+                // 如果加载失败，创建一个占位图像
+                const placeholder = document.createElement('canvas');
+                placeholder.width = 32;
+                placeholder.height = 32;
+                const pctx = placeholder.getContext('2d');
+                pctx.fillStyle = '#FF00FF'; // 粉红色表示缺失的图像
+                pctx.fillRect(0, 0, 32, 32);
+                pctx.strokeStyle = '#FFFFFF';
+                pctx.lineWidth = 2;
+                pctx.strokeRect(2, 2, 28, 28);
+                imageCache[src] = placeholder;
+                return placeholder;
+            }));
+
+            await Promise.all(promises);
+        }
+
+        // 游戏状态
+        let gameState = {
+            player: {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                size: 15,
+                hp: 120,
+                maxHp: 120,
+                weapon: null,
+                score: 0,
+                combo: 0,
+                maxCombo: 0,
+                lastHitTime: Date.now(),
+                maxComboDamage: 1.0,
+                attackRange: 50,
+                attackCooldown: 0,
+                comboDamageMultiplier: 1.0,
+                comboAttackSpeed: 1.0,
+                comboDefense: 1.0
+            },
+            enemies: [],
+            drops: [],
+            potions: [],
+            relics: [],
+            buffs: [],
+            level: 1,
+            kills: 0,
+            gameOver: false,
+            paused: false,
+            mousePosition: { x: 0, y: 0 },
+            lastShotTime: 0,
+            shotsPerSecond: 0,
+            comboEffects: [],
+            damagePopups: [],
+            weaponGetEffects: []
+        };
+
+        // 本地化支持
+        const translations = {
+            zh: {
+                levelUp: "升级！第 %d 关",
+                weaponPickup: "获得武器：%s",
+                potionUse: "使用药水：%s",
+                relicAcquire: "获得遗物：%s",
+                skillAOE: "%s 造成了范围伤害，击中 %d 个敌人！",
+                skillNoHit: "%s 没有击中任何敌人",
+                gameOver: "游戏结束！分数：%d",
+                finalScore: "最终分数: %d",
+                finalLevel: "最终关卡: %d"
+            },
+            en: {
+                levelUp: "Level Up! Level %d",
+                weaponPickup: "Got weapon: %s",
+                potionUse: "Used potion: %s",
+                relicAcquire: "Acquired relic: %s",
+                skillAOE: "%s dealt area damage, hit %d enemies!",
+                skillNoHit: "%s hit no enemies",
+                gameOver: "Game Over! Score: %d",
+                finalScore: "Final Score: %d",
+                finalLevel: "Final Level: %d"
+            }
+        };
+
+        let currentLanguage = 'zh';
+        function t(key) {
+            return translations[currentLanguage][key] || translations.zh[key] || key;
+        }
+
+        // 敌人类
+        class Enemy {
+            constructor(level, type = null) {
+                // 为不同类型敌人添加不同的生成权重，让游戏体验更平衡
+                const enemyWeights = {
+                    'MELEE': Math.min(0.4, 0.4 - (level * 0.005)), // 随等级提高，近战敌人比例稍微下降
+                    'RANGED': Math.min(0.3, 0.25 + (level * 0.008)), // 随等级提高，远程敌人比例适当上升
+                    'ELITE': Math.min(0.15, 0.05 + (level * 0.008)), // 精英敌人随等级提高而增加
+                    'SUPPORT': Math.min(0.1, 0.02 + (level * 0.005)), // 支援型敌人随等级提高而增加
+                    'ARCHER': Math.min(0.1, 0.02 + (level * 0.005)), // 弓箭手随等级提高而增加
+                    'MAGE': Math.min(0.08, 0.01 + (level * 0.005)), // 法师随等级提高而增加
+                    'ASSASSIN': Math.min(0.05, 0.005 + (level * 0.004)), // 刺客随等级提高而增加
+                    'UNDEAD': Math.min(0.05, 0.005 + (level * 0.004)), // 亡灵随等级提高而增加
+                    'BEAST': Math.min(0.05, 0.005 + (level * 0.004)), // 野兽随等级提高而增加
+                    'SKELETON': Math.min(0.05, 0.003 + (level * 0.003)), // 骷髅随等级提高而增加
+                    'GOBLIN': Math.min(0.05, 0.003 + (level * 0.003)), // 哥布林随等级提高而增加
+                    'DRAGON': Math.min(0.03, 0.001 + (level * 0.002)), // 龙类随等级提高而增加
+                    'GOLEM': Math.min(0.03, 0.001 + (level * 0.002)), // 石像鬼随等级提高而增加
+                    'SPIDER': Math.min(0.03, 0.001 + (level * 0.002)), // 蜘蛛随等级提高而增加
+                    'BERSERKER': Math.min(0.02, 0.0005 + (level * 0.0015)), // 狂战士随等级提高而增加
+                    'WIZARD': Math.min(0.02, 0.0005 + (level * 0.0015)), // 巫师随等级提高而增加
+                    'PHANTOM': Math.min(0.02, 0.0005 + (level * 0.0015)), // 幻影随等级提高而增加
+                    'TROLL': Math.min(0.01, 0.0002 + (level * 0.001)), // 巨魔随等级提高而增加
+                    'LICH': Math.min(0.01, 0.0002 + (level * 0.001)), // 巫妖王随等级提高而增加
+                    'ANGEL': Math.min(0.005, 0.0001 + (level * 0.0008)), // 天使随等级提高而增加
+                    'PIRATE': Math.min(0.005, 0.0001 + (level * 0.0008)), // 海盗随等级提高而增加
+                    'NINJA': Math.min(0.005, 0.0001 + (level * 0.0008)), // 忍者随等级提高而增加
+                    'CYBORG': Math.min(0.005, 0.0001 + (level * 0.0008)), // 机械战士随等级提高而增加
+                    'ELF': Math.min(0.005, 0.0001 + (level * 0.0008)), // 精灵随等级提高而增加
+                    'DRUID': Math.min(0.005, 0.0001 + (level * 0.0008)), // 德鲁伊随等级提高而增加
+                    'SHADOW': Math.min(0.003, 0.00005 + (level * 0.0005)), // 暗影随等级提高而增加
+                    'BOSS': Math.min(0.002, 0.00003 + (level * 0.0003)), // Boss随等级提高而增加
+                    'DEMIGOD': Math.min(0.001, 0.00001 + (level * 0.0001)), // 半神随等级提高而增加
+                    'DEMON': Math.min(0.001, 0.00001 + (level * 0.0001)), // 小恶魔随等级提高而增加
+                    'PLANET': Math.min(0.0005, 0.000005 + (level * 0.00005)), // 行星级随等级提高而增加
+                    'COSMOS': Math.min(0.0001, 0.000001 + (level * 0.00001)), // 宇宙级随等级提高而增加
+                    'ELEMENTAL': Math.min(0.003, 0.00005 + (level * 0.0003)) // 元素生物随等级提高而增加
+                };
+
+                // 计算总权重
+                let totalWeight = 0;
+                for (const weight of Object.values(enemyWeights)) {
+                    totalWeight += weight;
+                }
+
+                // 随着关卡提高，添加新的敌人类型
+                if (level > 8) { // 只有在较高的关卡才出现新敌人
+                    enemyWeights['ANGEL'] = Math.min(0.005, 0.0001 + (level * 0.0002)); // 天使随等级提高而增加
+                    enemyWeights['PIRATE'] = Math.min(0.005, 0.0001 + (level * 0.0002)); // 海盗随等级提高而增加
+                    enemyWeights['NINJA'] = Math.min(0.005, 0.0001 + (level * 0.0003)); // 忍者随等级提高而增加
+                    enemyWeights['CYBORG'] = Math.min(0.004, 0.0001 + (level * 0.0002)); // 机械战士随等级提高而增加
+                    enemyWeights['ELF'] = Math.min(0.004, 0.0001 + (level * 0.0002)); // 精灵随等级提高而增加
+                    enemyWeights['DRUID'] = Math.min(0.004, 0.0001 + (level * 0.0002)); // 德鲁伊随等级提高而增加
+                }
+
+                if (level > 12) { // 更高的关卡才出现以下敌人
+                    enemyWeights['ZOMBIE'] = Math.min(0.003, 0.0001 + (level * 0.0001)); // 僵尸随等级提高而增加
+                    enemyWeights['ORGE'] = Math.min(0.002, 0.00005 + (level * 0.0001)); // 食人魔随等级提高而增加
+                }
+
+                if (level > 20) { // 非常高的关卡才出现以下敌人
+                    enemyWeights['PHOENIX'] = Math.min(0.001, 0.00005 + (level * 0.00008)); // 凤凰随等级提高而增加
+                    enemyWeights['KRAKEN'] = Math.min(0.0005, 0.00002 + (level * 0.00005)); // 海怪随等级提高而增加
+                }
+
+                // 更高关卡（25级以上）出现更稀有的敌人
+                if (level > 25) {
+                    enemyWeights['DRAGON_KING'] = Math.min(0.0003, 0.00001 + (level * 0.00003)); // 龙王随等级提高而增加
+                    enemyWeights['UNICORN'] = Math.min(0.0003, 0.00001 + (level * 0.00003)); // 独角兽随等级提高而增加
+                }
+
+                if (level > 30) {
+                    enemyWeights['BASILISK'] = Math.min(0.0002, 0.000005 + (level * 0.00002)); // 蛇怪随等级提高而增加
+                    enemyWeights['GRIFFIN'] = Math.min(0.0002, 0.000005 + (level * 0.00002)); // 狮鹫随等级提高而增加
+                }
+
+                if (level > 35) {
+                    enemyWeights['MINOTAUR'] = Math.min(0.0001, 0.000003 + (level * 0.00001)); // 牛头怪随等级提高而增加
+                    enemyWeights['HYDRA'] = Math.min(0.0001, 0.000003 + (level * 0.00001)); // 九头蛇随等级提高而增加
+                }
+
+                if (level > 40) {
+                    enemyWeights['PEGASUS'] = Math.min(0.0001, 0.000002 + (level * 0.000008)); // 飞马随等级提高而增加
+                    enemyWeights['COCKATRICE'] = Math.min(0.0001, 0.000002 + (level * 0.000008)); // 鸡蛇怪随等级提高而增加
+                    enemyWeights['CHIMERA'] = Math.min(0.00008, 0.000001 + (level * 0.000005)); // 奇美拉随等级提高而增加
+                    enemyWeights['BANSHEE'] = Math.min(0.00008, 0.000001 + (level * 0.000005)); // 女妖随等级提高而增加
+                }
+
+                // 根据权重随机选择敌人类型
+                const rand = Math.random() * totalWeight;
+                let currentWeight = 0;
+                let selectedType = null;
+
+                for (const [enemyType, weight] of Object.entries(enemyWeights)) {
+                    currentWeight += weight;
+                    if (rand <= currentWeight) {
+                        selectedType = enemyType;
+                        break;
+                    }
+                }
+
+                // 如果没有明确指定类型，则使用随机选择的类型
+                this.type = type || selectedType || 'MELEE';
+
+                // 根据敌人类型设置配置
+                const config = this.getEnemyConfig(this.type);
+
+                // 基础属性 - 随等级增长
+                this.x = Math.random() * (canvas.width - 100) + 50;
+                this.y = Math.random() * (canvas.height - 100) + 50;
+
+                // 避免生成在玩家附近
+                const player = gameState.player;
+                const distanceToPlayer = Math.sqrt((this.x - player.x) ** 2 + (this.y - player.y) ** 2);
+                if (distanceToPlayer < 150) {
+                    // 重新生成位置
+                    this.x = Math.random() * (canvas.width - 100) + 50;
+                    this.y = Math.random() * (canvas.height - 100) + 50;
+                }
+
+                // 使用改进的增长曲线
+                this.baseHp = 10 + level * 2.2 + Math.pow(level * 0.3, 1.4);
+                this.baseDamage = 2.0 + level * 0.6 + Math.pow(level * 0.25, 1.3);
+                this.baseSpeed = 0.5 + Math.log(level + 1) * 0.3;
+
+                this.hp = Math.floor(this.baseHp * config.hp);
+                this.maxHp = this.hp;
+                this.damage = Math.floor(this.baseDamage * config.damage);
+                this.speed = this.baseSpeed * config.speed;
+                this.size = 15 * config.size;
+                this.color = config.color || '#FF0000';
+                this.behavior = config.behavior || 'melee';
+                this.weapon = this.generateEnemyWeapon(level);
+                this.lastShot = 0;
+                this.shotDelay = 60 + Math.random() * 60; // 射击延迟
+                this.lastMoveX = 0;
+                this.lastMoveY = 0;
+                this.moveChangeInterval = 60 + Math.random() * 60; // 移动方向改变间隔
+                this.moveTimer = 0;
+                this.dx = (Math.random() - 0.5) * 2;
+                this.dy = (Math.random() - 0.5) * 2;
+
+                // 随着等级提高，添加特殊能力
+                if (level > 15) {
+                    if (Math.random() < 0.1) { // 10% 概率有特殊能力
+                        if (Math.random() < 0.5) {
+                            this.hasShield = true; // 护盾
+                            this.shieldHp = Math.floor(this.maxHp * 0.3);
+                        } else {
+                            this.hasRegen = true; // 回血
+                            this.regenRate = 0.01 * level;
+                        }
+                    }
+                }
+
+                if (level > 30) {
+                    if (Math.random() < 0.2) { // 20% 概率有高级特殊能力
+                        if (Math.random() < 0.5) {
+                            this.hasTeleport = true; // 传送能力
+                            this.teleportCooldown = 5000;
+                            this.lastTeleport = 0;
+                        } else {
+                            this.hasSummon = true; // 召唤能力
+                            this.summonCooldown = 10000;
+                            this.lastSummon = 0;
+                        }
+                    }
+                }
+
+                // 根据行为类型设置特殊属性
+                switch (this.behavior) {
+                    case 'ranged':
+                        this.attackRange = 150;
+                        break;
+                    case 'melee':
+                        this.attackRange = 30;
+                        break;
+                    case 'support':
+                        this.supportRange = 200;
+                        break;
+                }
+            }
+
+            getEnemyConfig(type) {
+                const configs = {
+                    'MELEE': { name: '近战兵', speed: 1.0, hp: 1.0, damage: 1.0, size: 1.0, color: '#FF4444', behavior: 'melee' },
+                    'RANGED': { name: '远程兵', speed: 0.8, hp: 0.8, damage: 1.2, size: 0.9, color: '#4444FF', behavior: 'ranged' },
+                    'ELITE': { name: '精英兵', speed: 1.2, hp: 1.5, damage: 1.3, size: 1.2, color: '#FFAA00', behavior: 'mixed' },
+                    'SUPPORT': { name: '支援兵', speed: 0.9, hp: 1.1, damage: 0.9, size: 1.0, color: '#AA00FF', behavior: 'support' },
+                    'ARCHER': { name: '弓箭手', speed: 1.0, hp: 0.9, damage: 1.1, size: 0.95, color: '#00AAFF', behavior: 'ranged' },
+                    'MAGE': { name: '法师', speed: 0.7, hp: 0.8, damage: 1.5, size: 1.1, color: '#AA00AA', behavior: 'ranged' },
+                    'ASSASSIN': { name: '刺客', speed: 1.5, hp: 0.7, damage: 1.8, size: 0.8, color: '#000000', behavior: 'melee' },
+                    'UNDEAD': { name: '亡灵', speed: 0.9, hp: 1.2, damage: 1.0, size: 1.0, color: '#666666', behavior: 'melee' },
+                    'BEAST': { name: '野兽', speed: 1.1, hp: 1.0, damage: 1.1, size: 1.05, color: '#8B4513', behavior: 'melee' },
+                    'SKELETON': { name: '骷髅', speed: 1.0, hp: 0.9, damage: 1.0, size: 0.95, color: '#DDDDDD', behavior: 'melee' },
+                    'GOBLIN': { name: '哥布林', speed: 1.3, hp: 0.6, damage: 1.0, size: 0.8, color: '#228B22', behavior: 'mixed' },
+                    'DRAGON': { name: '龙', speed: 0.6, hp: 3.0, damage: 2.0, size: 2.5, color: '#FF6600', behavior: 'ranged' },
+                    'GOLEM': { name: '石像鬼', speed: 0.5, hp: 4.0, damage: 1.8, size: 2.2, color: '#8B4513', behavior: 'melee' },
+                    'SPIDER': { name: '蜘蛛', speed: 1.4, hp: 0.7, damage: 1.2, size: 0.7, color: '#8B008B', behavior: 'melee' },
+                    'BERSERKER': { name: '狂战士', speed: 1.2, hp: 1.8, damage: 1.6, size: 1.4, color: '#B22222', behavior: 'melee' },
+                    'WIZARD': { name: '巫师', speed: 0.6, hp: 0.8, damage: 2.2, size: 1.2, color: '#4169E1', behavior: 'ranged' },
+                    'PHANTOM': { name: '幻影', speed: 1.6, hp: 0.5, damage: 1.4, size: 0.85, color: '#8A2BE2', behavior: 'mixed' },
+                    'TROLL': { name: '巨魔', speed: 0.7, hp: 2.5, damage: 1.7, size: 2.0, color: '#2E8B57', behavior: 'melee' },
+                    'LICH': { name: '巫妖王', speed: 0.5, hp: 3.5, damage: 2.5, size: 1.8, color: '#663399', behavior: 'ranged' },
+                    'ANGEL': { name: '天使', speed: 1.0, hp: 2.0, damage: 1.8, size: 1.7, color: '#FFFAF0', behavior: 'support' },
+                    'PIRATE': { name: '海盗', speed: 1.1, hp: 1.4, damage: 1.5, size: 1.1, color: '#2F4F4F', behavior: 'melee' },
+                    'NINJA': { name: '忍者', speed: 1.8, hp: 0.8, damage: 2.0, size: 0.85, color: '#000000', behavior: 'melee' },
+                    'CYBORG': { name: '机械战士', speed: 0.9, hp: 2.2, damage: 1.9, size: 1.5, color: '#708090', behavior: 'ranged' },
+                    'ELF': { name: '精灵', speed: 1.3, hp: 1.1, damage: 1.4, size: 0.95, color: '#32CD32', behavior: 'ranged' },
+                    'DRUID': { name: '德鲁伊', speed: 0.8, hp: 1.6, damage: 1.6, size: 1.2, color: '#228B22', behavior: 'support' },
+                    'SHADOW': { name: '暗影', speed: 1.5, hp: 0.6, damage: 2.2, size: 0.9, color: '#2F4F4F', behavior: 'melee' },
+                    'BOSS': { name: 'Boss', speed: 0.5, hp: 5.0, damage: 2.5, size: 3.0, color: '#8B0000', behavior: 'mixed' },
+                    'DEMIGOD': { name: '半神', speed: 1.0, hp: 4.0, damage: 3.0, size: 2.8, color: '#FFD700', behavior: 'mixed' },
+                    'DEMON': { name: '小恶魔', speed: 1.2, hp: 1.5, damage: 2.0, size: 1.3, color: '#8B008B', behavior: 'mixed' },
+                    'PLANET': { name: '行星级', speed: 0.2, hp: 10.0, damage: 4.0, size: 4.0, color: '#4169E1', behavior: 'support' },
+                    'COSMOS': { name: '宇宙级', speed: 0.1, hp: 20.0, damage: 5.0, size: 5.0, color: '#9400D3', behavior: 'mixed' },
+                    'ELEMENTAL': { name: '元素生物', speed: 1.0, hp: 1.8, damage: 1.7, size: 1.4, color: '#32CD32', behavior: 'mixed' }
+                };
+
+                return configs[type] || configs['MELEE'];
+            }
+
+            generateEnemyWeapon(level) {
+                // 为敌人生成武器，用于掉落
+                const weaponTypes = ['sword', 'axe', 'bow', 'staff', 'dagger'];
+                const type = weaponTypes[Math.floor(Math.random() * weaponTypes.length)];
+
+                // 基于关卡生成敌人武器
+                const damage = Math.floor(5 + level * 0.8);
+                const rarities = ['common', 'uncommon', 'rare'];
+                const rarity = rarities[Math.min(rarities.length - 1, Math.floor(level / 10))];
+
+                return {
+                    name: `敌人的${type}`,
+                    damage: damage,
+                    rarity: rarity,
+                    color: '#FF0000'
+                };
+            }
+
+            update() {
+                if (gameState.gameOver || gameState.paused) return;
+
+                const player = gameState.player;
+
+                // 更新特殊能力
+                if (this.hasRegen && this.hp < this.maxHp) {
+                    this.hp = Math.min(this.maxHp, this.hp + this.regenRate);
+                }
+
+                // 不同行为模式
+                switch (this.behavior) {
+                    case 'melee':
+                        // 近战行为：直接朝玩家移动
+                        const dx = player.x - this.x;
+                        const dy = player.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance > 0) {
+                            this.x += (dx / distance) * this.speed;
+                            this.y += (dy / distance) * this.speed;
+                        }
+                        break;
+
+                    case 'ranged':
+                        // 远程行为：保持距离并射击
+                        const rdx = player.x - this.x;
+                        const rdy = player.y - this.y;
+                        const rDistance = Math.sqrt(rdx * rdx + rdy * rdy);
+
+                        if (rDistance > this.attackRange) {
+                            // 太远了，靠近玩家
+                            if (rDistance > 0) {
+                                this.x += (rdx / rDistance) * this.speed * 0.7;
+                                this.y += (rdy / rDistance) * this.speed * 0.7;
+                            }
+                        } else if (rDistance < this.attackRange * 0.6) {
+                            // 太近了，远离玩家
+                            if (rDistance > 0) {
+                                this.x -= (rdx / rDistance) * this.speed * 0.5;
+                                this.y -= (rdy / rDistance) * this.speed * 0.5;
+                            }
+                        }
+                        // 射击逻辑
+                        if (rDistance <= this.attackRange && Date.now() - this.lastShot > this.shotDelay) {
+                            this.shoot(player);
+                            this.lastShot = Date.now();
+                        }
+                        break;
+
+                    case 'support':
+                        // 支援行为：辅助其他敌人
+                        let nearestAlly = null;
+                        let nearestDistance = Infinity;
+
+                        for (const enemy of gameState.enemies) {
+                            if (enemy !== this) {
+                                const dist = Math.sqrt((enemy.x - this.x) ** 2 + (enemy.y - this.y) ** 2);
+                                if (dist < nearestDistance) {
+                                    nearestDistance = dist;
+                                    nearestAlly = enemy;
+                                }
+                            }
+                        }
+
+                        if (nearestAlly && nearestDistance < this.supportRange) {
+                            // 移向最近的盟友
+                            const adx = nearestAlly.x - this.x;
+                            const ady = nearestAlly.y - this.y;
+                            const aDistance = Math.sqrt(adx * adx + ady * ady);
+
+                            if (aDistance > 0) {
+                                this.x += (adx / aDistance) * this.speed * 0.8;
+                                this.y += (ady / aDistance) * this.speed * 0.8;
+
+                                // 增强盟友
+                                if (aDistance < 50) {
+                                    nearestAlly.damage = Math.min(nearestAlly.damage + 0.01, nearestAlly.damage * 1.1);
+                                    nearestAlly.speed = Math.min(nearestAlly.speed + 0.005, nearestAlly.speed * 1.05);
+                                }
+                            }
+                        } else {
+                            // 否则朝玩家移动
+                            const edx = player.x - this.x;
+                            const edy = player.y - this.y;
+                            const eDistance = Math.sqrt(edx * edx + edy * edy);
+
+                            if (eDistance > 0) {
+                                this.x += (edx / eDistance) * this.speed * 0.6;
+                                this.y += (edy / eDistance) * this.speed * 0.6;
+                            }
+                        }
+                        break;
+
+                    case 'mixed':
+                        // 混合行为：根据情况选择近战或远程
+                        const mdx = player.x - this.x;
+                        const mdy = player.y - this.y;
+                        const mDistance = Math.sqrt(mdx * mdx + mdy * mdy);
+
+                        if (mDistance > this.attackRange * 0.8) {
+                            // 远程时接近玩家
+                            if (mDistance > 0) {
+                                this.x += (mdx / mDistance) * this.speed;
+                                this.y += (mdy / mDistance) * this.speed;
+                            }
+                        } else {
+                            // 近距离时保持压力
+                            if (mDistance > 0) {
+                                this.x += (mdx / mDistance) * this.speed * 0.7;
+                                this.y += (mdy / mDistance) * this.speed * 0.7;
+                            }
+
+                            // 有机会就攻击
+                            if (mDistance <= this.attackRange * 1.2) {
+                                if (Date.now() - this.lastShot > this.shotDelay * 0.8) {
+                                    this.shoot(player);
+                                    this.lastShot = Date.now();
+                                }
+                            }
+                        }
+                        break;
+                }
+
+                // 确保敌人在边界内
+                this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
+
+                // 检查与玩家的碰撞
+                const collisionDistance = this.size + player.size;
+                const actualDistance = Math.sqrt((this.x - player.x) ** 2 + (this.y - player.y) ** 2);
+
+                if (actualDistance < collisionDistance) {
+                    // 计算伤害
+                    let damage = this.damage;
+
+                    // 应用连击防御效果
+                    if (player.comboDefense < 1.0) {
+                        damage *= player.comboDefense;
+                    }
+
+                    player.hp -= damage;
+
+                    // 创建碰撞效果
+                    createParticles(this.x, this.y, '#ff0000', 15, 'explosion');
+
+                    // 重置连击
+                    resetCombo();
+
+                    // 检查玩家是否死亡
+                    if (player.hp <= 0) {
+                        player.hp = 0;
+                        endGame();
+                    }
+                }
+            }
+
+            shoot(target) {
+                // 发射子弹的逻辑
+                const proj = {
+                    x: this.x,
+                    y: this.y,
+                    dx: (target.x - this.x),
+                    dy: (target.y - this.y),
+                    speed: 3,
+                    size: 5,
+                    damage: Math.floor(this.damage * 0.7),
+                    owner: this
+                };
+
+                // 标准化方向
+                const len = Math.sqrt(proj.dx * proj.dx + proj.dy * proj.dy);
+                if (len > 0) {
+                    proj.dx /= len;
+                    proj.dy /= len;
+                }
+
+                gameState.projectiles = gameState.projectiles || [];
+                gameState.projectiles.push(proj);
+            }
+
+            draw() {
+                // 绘制敌人
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 绘制生命条
+                const barWidth = this.size * 2;
+                const barHeight = 4;
+                const barX = this.x - this.size;
+                const barY = this.y - this.size - 8;
+
+                // 背景
+                ctx.fillStyle = '#333';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                // 生命值
+                ctx.fillStyle = '#0f0';
+                const lifePercent = this.hp / this.maxHp;
+                ctx.fillRect(barX, barY, barWidth * lifePercent, barHeight);
+
+                // 如果有护盾，绘制护盾条
+                if (this.hasShield && this.shieldHp > 0) {
+                    ctx.fillStyle = '#00f';
+                    ctx.fillRect(barX, barY - 6, barWidth * (this.shieldHp / (this.maxHp * 0.3)), 4);
+                }
+
+                // 如果是特殊敌人，添加视觉识别标记
+                if (this.type === 'ELITE') {
+                    ctx.strokeStyle = '#FFAA00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (this.type === 'BOSS') {
+                    ctx.strokeStyle = '#8B0000';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // 掉落物类
+        class Drop {
+            constructor(x, y, item, type) {
+                this.x = x;
+                this.y = y;
+                this.item = item;
+                this.type = type; // 'weapon', 'potion', 'relic'
+                this.size = type === 'weapon' ? 12 : 10;
+                this.collected = false;
+                this.dropTime = Date.now();
+
+                // 随机飘浮效果
+                this.floatOffset = Math.random() * Math.PI * 2;
+                this.floatSpeed = 0.05 + Math.random() * 0.05;
+                this.floatHeight = 5 + Math.random() * 5;
+            }
+
+            update() {
+                // 飘浮动画
+                this.y += Math.sin(Date.now() * this.floatSpeed + this.floatOffset) * 0.3;
+            }
+
+            draw() {
+                // 根据类型绘制不同的图形
+                switch (this.type) {
+                    case 'weapon':
+                        // 武器用矩形表示
+                        ctx.fillStyle = this.item.color || '#ffffff';
+                        ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+
+                        // 边框
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                        break;
+
+                    case 'potion':
+                        // 药水用圆形表示
+                        ctx.fillStyle = '#9370DB';
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // 药水内部
+                        ctx.fillStyle = '#BA55D3';
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+
+                    case 'relic':
+                        // 遗物用星形表示
+                        ctx.fillStyle = '#FFD700';
+                        this.drawStar(ctx, this.x, this.y, 5, this.size, this.size * 0.4);
+                        break;
+                }
+
+                // 如果快过期了，添加闪烁效果
+                if (Date.now() - this.dropTime > 25000) { // 25秒后开始闪烁
+                    const flash = Math.sin(Date.now() * 10) > 0;
+                    if (flash) {
+                        ctx.globalAlpha = 0.5;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        if (this.type === 'weapon') {
+                            ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                        } else if (this.type === 'potion') {
+                            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (this.type === 'relic') {
+                            this.drawStar(ctx, this.x, this.y, 5, this.size, this.size * 0.4);
+                        }
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+            }
+
+            drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+                let rot = Math.PI / 2 * 3;
+                let x = cx;
+                let y = cy;
+                let step = Math.PI / spikes;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - outerRadius);
+
+                for (let i = 0; i < spikes; i++) {
+                    x = cx + Math.cos(rot) * outerRadius;
+                    y = cy + Math.sin(rot) * outerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+
+                    x = cx + Math.cos(rot) * innerRadius;
+                    y = cy + Math.sin(rot) * innerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+                }
+
+                ctx.lineTo(cx, cy - outerRadius);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // 子弹/投射物类
+        class Projectile {
+            constructor(x, y, targetX, targetY, damage, owner) {
+                this.x = x;
+                this.y = y;
+                this.dx = (targetX - x);
+                this.dy = (targetY - y);
+                this.speed = 5;
+                this.size = 4;
+                this.damage = damage;
+                this.owner = owner; // 敌人引用
+
+                // 标准化方向
+                const len = Math.sqrt(this.dx * this.dx + this.dy * this.dy);
+                if (len > 0) {
+                    this.dx /= len;
+                    this.dy /= len;
+                }
+            }
+
+            update() {
+                this.x += this.dx * this.speed;
+                this.y += this.dy * this.speed;
+
+                // 检查边界
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    return false; // 标记为删除
+                }
+
+                // 检查与玩家的碰撞
+                const player = gameState.player;
+                const collisionDistance = this.size + player.size;
+                const actualDistance = Math.sqrt((this.x - player.x) ** 2 + (this.y - player.y) ** 2);
+
+                if (actualDistance < collisionDistance) {
+                    // 计算伤害
+                    let damage = this.damage;
+
+                    // 应用连击防御效果
+                    if (player.comboDefense < 1.0) {
+                        damage *= player.comboDefense;
+                    }
+
+                    player.hp -= damage;
+
+                    // 创建撞击效果
+                    createParticles(this.x, this.y, '#FF6600', 8, 'impact');
+
+                    // 重置连击
+                    resetCombo();
+
+                    // 检查玩家是否死亡
+                    if (player.hp <= 0) {
+                        player.hp = 0;
+                        endGame();
+                    }
+
+                    return false; // 标记为删除
+                }
+
+                return true; // 继续存在
+            }
+
+            draw() {
+                ctx.fillStyle = '#FF6600';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 初始化游戏
+        async function initGame() {
+            await loadGameImages();
+            setupEventListeners();
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 鼠标移动
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                gameState.mousePosition = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            });
+
+            // 鼠标点击（攻击）
+            canvas.addEventListener('click', (e) => {
+                if (gameState.paused || gameState.gameOver) return;
+
+                attack();
+            });
+
+            // 键盘事件
+            document.addEventListener('keydown', (e) => {
+                // ESC键暂停
+                if (e.key === 'Escape') {
+                    if (!gameState.gameOver) {
+                        gameState.paused = !gameState.paused;
+                        document.getElementById('pause-menu').classList.toggle('hidden', !gameState.paused);
+                    }
+                }
+
+                // 空格键暂停/继续
+                if (e.code === 'Space') {
+                    e.preventDefault(); // 防止页面滚动
+                    if (!gameState.gameOver) {
+                        gameState.paused = !gameState.paused;
+                        document.getElementById('pause-menu').classList.toggle('hidden', !gameState.paused);
+                    }
+                }
+
+                // 技能键
+                if (!gameState.paused && !gameState.gameOver) {
+                    if (e.key === 'q' || e.key === 'Q') {
+                        useSkill(0);
+                    } else if (e.key === 'w' || e.key === 'W') {
+                        useSkill(1);
+                    } else if (e.key === 'e' || e.key === 'E') {
+                        useSkill(2);
+                    } else if (e.key === 'r' || e.key === 'R') {
+                        useSkill(3);
+                    }
+                }
+            });
+
+            // 菜单按钮事件
+            document.getElementById('start-game-btn').addEventListener('click', startGame);
+            document.getElementById('resume-btn').addEventListener('click', () => {
+                gameState.paused = false;
+                document.getElementById('pause-menu').classList.add('hidden');
+            });
+            document.getElementById('restart-btn').addEventListener('click', startGame);
+            document.getElementById('main-menu-btn').addEventListener('click', () => {
+                gameState.paused = false;
+                document.getElementById('pause-menu').classList.add('hidden');
+                document.getElementById('main-menu').classList.remove('hidden');
+            });
+            document.getElementById('retry-btn').addEventListener('click', startGame);
+            document.getElementById('main-menu-end-btn').addEventListener('click', () => {
+                document.getElementById('game-over').classList.add('hidden');
+                document.getElementById('main-menu').classList.remove('hidden');
+            });
+            document.getElementById('tutorial-btn').addEventListener('click', () => {
+                document.getElementById('main-menu').classList.add('hidden');
+                document.getElementById('tutorial-screen').classList.remove('hidden');
+            });
+            document.getElementById('tutorial-back-btn').addEventListener('click', () => {
+                document.getElementById('tutorial-screen').classList.add('hidden');
+                document.getElementById('main-menu').classList.remove('hidden');
+            });
+            document.getElementById('achievements-btn').addEventListener('click', () => {
+                document.getElementById('main-menu').classList.add('hidden');
+                document.getElementById('achievements-screen').classList.remove('hidden');
+                updateAchievementsList();
+            });
+            document.getElementById('achievements-back-btn').addEventListener('click', () => {
+                document.getElementById('achievements-screen').classList.add('hidden');
+                document.getElementById('main-menu').classList.remove('hidden');
+            });
+            document.getElementById('high-scores-btn').addEventListener('click', () => {
+                document.getElementById('main-menu').classList.add('hidden');
+                document.getElementById('high-scores-screen').classList.remove('hidden');
+                updateHighScoresList();
+            });
+            document.getElementById('high-scores-back-btn').addEventListener('click', () => {
+                document.getElementById('high-scores-screen').classList.add('hidden');
+                document.getElementById('main-menu').classList.remove('hidden');
+            });
+            document.getElementById('settings-btn').addEventListener('click', () => {
+                document.getElementById('main-menu').classList.add('hidden');
+                document.getElementById('settings-screen').classList.remove('hidden');
+            });
+            document.getElementById('settings-back-btn').addEventListener('click', () => {
+                document.getElementById('settings-screen').classList.add('hidden');
+                document.getElementById('main-menu').classList.remove('hidden');
+            });
+            document.getElementById('quit-btn').addEventListener('click', () => {
+                if (confirm('确定要退出游戏吗？')) {
+                    window.close();
+                }
+            });
+
+            // 语言切换
+            document.getElementById('language-switch').addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
+                updateUI();
+            });
+        }
+
+        // 开始游戏
+        function startGame() {
+            // 重置游戏状态
+            gameState = {
+                player: {
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    size: 15,
+                    hp: 120,
+                    maxHp: 120,
+                    weapon: null,
+                    score: 0,
+                    combo: 0,
+                    maxCombo: 0,
+                    lastHitTime: Date.now(),
+                    attackRange: 50,
+                    attackCooldown: 0,
+                    comboDamageMultiplier: 1.0,
+                    comboAttackSpeed: 1.0,
+                    comboDefense: 1.0
+                },
+                enemies: [],
+                drops: [],
+                projectiles: [],
+                level: 1,
+                kills: 0,
+                gameOver: false,
+                paused: false,
+                mousePosition: { x: 0, y: 0 },
+                lastShotTime: 0,
+                shotsPerSecond: 0,
+                comboEffects: [],
+                damagePopups: [],
+                weaponGetEffects: [],
+                lastEnemySpawn: Date.now()
+            };
+
+            // 隐藏菜单
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-over').classList.add('hidden');
+            document.getElementById('pause-menu').classList.add('hidden');
+
+            // 生成初始敌人
+            for (let i = 0; i < 3; i++) {
+                spawnEnemy();
+            }
+
+            // 生成初始武器
+            const initialWeapon = getRandomWeapon(1);
+            getWeapon(initialWeapon);
+
+            updateUI();
+            showCombatLog("游戏开始！祝你好运！", 'start');
+        }
+
+        // 生成敌人
+        function spawnEnemy() {
+            if (gameState.enemies.length < 15 + Math.floor(gameState.level / 3)) { // 根据关卡增加最大敌人数量
+                gameState.enemies.push(new Enemy(gameState.level));
+            }
+        }
+
+        // 获取随机武器（基于关卡）
+        function getRandomWeapon(level) {
+            // 根据关卡计算各种稀有度的权重
+            const levelFactor = 1 / (1 + Math.exp(-0.1 * (level - 10))); // 在第10关左右开始显著变化
+
+            const commonWeight = Math.max(30, 60 - (levelFactor * 30));  // 从60降到30
+            const uncommonWeight = 15 + (levelFactor * 10);  // 从15升到25
+            const rareWeight = 5 + (levelFactor * 10);   // 从5升到15
+            const epicWeight = 1 + (levelFactor * 5);   // 从1升到6
+            const legendaryWeight = 0.5 + (levelFactor * 2);  // 从0.5升到2.5
+            const mythicWeight = 0.2 + (levelFactor * 1);  // 从0.2升到1.2
+
+            const totalWeight = commonWeight + uncommonWeight + rareWeight + epicWeight + legendaryWeight + mythicWeight;
+            const rand = Math.random() * totalWeight;
+
+            let cumulativeWeight = 0;
+
+            cumulativeWeight += commonWeight;
+            if (rand < cumulativeWeight) {
+                const commonWeapons = WEAPONS.filter(w => w.rarity === 'common');
+                return { ...commonWeapons[Math.floor(Math.random() * commonWeapons.length)] };
+            }
+
+            cumulativeWeight += uncommonWeight;
+            if (rand < cumulativeWeight) {
+                const uncommonWeapons = WEAPONS.filter(w => w.rarity === 'uncommon');
+                return { ...uncommonWeapons[Math.floor(Math.random() * uncommonWeapons.length)] };
+            }
+
+            cumulativeWeight += rareWeight;
+            if (rand < cumulativeWeight) {
+                const rareWeapons = WEAPONS.filter(w => w.rarity === 'rare');
+                return { ...rareWeapons[Math.floor(Math.random() * rareWeapons.length)] };
+            }
+
+            cumulativeWeight += epicWeight;
+            if (rand < cumulativeWeight) {
+                const epicWeapons = WEAPONS.filter(w => w.rarity === 'epic');
+                return { ...epicWeapons[Math.floor(Math.random() * epicWeapons.length)] };
+            }
+
+            cumulativeWeight += legendaryWeight;
+            if (rand < cumulativeWeight) {
+                const legendaryWeapons = WEAPONS.filter(w => w.rarity === 'legendary');
+                return { ...legendaryWeapons[Math.floor(Math.random() * legendaryWeapons.length)] };
+            }
+
+            // mythic
+            const mythicWeapons = WEAPONS.filter(w => w.rarity === 'mythic');
+            return { ...mythicWeapons[Math.floor(Math.random() * mythicWeapons.length)] };
+        }
+
+        // 获取武器
+        function getWeapon(weapon) {
+            const oldWeapon = gameState.player.weapon;
+            gameState.player.weapon = weapon;
+
+            // 显示获得武器效果
+            showWeaponGetEffect(gameState.player.x, gameState.player.y, weapon.name);
+
+            // 添加到武器收集记录
+            if (window.WeaponCollection) {
+                window.WeaponCollection.add(weapon);
+            }
+
+            showCombatLog(t('weaponPickup').replace('%s', weapon.name), 'weapon-get');
+        }
+
+        // 攻击
+        function attack() {
+            if (gameState.player.attackCooldown > 0) return;
+
+            const weapon = gameState.player.weapon;
+            if (!weapon) {
+                showCombatLog("没有武器！", 'warning');
+                return;
+            }
+
+            const weaponDamage = weapon.damage;
+            let hitCount = 0;
+
+            // 检查与敌人的碰撞
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                const distance = getDistance(gameState.player, enemy);
+
+                if (distance <= gameState.player.size + enemy.size + gameState.player.attackRange) {
+                    // 计算最终伤害
+                    let damage = weaponDamage * gameState.player.comboDamageMultiplier;
+
+                    // 普通攻击伤害
+                    enemy.hp -= damage;
+
+                    // 创建攻击效果
+                    createAttackEffect(enemy.x, enemy.y, damage, weapon);
+
+                    if (enemy.hp <= 0) {
+                        // 敌人死亡
+                        createDeathEffect(enemy.x, enemy.y, enemy.type);
+                        handleEnemyDeath(enemy, i);
+                    }
+
+                    hitCount++;
+                }
+            }
+
+            // 如果击中敌人，增加连击
+            if (hitCount > 0) {
+                increaseCombo();
+            } else {
+                // 没击中，重置连击
+                resetCombo();
+            }
+
+            // 设置攻击冷却
+            const baseCooldown = 15; // 基础15帧冷却
+            gameState.player.attackCooldown = Math.floor(baseCooldown * gameState.player.comboAttackSpeed); // 应用连击攻速加成
+
+            // 增加分数
+            gameState.player.score += hitCount * 5;
+        }
+
+        // 增加连击
+        function increaseCombo() {
+            const currentTime = Date.now();
+            const timeDiff = currentTime - gameState.player.lastHitTime;
+
+            // 如果时间间隔太长，重置连击
+            if (timeDiff > 3000) {
+                gameState.player.combo = 1;
+            } else {
+                gameState.player.combo++;
+            }
+
+            // 更新最大连击记录
+            if (gameState.player.combo > gameState.player.maxCombo) {
+                gameState.player.maxCombo = gameState.player.combo;
+            }
+
+            // 更新最后命中时间
+            gameState.player.lastHitTime = currentTime;
+
+            // 根据连击数计算加成
+            if (gameState.player.combo >= 50) {
+                gameState.player.comboDamageMultiplier = 1.5;
+                gameState.player.comboAttackSpeed = 0.7; // 攻击间隔减少30%
+                gameState.player.comboDefense = 0.9; // 受伤减少10%
+            } else if (gameState.player.combo >= 30) {
+                gameState.player.comboDamageMultiplier = 1.4;
+                gameState.player.comboAttackSpeed = 0.75;
+                gameState.player.comboDefense = 0.95;
+            } else if (gameState.player.combo >= 20) {
+                gameState.player.comboDamageMultiplier = 1.3;
+                gameState.player.comboAttackSpeed = 0.85;
+                gameState.player.comboDefense = 0.95;
+            } else if (gameState.player.combo >= 10) {
+                gameState.player.comboDamageMultiplier = 1.2;
+                gameState.player.comboAttackSpeed = 1.0;
+                gameState.player.comboDefense = 1.0;
+            } else if (gameState.player.combo >= 5) {
+                gameState.player.comboDamageMultiplier = 1.1;
+                gameState.player.comboAttackSpeed = 1.0;
+                gameState.player.comboDefense = 1.0;
+            } else {
+                gameState.player.comboDamageMultiplier = 1.0;
+                gameState.player.comboAttackSpeed = 1.0;
+                gameState.player.comboDefense = 1.0;
+            }
+
+            // 每5连击显示一次提示
+            if (gameState.player.combo >= 5 && gameState.player.combo % 5 === 0) {
+                showComboEffect(gameState.player.x, gameState.player.y, `${gameState.player.combo} 连击!`);
+                if (gameState.player.combo >= 50) {
+                    showCombatLog(`🎉 ${gameState.player.combo} 连击! 伤害+x1.5，攻速+30%`, 'combo');
+                } else if (gameState.player.combo >= 30) {
+                    showCombatLog(`🔥 ${gameState.player.combo} 连击! 伤害+x1.4，攻速+25%`, 'combo');
+                } else if (gameState.player.combo >= 20) {
+                    showCombatLog(`⚡ ${gameState.player.combo} 连击! 伤害+x1.3，攻速+15%`, 'combo');
+                } else if (gameState.player.combo >= 10) {
+                    showCombatLog(`💥 ${gameState.player.combo} 连击! 伤害+x1.2`, 'combo');
+                } else if (gameState.player.combo >= 5) {
+                    showCombatLog(`💪 ${gameState.player.combo} 连击! 伤害+x1.1`, 'combo');
+                }
+            }
+        }
+
+        // 重置连击
+        function resetCombo() {
+            if (gameState.player.combo > 0) {
+                showCombatLog(`💔 连击中断 (${gameState.player.combo})`, 'combo-break');
+            }
+            gameState.player.combo = 0;
+            gameState.player.comboDamageMultiplier = 1.0;
+            gameState.player.comboAttackSpeed = 1.0;
+            gameState.player.comboDefense = 1.0;
+        }
+
+        // 处理敌人死亡
+        function handleEnemyDeath(enemy, index) {
+            // 从数组中移除敌人
+            gameState.enemies.splice(index, 1);
+
+            // 增加击杀数
+            gameState.kills++;
+
+            // 计算分数
+            let enemyScore = Math.floor(enemy.maxHp / 10);
+            switch(enemy.type) {
+                case 'MELEE': enemyScore += 10; break;
+                case 'RANGED': enemyScore += 20; break;
+                case 'ELITE': enemyScore += 50; break;
+                case 'BOSS': enemyScore += 100; break;
+                default: enemyScore += 15; break;
+            }
+            gameState.player.score += enemyScore;
+
+            // 生成掉落物
+            if (Math.random() < 0.7) { // 70% 概率掉落武器
+                gameState.drops.push(new Drop(enemy.x, enemy.y, enemy.weapon, 'weapon'));
+            }
+
+            // 15% 概率掉落药水
+            if (Math.random() < 0.15) {
+                const potionTypes = [
+                    { name: '生命药水', type: 'health', desc: '恢复50%生命值', effect: 'heal', value: 0.5 },
+                    { name: '力量药水', type: 'strength', desc: '伤害增加25%，持续10秒', effect: 'damage_boost', value: 1.25, duration: 10000 },
+                    { name: '敏捷药水', type: 'agility', desc: '移动速度增加50%，持续8秒', effect: 'speed_boost', value: 1.5, duration: 8000 },
+                    { name: '防护药水', type: 'defense', desc: '受到伤害减少30%，持续12秒', effect: 'defense_boost', value: 0.7, duration: 12000 }
+                ];
+                const potion = { ...potionTypes[Math.floor(Math.random() * potionTypes.length)] };
+                gameState.drops.push(new Drop(enemy.x, enemy.y, potion, 'potion'));
+            }
+
+            // 5% 概率掉落遗物
+            if (Math.random() < 0.05) {
+                const relicTypes = [
+                    { name: '古老护符', desc: '受到致命伤害时有20%几率存活', effect: 'lifesaver', chance: 0.2 },
+                    { name: '龙鳞甲', desc: '减少20%受到的伤害', effect: 'damage_reduction', reduction: 0.2 },
+                    { name: '吸血宝石', desc: '攻击时吸取20%伤害转化为生命', effect: 'life_steal', steal: 0.2 },
+                    { name: '疾风之靴', desc: '永久增加30%移动速度', effect: 'perma_speed', bonus: 0.3 }
+                ];
+                const relic = { ...relicTypes[Math.floor(Math.random() * relicTypes.length)] };
+                gameState.drops.push(new Drop(enemy.x, enemy.y, relic, 'relic'));
+            }
+
+            // 检查升级条件
+            const killsNeededForLevel = Math.min(30, 5 + Math.floor(gameState.level * 1.2) + Math.floor(gameState.level / 4) * 3);
+            if (gameState.kills % killsNeededForLevel === 0) {
+                gameState.level++;
+                showCombatLog(t('levelUp').replace('%d', gameState.level), 'level-up');
+
+                // 升级时增加玩家生命值
+                const baseHpIncrease = 8; // 基础生命值增加量
+                const levelMultiplier = Math.max(0.3, 1.0 - (gameState.level * 0.005)); // 随等级增长递减
+                const hpIncrease = Math.floor(baseHpIncrease * levelMultiplier);
+
+                gameState.player.maxHp += hpIncrease;
+                gameState.player.hp += hpIncrease; // 同时恢复相应生命值
+
+                // 限制最大生命值
+                const maxHpLimit = 500; // 设定最大生命值上限
+                gameState.player.maxHp = Math.min(gameState.player.maxHp, maxHpLimit);
+                gameState.player.hp = Math.min(gameState.player.hp, gameState.player.maxHp);
+            }
+        }
+
+        // 使用技能
+        function useSkill(skillIndex) {
+            const skills = [
+                { name: '旋风斩', effect: 'aoe_damage', range: 100, cooldown: 3000 },
+                { name: '治疗光环', effect: 'heal', range: 150, cooldown: 5000 },
+                { name: '闪现', effect: 'teleport', range: 200, cooldown: 10000 },
+                { name: '真实打击', effect: 'true_strike', range: 60, cooldown: 2000 }
+            ];
+
+            const skill = skills[skillIndex];
+            if (!skill) return;
+
+            // 检查冷却时间（简化版）
+            const now = Date.now();
+            if (window[`skill_${skillIndex}_last_used`] && now - window[`skill_${skillIndex}_last_used`] < skill.cooldown) {
+                const remaining = Math.ceil((window[`skill_${skillIndex}_last_used`] + skill.cooldown - now) / 1000);
+                showCombatLog(`${skill.name}还在冷却中 (${remaining}s)`, 'cooldown');
+                return;
+            }
+
+            window[`skill_${skillIndex}_last_used`] = now;
+
+            let success = false;
+
+            switch (skill.effect) {
+                case 'aoe_damage':
+                    // 旋风斩 - 对周围敌人造成伤害
+                    let hitEnemies = 0;
+                    const weaponDamage = gameState.player.weapon ? gameState.player.weapon.damage : 5;
+
+                    for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                        const enemy = gameState.enemies[i];
+                        const distance = getDistance(gameState.player, enemy);
+
+                        if (distance <= skill.range) {
+                            enemy.hp -= weaponDamage * 2; // 2倍武器伤害
+
+                            // 创建攻击效果
+                            createAttackEffect(enemy.x, enemy.y, weaponDamage * 2, gameState.player.weapon);
+
+                            if (enemy.hp <= 0) {
+                                createDeathEffect(enemy.x, enemy.y, enemy.type);
+                                handleEnemyDeath(enemy, i);
+                            }
+                            hitEnemies++;
+                        }
+                    }
+
+                    if (hitEnemies > 0) {
+                        showCombatLog(t('skillAOE').replace('%s', skill.name).replace('%d', hitEnemies), 'skill-use');
+                        success = true;
+                    } else {
+                        showCombatLog(t('skillNoHit').replace('%s', skill.name), 'skill-miss');
+                    }
+                    break;
+
+                case 'heal':
+                    // 治疗光环 - 恢复周围区域的生命值
+                    const healAmount = Math.floor(gameState.player.maxHp * 0.3);
+                    gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+
+                    createParticles(gameState.player.x, gameState.player.y, '#00FF00', 20);
+                    createPulseEffect(gameState.player.x, gameState.player.y, '#00FF00');
+
+                    showCombatLog(`${skill.name} 恢复了 ${healAmount} 生命值`, 'skill-use');
+                    success = true;
+                    break;
+
+                case 'teleport':
+                    // 闪现 - 传送到鼠标位置
+                    const distance = getDistance(gameState.player, gameState.mousePosition);
+                    const teleportDistance = Math.min(distance, skill.range);
+
+                    const angle = Math.atan2(gameState.mousePosition.y - gameState.player.y, gameState.mousePosition.x - gameState.player.x);
+                    gameState.player.x += Math.cos(angle) * teleportDistance;
+                    gameState.player.y += Math.sin(angle) * teleportDistance;
+
+                    // 限制在画布边界内
+                    gameState.player.x = Math.max(gameState.player.size, Math.min(canvas.width - gameState.player.size, gameState.player.x));
+                    gameState.player.y = Math.max(gameState.player.size, Math.min(canvas.height - gameState.player.size, gameState.player.y));
+
+                    createParticles(gameState.player.x, gameState.player.y, '#8A2BE2', 15);
+
+                    showCombatLog(`${skill.name} 传送了 ${Math.round(teleportDistance)} 像素`, 'skill-use');
+                    success = true;
+                    break;
+
+                case 'true_strike':
+                    // 真实打击 - 对单一目标造成大额伤害
+                    let closestEnemy = null;
+                    let closestDistance = Infinity;
+
+                    for (const enemy of gameState.enemies) {
+                        const distance = getDistance(gameState.player, enemy);
+                        if (distance < closestDistance && distance <= skill.range) {
+                            closestDistance = distance;
+                            closestEnemy = enemy;
+                        }
+                    }
+
+                    if (closestEnemy) {
+                        const weaponDamage = gameState.player.weapon ? gameState.player.weapon.damage : 5;
+                        const trueDamage = weaponDamage * 3; // 3倍武器伤害
+                        closestEnemy.hp -= trueDamage;
+
+                        createAttackEffect(closestEnemy.x, closestEnemy.y, trueDamage, gameState.player.weapon);
+
+                        if (closestEnemy.hp <= 0) {
+                            createDeathEffect(closestEnemy.x, closestEnemy.y, closestEnemy.type);
+                            const enemyIndex = gameState.enemies.indexOf(closestEnemy);
+                            if (enemyIndex !== -1) {
+                                handleEnemyDeath(closestEnemy, enemyIndex);
+                            }
+                        }
+
+                        showCombatLog(`${skill.name} 对 ${closestEnemy.type} 造成了 ${trueDamage} 真实伤害`, 'skill-use');
+                        success = true;
+                    } else {
+                        showCombatLog(t('skillNoHit').replace('%s', skill.name), 'skill-miss');
+                    }
+                    break;
+            }
+
+            if (!success) {
+                // 如果技能没成功，退还冷却
+                window[`skill_${skillIndex}_last_used`] = now - skill.cooldown;
+            }
+        }
+
+        // 创建攻击效果
+        function createAttackEffect(x, y, damage, weapon) {
+            // 创建伤害数字弹出
+            createDamagePopup(x, y, damage, weapon?.color || '#FF0000');
+
+            // 创建粒子效果
+            createParticles(x, y, weapon?.color || '#FF0000', Math.min(20, Math.floor(damage / 2)));
+
+            // 创建武器轨迹效果
+            if (weapon && weapon.color) {
+                createTrailEffect(gameState.player.x, gameState.player.y, x, y, weapon.color);
+            }
+        }
+
+        // 创建死亡效果
+        function createDeathEffect(x, y, enemyType) {
+            createParticles(x, y, '#FF4500', 30, 'explosion');
+            createPulseEffect(x, y, '#FF6347');
+        }
+
+        // 创建粒子效果
+        function createParticles(x, y, color, count, type = 'normal') {
+            for (let i = 0; i < count; i++) {
+                gameState.damagePopups.push({
+                    x: x + (Math.random() - 0.5) * 40,
+                    y: y + (Math.random() - 0.5) * 40,
+                    text: '',
+                    color: color,
+                    size: 12 + Math.random() * 8,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2 - 1, // 向上偏移
+                    life: 60, // 60帧生命周期
+                    type: 'particle'
+                });
+            }
+        }
+
+        // 创建脉冲效果
+        function createPulseEffect(x, y, color) {
+            gameState.comboEffects.push({
+                x: x,
+                y: y,
+                radius: 10,
+                maxRadius: 60,
+                color: color,
+                life: 30,
+                type: 'pulse'
+            });
+        }
+
+        // 创建轨迹效果
+        function createTrailEffect(startX, startY, endX, endY, color) {
+            const steps = 5;
+            const deltaX = (endX - startX) / steps;
+            const deltaY = (endY - startY) / steps;
+
+            for (let i = 0; i < steps; i++) {
+                gameState.comboEffects.push({
+                    x: startX + deltaX * i + (Math.random() - 0.5) * 10,
+                    y: startY + deltaY * i + (Math.random() - 0.5) * 10,
+                    radius: 2 + Math.random() * 3,
+                    color: color,
+                    life: 20,
+                    type: 'trail'
+                });
+            }
+        }
+
+        // 创建伤害弹出
+        function createDamagePopup(x, y, damage, color) {
+            gameState.damagePopups.push({
+                x: x,
+                y: y,
+                text: `-${Math.floor(damage)}`,
+                color: color,
+                size: 16,
+                vx: (Math.random() - 0.5) * 2,
+                vy: -1,
+                life: 90, // 90帧生命周期
+                type: 'damage'
+            });
+        }
+
+        // 创建获得武器效果
+        function showWeaponGetEffect(x, y, weaponName) {
+            gameState.weaponGetEffects.push({
+                x: x,
+                y: y,
+                text: `获得: ${weaponName}`,
+                color: '#4CAF50',
+                size: 18,
+                vx: 0,
+                vy: -0.5,
+                life: 120, // 120帧生命周期
+                type: 'weapon-get'
+            });
+        }
+
+        // 创建连击效果
+        function showComboEffect(x, y, text) {
+            gameState.comboEffects.push({
+                x: x,
+                y: y - 50,
+                text: text,
+                color: '#FF9800',
+                size: 24,
+                vx: 0,
+                vy: -0.3,
+                life: 150, // 150帧生命周期
+                type: 'combo'
+            });
+        }
+
+        // 显示战斗日志
+        function showCombatLog(message, type = 'info') {
+            const logElement = document.getElementById('combat-log');
+            logElement.textContent = message;
+
+            // 根据类型设置样式
+            logElement.style.color =
+                type === 'weapon-get' ? '#4CAF50' :
+                type === 'level-up' ? '#FF9800' :
+                type === 'combo' ? '#FF9800' :
+                type === 'combo-break' ? '#FF5722' :
+                type === 'skill-use' ? '#2196F3' :
+                type === 'skill-miss' ? '#FF9800' :
+                type === 'warning' ? '#FF9800' :
+                type === 'start' ? '#8BC34A' :
+                type === 'special-event' ? '#E91E63' : '#E0E0E0';
+
+            logElement.style.fontSize =
+                type === 'level-up' ? '20px' :
+                type === 'combo' ? '20px' :
+                type === 'weapon-get' ? '18px' : '15px';
+
+            // 重置到正常颜色
+            setTimeout(() => {
+                if (logElement.textContent === message) {
+                    logElement.style.color = '#e6e6e6';
+                    logElement.style.fontSize = '15px';
+                }
+            }, 2000);
+        }
+
+        // 计算两点间距离
+        function getDistance(obj1, obj2) {
+            return Math.sqrt((obj1.x - obj2.x) ** 2 + (obj1.y - obj2.y) ** 2);
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            if (!gameState.gameOver && !gameState.paused) {
+                // 更新玩家位置到鼠标位置（简单的跟随）
+                const dx = gameState.mousePosition.x - gameState.player.x;
+                const dy = gameState.mousePosition.y - gameState.player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > 1) { // 避免除以0
+                    // 归一化方向
+                    const dirX = dx / distance;
+                    const dirY = dy / distance;
+
+                    // 更新玩家位置，限制最高速度
+                    gameState.player.x += dirX * 5; // 移动速度
+                    gameState.player.y += dirY * 5;
+
+                    // 确保玩家在边界内
+                    gameState.player.x = Math.max(gameState.player.size, Math.min(canvas.width - gameState.player.size, gameState.player.x));
+                    gameState.player.y = Math.max(gameState.player.size, Math.min(canvas.height - gameState.player.size, gameState.player.y));
+                }
+
+                // 更新攻击冷却
+                if (gameState.player.attackCooldown > 0) {
+                    gameState.player.attackCooldown--;
+                }
+
+                // 自然生命恢复（当生命值未满且有一定时间无伤害时）
+                const timeSinceLastHit = Date.now() - gameState.player.lastHitTime;
+                if (timeSinceLastHit > 5000 && gameState.player.hp < gameState.player.maxHp) {
+                    const healAmount = Math.floor(gameState.player.maxHp * 0.01); // 每次恢复1%最大生命值
+                    gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+                }
+
+                // 更新敌人
+                gameState.enemies.forEach(enemy => enemy.update());
+
+                // 更新掉落物
+                gameState.drops.forEach(drop => drop.update());
+
+                // 检查玩家与掉落物的碰撞
+                for (let i = gameState.drops.length - 1; i >= 0; i--) {
+                    const drop = gameState.drops[i];
+                    const distance = getDistance(gameState.player, drop);
+
+                    if (distance < gameState.player.size + drop.size) {
+                        // 捡起掉落物
+                        switch (drop.type) {
+                            case 'weapon':
+                                getWeapon(drop.item);
+                                break;
+                            case 'potion':
+                                usePotion(drop.item);
+                                break;
+                            case 'relic':
+                                getRelic(drop.item);
+                                break;
+                        }
+
+                        gameState.drops.splice(i, 1);
+                    }
+                }
+
+                // 更新和绘制投射物
+                if (gameState.projectiles) {
+                    for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
+                        const proj = gameState.projectiles[i];
+                        if (!proj.update()) {
+                            gameState.projectiles.splice(i, 1);
+                        }
+                    }
+                }
+
+                // 生成新敌人（基于关卡和时间）
+                const now = Date.now();
+                const baseSpawnRate = Math.max(7000 - (gameState.level * 30) - (gameState.level * gameState.level * 0.3), 1000); // 使用二次函数调整曲线，给玩家更好的适应过程
+                if (now - gameState.lastEnemySpawn > baseSpawnRate && gameState.enemies.length < 15 + Math.floor(gameState.level / 3)) {
+                    spawnEnemy();
+                    gameState.lastEnemySpawn = now;
+                }
+
+                // 更新伤害弹出
+                for (let i = gameState.damagePopups.length - 1; i >= 0; i--) {
+                    const popup = gameState.damagePopups[i];
+                    popup.x += popup.vx;
+                    popup.y += popup.vy;
+                    popup.life--;
+
+                    if (popup.life <= 0) {
+                        gameState.damagePopups.splice(i, 1);
+                    }
+                }
+
+                // 更新连击效果
+                for (let i = gameState.comboEffects.length - 1; i >= 0; i--) {
+                    const effect = gameState.comboEffects[i];
+
+                    if (effect.type === 'pulse' || effect.type === 'trail') {
+                        effect.radius += (effect.maxRadius - effect.radius) * 0.1;
+                        effect.life--;
+                    } else {
+                        effect.x += effect.vx;
+                        effect.y += effect.vy;
+                        effect.life--;
+                    }
+
+                    if (effect.life <= 0) {
+                        gameState.comboEffects.splice(i, 1);
+                    }
+                }
+
+                // 更新武器获取效果
+                for (let i = gameState.weaponGetEffects.length - 1; i >= 0; i--) {
+                    const effect = gameState.weaponGetEffects[i];
+                    effect.y += effect.vy;
+                    effect.life--;
+
+                    if (effect.life <= 0) {
+                        gameState.weaponGetEffects.splice(i, 1);
+                    }
+                }
+            }
+
+            // 绘制游戏
+            draw();
+
+            // 继续游戏循环
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 绘制函数
+        function draw() {
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制背景网格（可选）
+            drawBackgroundGrid();
+
+            // 绘制掉落物
+            gameState.drops.forEach(drop => drop.draw());
+
+            // 绘制敌人
+            gameState.enemies.forEach(enemy => enemy.draw());
+
+            // 绘制投射物
+            if (gameState.projectiles) {
+                gameState.projectiles.forEach(proj => proj.draw());
+            }
+
+            // 绘制玩家
+            drawPlayer();
+
+            // 绘制伤害弹出
+            gameState.damagePopups.forEach(popup => {
+                ctx.fillStyle = popup.color;
+                ctx.font = `${popup.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText(popup.text, popup.x, popup.y);
+            });
+
+            // 绘制连击效果
+            gameState.comboEffects.forEach(effect => {
+                if (effect.type === 'pulse') {
+                    ctx.strokeStyle = effect.color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (effect.type === 'trail') {
+                    ctx.fillStyle = effect.color;
+                    ctx.globalAlpha = effect.life / 30; // 透明度随生命周期减少
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    ctx.fillStyle = effect.color;
+                    ctx.font = `${effect.size}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(effect.text, effect.x, effect.y);
+                }
+            });
+
+            // 绘制武器获取效果
+            gameState.weaponGetEffects.forEach(effect => {
+                ctx.fillStyle = effect.color;
+                ctx.font = `${effect.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText(effect.text, effect.x, effect.y);
+            });
+
+            // 绘制UI
+            updateUI();
+        }
+
+        // 绘制背景网格
+        function drawBackgroundGrid() {
+            ctx.strokeStyle = 'rgba(100, 100, 150, 0.1)';
+            ctx.lineWidth = 1;
+
+            // 绘制垂直线
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // 绘制水平线
+            for (let y = 0; y < canvas.height; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        // 绘制玩家
+        function drawPlayer() {
+            // 绘制玩家主体
+            ctx.fillStyle = '#4FC3F7';
+            ctx.beginPath();
+            ctx.arc(gameState.player.x, gameState.player.y, gameState.player.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 绘制玩家方向指示器
+            const angle = Math.atan2(gameState.mousePosition.y - gameState.player.y, gameState.mousePosition.x - gameState.player.x);
+            const indicatorX = gameState.player.x + Math.cos(angle) * (gameState.player.size + 5);
+            const indicatorY = gameState.player.y + Math.sin(angle) * (gameState.player.size + 5);
+
+            ctx.fillStyle = '#FFEB3B';
+            ctx.beginPath();
+            ctx.arc(indicatorX, indicatorY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 如果有武器，绘制武器
+            if (gameState.player.weapon) {
+                const weapon = gameState.player.weapon;
+                const weaponLength = gameState.player.size * 1.5;
+
+                // 计算武器位置（指向鼠标方向）
+                const weaponAngle = angle;
+                const weaponTipX = gameState.player.x + Math.cos(weaponAngle) * weaponLength;
+                const weaponTipY = gameState.player.y + Math.sin(weaponAngle) * weaponLength;
+
+                // 绘制武器
+                ctx.strokeStyle = weapon.color;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(gameState.player.x, gameState.player.y);
+                ctx.lineTo(weaponTipX, weaponTipY);
+                ctx.stroke();
+
+                // 如果武器有特殊效果（如发光），绘制额外效果
+                if (['epic', 'legendary', 'mythic'].includes(weapon.rarity)) {
+                    // 绘制发光效果
+                    ctx.shadowColor = weapon.color;
+                    ctx.shadowBlur = 15;
+                    ctx.strokeStyle = weapon.color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(gameState.player.x, gameState.player.y);
+                    ctx.lineTo(weaponTipX, weaponTipY);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            // 绘制攻击冷却指示器
+            if (gameState.player.attackCooldown > 0) {
+                const cooldownPercent = 1 - (gameState.player.attackCooldown / 15); // 假设15帧冷却
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(gameState.player.x, gameState.player.y, gameState.player.size + 5, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * cooldownPercent));
+                ctx.stroke();
+            }
+
+            // 绘制连击圈
+            if (gameState.player.combo > 0) {
+                const comboPercent = Math.min(1, gameState.player.combo / 50); // 假设50连击为最大
+                const hue = 120 - (comboPercent * 120); // 从绿到红
+                ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+                ctx.lineWidth = 2 + (comboPercent * 3);
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(gameState.player.x, gameState.player.y, gameState.player.size + 10, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * comboPercent));
+                ctx.stroke();
+            }
+        }
+
+        // 更新UI
+        function updateUI() {
+            // 更新生命值显示
+            document.getElementById('hp').textContent = Math.max(0, Math.floor(gameState.player.hp));
+            document.getElementById('maxHp').textContent = gameState.player.maxHp;
+
+            // 更新武器显示
+            document.getElementById('weapon').textContent = gameState.player.weapon?.name || '无';
+
+            // 更新连击显示
+            document.getElementById('combo').textContent = gameState.player.combo;
+
+            // 更新分数显示
+            document.getElementById('score').textContent = gameState.player.score;
+
+            // 更新关卡显示
+            document.getElementById('level').textContent = gameState.level;
+
+            // 更新击杀数显示
+            document.getElementById('kills').textContent = gameState.kills;
+
+            // 更新里程碑显示（简化版）
+            document.getElementById('milestones').textContent = `${Math.floor(gameState.level / 5)}/∞`;
+
+            // 更新生命条视觉效果
+            const healthPercent = (gameState.player.hp / gameState.player.maxHp) * 100;
+            const statsElement = document.getElementById('stats');
+            statsElement.style.borderColor =
+                healthPercent > 50 ? '#4CAF50' :
+                healthPercent > 25 ? '#FFC107' : '#F44336';
+        }
+
+        // 使用药水
+        function usePotion(potion) {
+            switch (potion.effect) {
+                case 'heal':
+                    const healAmount = Math.floor(gameState.player.maxHp * potion.value);
+                    gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+                    showCombatLog(`使用 ${potion.name}，恢复了 ${healAmount} 生命值`, 'potion-use');
+                    break;
+                case 'damage_boost':
+                    // 临时增加伤害（这个例子只做演示）
+                    gameState.player.tempDamageBoost = potion.value;
+                    gameState.player.damageBoostEnd = Date.now() + potion.duration;
+                    showCombatLog(`使用 ${potion.name}，伤害增加 ${Math.round((potion.value-1)*100)}%`, 'potion-use');
+                    break;
+                case 'speed_boost':
+                    // 临时增加速度（这个例子只做演示）
+                    gameState.player.tempSpeedBoost = potion.value;
+                    gameState.player.speedBoostEnd = Date.now() + potion.duration;
+                    showCombatLog(`使用 ${potion.name}，速度增加 ${Math.round((potion.value-1)*100)}%`, 'potion-use');
+                    break;
+                case 'defense_boost':
+                    // 临时减少伤害（这个例子只做演示）
+                    gameState.player.tempDefenseBoost = potion.value;
+                    gameState.player.defenseBoostEnd = Date.now() + potion.duration;
+                    showCombatLog(`使用 ${potion.name}，受到伤害减少 ${Math.round((1-potion.value)*100)}%`, 'potion-use');
+                    break;
+                default:
+                    showCombatLog(`使用 ${potion.name}，但没有效果`, 'potion-use');
+            }
+        }
+
+        // 获取遗物
+        function getRelic(relic) {
+            // 在实际实现中，这会永久性地影响游戏
+            showCombatLog(`获得遗物：${relic.name} - ${relic.desc}`, 'relic-get');
+        }
+
+        // 结束游戏
+        function endGame() {
+            gameState.gameOver = true;
+            document.getElementById('final-score').textContent = gameState.player.score;
+            document.getElementById('final-level').textContent = gameState.level;
+            document.getElementById('final-kills').textContent = gameState.kills;
+            document.getElementById('game-over').classList.remove('hidden');
+
+            showCombatLog(`游戏结束！分数：${gameState.player.score}`, 'game-over');
+        }
+
+        // 更新成就列表
+        function updateAchievementsList() {
+            const achievementsList = document.getElementById('achievements-list');
+            achievementsList.innerHTML = '<p>成就系统正在建设中...</p>';
+        }
+
+        // 更新高分榜
+        function updateHighScoresList() {
+            const highScoresList = document.getElementById('high-scores');
+            highScoresList.innerHTML = '<p>高分榜正在建设中...</p>';
+        }
+
+        // 启动游戏
+        window.addEventListener('load', initGame);
+    </script>
+
+    <!-- 集成Steam增强包 -->
+    <script src="./steam-enhancement-pack.js"></script>
+</body>
+</html>
