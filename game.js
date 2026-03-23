@@ -753,6 +753,14 @@ function useSkill(skillKey) {
                         // 创建增强的死亡效果
                         enhancedDeathEffect(enemy.x, enemy.y, enemy.type);
 
+                        // 播放敌人死亡音效
+                        AudioManager.playSound('enemy_death');
+
+                        // Boss敌人额外音效
+                        if (enemy.type === 'BOSS') {
+                            AudioManager.playSound('victory');
+                        }
+
                         // 敌人死亡处理
                         let enemyScore = Math.floor(enemy.maxHp / 10);
                         switch(enemy.type) {
@@ -767,6 +775,7 @@ function useSkill(skillKey) {
                         if (gameState.kills % 10 === 0) {
                             gameState.level++;
                             showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                            AudioManager.playSound('level_up');
                         }
 
                         gameState.enemies.splice(i, 1);
@@ -805,6 +814,9 @@ function useSkill(skillKey) {
             gameState.player.x = Math.max(player.size, Math.min(canvas.width - player.size, gameState.player.x));
             gameState.player.y = Math.max(player.size, Math.min(canvas.height - player.size, gameState.player.y));
 
+            // 播放传送音效
+            AudioManager.playSound('teleport');
+
             createParticles(gameState.player.x, gameState.player.y, '#8A2BE2', 15);
             showCombatLog(`✨ ${skill.name} 成功传送!`, 'weapon-get');
             success = true;
@@ -817,6 +829,10 @@ function useSkill(skillKey) {
                 duration: 5, // 5秒
                 value: 2 // 伤害倍数
             });
+
+            // 播放狂暴音效
+            AudioManager.playSound('magic_spell');
+
             createParticles(gameState.player.x, gameState.player.y, '#FF0000', 25);
             showCombatLog(`😠 ${skill.name} 开启，伤害翻倍!`, 'weapon-get');
             success = true;
@@ -824,6 +840,9 @@ function useSkill(skillKey) {
     }
 
     if (success) {
+        // 播放技能使用音效
+        AudioManager.playSound('skill_use');
+
         // 增加技能使用计数
         gameState.skillsUsed = (gameState.skillsUsed || 0) + 1;
 
@@ -949,30 +968,187 @@ const AudioManager = {
     musicEnabled: true,
     soundEnabled: true,
 
+    // 音效映射 - 将音效名映射到音频文件路径
+    soundMap: {
+        'collect': 'assets/sounds/collect.mp3',
+        'hurt': 'assets/sounds/hurt.mp3',
+        'gameOver': 'assets/sounds/game_over.mp3',
+        'victory': 'assets/sounds/victory.mp3',
+        'weapon_pickup': 'assets/sounds/weapon_pickup.mp3',
+        'attack': 'assets/sounds/attack.mp3',
+        'level_up': 'assets/sounds/level_up.mp3',
+        'hit': 'assets/sounds/hit.mp3',
+        'enemy_death': 'assets/sounds/enemy_death.mp3',
+        'heal': 'assets/sounds/heal.mp3',
+        'menu_select': 'assets/sounds/menu_select.mp3',
+        'skill_use': 'assets/sounds/skill_use.mp3',
+        'potion_pickup': 'assets/sounds/potion_pickup.mp3',
+        'boss_appear': 'assets/sounds/boss_appear.mp3',
+        'critical_hit': 'assets/sounds/critical_hit.mp3',
+        'combo_break': 'assets/sounds/combo_break.mp3',
+        'relic_pickup': 'assets/sounds/relic_pickup.mp3',
+        'teleport': 'assets/sounds/teleport.mp3',
+        'shield_block': 'assets/sounds/shield_block.mp3',
+        'magic_spell': 'assets/sounds/magic_spell.mp3',
+        'bow_shoot': 'assets/sounds/bow_shoot.mp3'
+    },
+
     // 初始化音频上下文
     init() {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             console.log('音效系统已初始化');
 
-            // 预加载一些基本音效
+            // 预加载音频文件和基本音效
+            this.preloadSounds();
             this.createBasicSounds();
         } catch (e) {
             console.warn('无法初始化Web Audio API，将使用简单音效:', e);
         }
     },
 
+    // 预加载音频文件
+    async preloadSounds() {
+        // 尝试加载音频文件，如果失败则使用程序生成的音效作为回退
+        for (const [soundName, soundPath] of Object.entries(this.soundMap)) {
+            await this.loadSound(soundName, soundPath);
+        }
+    },
+
+    // 加载音频文件
+    loadSound(name, path) {
+        return new Promise((resolve) => {
+            // 尝试加载外部音频文件，如果失败则使用程序生成的音效作为回退
+            const audio = new Audio();
+            audio.src = path;
+
+            audio.addEventListener('loadeddata', () => {
+                // 音频加载成功，将其包装为可播放函数
+                this.sounds[name] = () => {
+                    if (!this.soundEnabled) return;
+
+                    // 创建新的audio元素播放声音，避免重复播放冲突
+                    const newAudio = new Audio(path);
+                    newAudio.volume = 0.7;
+                    newAudio.play().catch(e => console.warn(`音频播放失败: ${name}`, e));
+                };
+
+                console.log(`音频文件已加载: ${path}`);
+                resolve();
+            });
+
+            audio.addEventListener('error', () => {
+                // 加载失败，使用程序生成的音效作为回退
+                console.warn(`音频文件加载失败，使用回退音效: ${path}`);
+
+                // 为常见音效提供回退程序音效
+                switch(name) {
+                    case 'collect':
+                        this.sounds[name] = this.createTone(523.25, 0.1);
+                        break;
+                    case 'hurt':
+                        this.sounds[name] = this.createTone(220.00, 0.2);
+                        break;
+                    case 'gameOver':
+                        this.sounds[name] = this.createTone(110.00, 0.8);
+                        break;
+                    case 'victory':
+                        this.sounds[name] = this.createChord([261.63, 329.63, 392.00], 1.0);
+                        break;
+                    case 'weapon_pickup':
+                        this.sounds[name] = this.createTone(659.25, 0.15);
+                        break;
+                    case 'attack':
+                        this.sounds[name] = this.createWhiteNoise(0.05);
+                        break;
+                    case 'level_up':
+                        this.sounds[name] = this.createChord([261.63, 329.63, 392.00, 523.25], 0.5);
+                        break;
+                    case 'hit':
+                        this.sounds[name] = this.createWhiteNoise(0.02);
+                        break;
+                    case 'enemy_death':
+                        this.sounds[name] = this.createTone(329.63, 0.15);
+                        break;
+                    case 'heal':
+                        this.sounds[name] = this.createChord([392.00, 523.25, 659.25], 0.3);
+                        break;
+                    case 'menu_select':
+                        this.sounds[name] = this.createTone(783.99, 0.1); // G5
+                        break;
+                    case 'skill_use':
+                        this.sounds[name] = this.createChord([329.63, 523.25], 0.2);
+                        break;
+                    case 'potion_pickup':
+                        this.sounds[name] = this.createTone(659.25, 0.1);
+                        break;
+                    case 'boss_appear':
+                        this.sounds[name] = this.createChord([110.00, 146.83, 220.00], 1.2);
+                        break;
+                    case 'critical_hit':
+                        this.sounds[name] = this.createWhiteNoise(0.1);
+                        break;
+                    case 'combo_break':
+                        this.sounds[name] = this.createTone(146.83, 0.3);
+                        break;
+                    case 'relic_pickup':
+                        this.sounds[name] = this.createChord([523.25, 659.25], 0.4);
+                        break;
+                    case 'teleport':
+                        this.sounds[name] = this.createTone(987.77, 0.2); // B5
+                        break;
+                    case 'shield_block':
+                        this.sounds[name] = this.createWhiteNoise(0.08);
+                        break;
+                    case 'magic_spell':
+                        this.sounds[name] = this.createChord([261.63, 349.23, 523.25], 0.3);
+                        break;
+                    case 'bow_shoot':
+                        this.sounds[name] = this.createTone(783.99, 0.05);
+                        break;
+                    default:
+                        // 默认使用简单的音效
+                        this.sounds[name] = this.createTone(440.00, 0.1);
+                }
+
+                resolve();
+            });
+        });
+    },
+
     // 创建基本音效
     createBasicSounds() {
-        // 创建不同类型的音效
-        this.sounds['collect'] = this.createTone(523.25, 0.1); // C5 音符，用于收集物品
-        this.sounds['hurt'] = this.createTone(220.00, 0.2); // A3 音符，用于受伤
-        this.sounds['gameOver'] = this.createTone(110.00, 0.8); // A2 音符，用于游戏结束
-        this.sounds['victory'] = this.createChord([261.63, 329.63, 392.00], 1.0); // C-E-G 和弦，用于胜利
-        this.sounds['weapon_pickup'] = this.createTone(659.25, 0.15); // E5 音符，用于获得武器
-        this.sounds['attack'] = this.createWhiteNoise(0.05); // 白噪声，用于攻击
-        this.sounds['level_up'] = this.createChord([261.63, 329.63, 392.00, 523.25], 0.5); // C-E-G-C 和弦，用于升级
-        this.sounds['hit'] = this.createWhiteNoise(0.02); // 短促白噪声，用于击中
+        // 如果某些音效尚未定义，创建默认的程序生成音效
+        const fallbackSounds = {
+            'collect': this.createTone(523.25, 0.1), // C5 音符，用于收集物品
+            'hurt': this.createTone(220.00, 0.2), // A3 音符，用于受伤
+            'gameOver': this.createTone(110.00, 0.8), // A2 音符，用于游戏结束
+            'victory': this.createChord([261.63, 329.63, 392.00], 1.0), // C-E-G 和弦，用于胜利
+            'weapon_pickup': this.createTone(659.25, 0.15), // E5 音符，用于获得武器
+            'attack': this.createWhiteNoise(0.05), // 白噪声，用于攻击
+            'level_up': this.createChord([261.63, 329.63, 392.00, 523.25], 0.5), // C-E-G-C 和弦，用于升级
+            'hit': this.createWhiteNoise(0.02), // 短促白噪声，用于击中
+            'enemy_death': this.createTone(329.63, 0.15), // E4 音符，用于敌人死亡
+            'heal': this.createChord([392.00, 523.25, 659.25], 0.3), // G-E-C 和弦，用于治疗
+            'menu_select': this.createTone(783.99, 0.1), // G5 音符，用于菜单选择
+            'skill_use': this.createChord([329.63, 523.25], 0.2), // E-G 和弦，用于技能释放
+            'potion_pickup': this.createTone(659.25, 0.1), // E5 音符，用于获得药水
+            'boss_appear': this.createChord([110.00, 146.83, 220.00], 1.2), // A-D-A 和弦，用于Boss出现
+            'critical_hit': this.createWhiteNoise(0.1), // 关键击音效
+            'combo_break': this.createTone(146.83, 0.3), // D3 音符，用于连击中断
+            'relic_pickup': this.createChord([523.25, 659.25], 0.4), // C-E 和弦，用于获得遗物
+            'teleport': this.createTone(987.77, 0.2), // B5 音符，用于传送
+            'shield_block': this.createWhiteNoise(0.08), // 格挡音效
+            'magic_spell': this.createChord([261.63, 349.23, 523.25], 0.3), // C-F-C 和弦，用于魔法
+            'bow_shoot': this.createTone(783.99, 0.05) // G5 音符，用于弓箭射击
+        };
+
+        // 只添加尚未定义的音效（即加载失败时使用的回退音效）
+        for (const [name, soundFunc] of Object.entries(fallbackSounds)) {
+            if (!this.sounds[name]) {
+                this.sounds[name] = soundFunc;
+            }
+        }
     },
 
     // 创建简单音调
@@ -1326,6 +1502,11 @@ class Enemy {
 
         this.type = type;
         this.config = ENEMY_TYPES[type];
+
+        // 如果是BOSS类型，播放BOSS出现音效
+        if (this.type === 'BOSS') {
+            AudioManager.playSound('boss_appear');
+        }
 
         this.size = Math.floor(20 * this.config.size + randomInt(0, 15));
         this.x = Math.random() < 0.5 ? -this.size : canvas.width + this.size;
@@ -2158,10 +2339,16 @@ canvas.addEventListener('click', () => {
 function collectDrop(drop) {
     if (drop.type === 'weapon') {
         replaceWeapon(drop.item);
+        // 播放武器拾取音效
+        AudioManager.playSound('weapon_pickup');
     } else if (drop.type === 'potion') {
         usePotion(drop.item);
+        // 播放药水拾取音效
+        AudioManager.playSound('potion_pickup');
     } else if (drop.type === 'relic') {
         collectRelic(drop.item);
+        // 播放遗物拾取音效
+        AudioManager.playSound('relic_pickup');
     }
 
     // 播放收集物品音效
@@ -2191,6 +2378,16 @@ function replaceWeapon(newWeapon) {
     // 增加获取的武器计数
     gameState.weaponsAcquired = (gameState.weaponsAcquired || 0) + 1;
 
+    // 根据武器稀有度播放不同音效
+    if (newWeapon.rarity === 'epic') {
+        AudioManager.playSound('skill_use'); // 使用技能音效表示史诗级武器
+    } else if (newWeapon.rarity === 'legendary') {
+        AudioManager.playSound('victory'); // 使用胜利音效表示传说级武器
+    } else if (newWeapon.rarity === 'mythic') {
+        // 使用特殊音效表示神话级武器
+        AudioManager.playSound('magic_spell');
+    }
+
     // 通知成就系统获取了新武器
     AchievementSystem.onWeaponAcquired(newWeapon);
 
@@ -2215,6 +2412,9 @@ function usePotion(potion) {
     switch (potion.effect) {
         case 'heal':
             gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + potion.value);
+
+            // 播放治疗音效
+            AudioManager.playSound('heal');
 
             // 检查是否在低血量时使用生命药水，触发凤凰涅槃成就
             if (gameState.player.hp < gameState.player.maxHp * 0.2 && potion.value > gameState.player.maxHp * 0.3) {
@@ -2428,6 +2628,14 @@ function attackEnemies() {
                 // 创建增强的死亡效果
                 enhancedDeathEffect(enemy.x, enemy.y, enemy.type);
 
+                // 播放敌人死亡音效
+                AudioManager.playSound('enemy_death');
+
+                // Boss敌人额外音效
+                if (enemy.type === 'BOSS') {
+                    AudioManager.playSound('victory');
+                }
+
                 // 增加得分
                 let enemyScore = Math.floor(enemy.maxHp / 10);
                 switch(enemy.type) {
@@ -2469,6 +2677,7 @@ function attackEnemies() {
                 if (gameState.kills % killsNeededForLevel === 0) {
                     gameState.level++;
                     showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                    AudioManager.playSound('level_up');
                 }
 
                 gameState.enemies.splice(i, 1);
@@ -2480,6 +2689,9 @@ function attackEnemies() {
             } else {
                 // 只是击中敌人但未杀死
                 createParticles(enemy.x, enemy.y, '#FF4500', 3);
+
+                // 播放击中音效
+                AudioManager.playSound('hit');
             }
         }
     }
@@ -2561,6 +2773,10 @@ function updateCombo(currentTime) {
 
 // 重置连击
 function resetCombo() {
+    // 播放连击中断音效
+    if (gameState.player.combo > 0) {
+        AudioManager.playSound('combo_break');
+    }
     gameState.player.combo = 0;
 }
 
@@ -3037,6 +3253,9 @@ const TutorialSystem = {
 };
 
 function initGame() {
+    // 播放游戏开始音效
+    AudioManager.playSound('victory'); // 使用胜利音效表示新的冒险开始
+
     // 保存当前的游戏状态，以便在重新开始游戏时决定是否重置
     const shouldResetGame = !gameState.isPlaying; // 如果游戏没在进行中，表示是全新开始
 
@@ -3175,8 +3394,16 @@ function winGame() {
 }
 
 // 按钮事件
-document.getElementById('start-btn').addEventListener('click', startGame);
-document.getElementById('restart-btn').addEventListener('click', startGame);
+document.getElementById('start-btn').addEventListener('click', () => {
+    // 播放菜单选择音效
+    AudioManager.playSound('menu_select');
+    startGame();
+});
+document.getElementById('restart-btn').addEventListener('click', () => {
+    // 播放菜单选择音效
+    AudioManager.playSound('menu_select');
+    startGame();
+});
 
 // 添加暂停菜单相关事件监听器
 let gamePaused = false;
@@ -3219,13 +3446,21 @@ function resumeGame() {
 }
 
 // 暂停菜单按钮事件
-document.getElementById('continue-btn').addEventListener('click', resumeGame);
+document.getElementById('continue-btn').addEventListener('click', () => {
+    // 播放菜单选择音效
+    AudioManager.playSound('menu_select');
+    resumeGame();
+});
 document.getElementById('settings-btn').addEventListener('click', () => {
+    // 播放菜单选择音效
+    AudioManager.playSound('menu_select');
     document.getElementById('pause-menu').classList.add('hidden');
     document.getElementById('settings-menu').classList.remove('hidden');
 });
 
 document.getElementById('main-menu-btn').addEventListener('click', () => {
+    // 播放菜单选择音效
+    AudioManager.playSound('menu_select');
     // 返回主菜单
     gameState.isPlaying = false;
     gameState.isGameOver = false;
@@ -3241,6 +3476,8 @@ document.getElementById('main-menu-btn').addEventListener('click', () => {
 
 // 设置菜单按钮事件
 document.getElementById('back-to-pause').addEventListener('click', () => {
+    // 播放菜单选择音效
+    AudioManager.playSound('menu_select');
     document.getElementById('settings-menu').classList.add('hidden');
     document.getElementById('pause-menu').classList.remove('hidden');
 });
