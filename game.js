@@ -492,6 +492,22 @@ const ADDITIONAL_MYTHIC_WEAPONS = [
 // 合并额外武器到主武器库
 WEAPONS.push(...ADDITIONAL_EPIC_WEAPONS, ...ADDITIONAL_LEGENDARY_WEAPONS, ...ADDITIONAL_MYTHIC_WEAPONS);
 
+// 引入内容扩展
+try {
+    // 动态加载内容扩展
+    if (typeof require !== 'undefined') {
+        // Node.js 环境
+        const contentExpansion = require('./content-expansion-extension.js');
+    } else {
+        // 浏览器环境 - 使用动态导入
+        import('./content-expansion-extension.js').catch(() => {
+            console.log('内容扩展模块未找到，使用基础内容');
+        });
+    }
+} catch (e) {
+    console.log('加载内容扩展时出错:', e);
+}
+
 // 新增敌人类型
 const ADDITIONAL_ENEMY_TYPES = {
     // 机械系敌人
