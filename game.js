@@ -442,18 +442,40 @@ const AchievementSystem = {
         { id: 'berserker_legend', name: '狂战传说', description: '连续使用狂暴技能10次', condition: 'berserkLegend' },
         { id: 'elemental_warden', name: '元素守护者', description: '获得所有药水类型的各5瓶', condition: 'collectAllPotions' },
         { id: 'relic_collector', name: '遗物收藏家', description: '收集全部7种遗物', condition: 'collectAllRelics' },
+
+        // 新增成就 (第三波)
+        { id: 'first_win', name: '初试啼声', description: '完成第一次游戏', condition: 'firstWin' },
+        { id: 'weapon_diversity', name: '武器多样化', description: '同时拥有5种不同稀有度的武器', condition: 'weaponDiversity' },
+        { id: 'lucky_charm_pro', name: '幸运星', description: '使用幸运药水连续击杀10个敌人', condition: 'luckyKillStreak' },
+        { id: 'tank_like', name: '坦克般存在', description: '到达第15关且生命值不低于80', condition: 'tankLike' },
+        { id: 'speed_runner', name: '疾风骤雨', description: '在30分钟内到达第25关', condition: 'speedRun' },
+        { id: 'pacifist_win', name: '和平主义者', description: '完成游戏但只击杀最少必需的敌人', condition: 'pacifistWin' },
+        { id: 'elemental_adept', name: '元素专家', description: '连续使用3种不同元素的药水', condition: 'elementalAdept' },
+        { id: 'master_of_arts', name: '武学宗师', description: '掌握所有4种技能', condition: 'masterOfArts' },
+        { id: 'boss_destroyer', name: 'Boss破坏者', description: '连续击败3个Boss', condition: 'bossDestroyer' },
+        { id: 'legendary_weapon_master', name: '传说武器大师', description: '使用传说武器击败10个敌人', condition: 'legendaryWeaponMaster' },
     ],
 
     // 临时状态变量，用于跟踪复杂的成就条件
     tempStats: {
-        uniqueWeaponsUsed: new Set(),
-        luckyKillCount: 0,
-        lowHpReviveCount: 0,
-        relicsCollected: 0,
-        skillsUsed: 0,
-        usedPotionTypes: new Set(),
-        berserkStreak: 0,
-        lastBerserkTime: 0
+        uniqueWeaponsUsed: new Set(), // 追踪使用的不同武器
+        luckyKillCount: 0, // 幸运转杀计数
+        lowHpReviveCount: 0, // 濒死复活计数
+        relicsCollected: 0, // 收集的遗物数量
+        skillsUsed: 0, // 使用技能的总数
+        usedPotionTypes: new Set(), // 使用过的药水类型
+        berserkStreak: 0, // 狂暴连击数
+        lastBerserkTime: 0, // 上次使用狂暴的时间
+        consecutiveLuckyKills: 0, // 连续幸运击杀
+        lastLuckyKillTime: 0, // 上次幸运击杀时间
+        bossKillStreak: 0, // Boss击杀连击
+        lastBossKillTime: 0, // 上次击杀Boss的时间
+        legendaryWeaponKills: 0, // 传说武器击杀数
+        lastWeaponChangeTime: 0, // 上次更换武器的时间
+        skillsUsedByType: { Q: 0, W: 0, E: 0, R: 0 }, // 各类型技能使用次数
+        lastPotionTypes: [], // 最近使用的药水类型（用于追踪连续使用）
+        speedRunStartTime: 0, // 速通开始时间
+        firstWinCompleted: false, // 是否完成首次胜利
     },
 
     // 检查成就条件并解锁成就
@@ -550,6 +572,30 @@ const AchievementSystem = {
             }
             if (condition === 'maxCombo >= 50') {
                 return context.maxCombo >= 50;
+            }
+
+            // 第三波新增成就条件
+            if (condition === 'firstWin') {
+                return context.level >= 50; // 假设通关即为首次胜利
+            }
+            if (condition === 'luckyKillStreak') {
+                return this.tempStats.luckyKillCount >= 10;
+            }
+            if (condition === 'tankLike') {
+                return context.level >= 15 && context.hp >= 80;
+            }
+            if (condition === 'weaponDiversity') {
+                // 检查是否同时拥有5种不同稀有度的武器（common, uncommon, rare, epic, legendary/mythic）
+                // 这个条件会在武器获取时动态检查
+                const rarities = new Set();
+                // 遍历所有获得过的武器类型
+                this.tempStats.uniqueWeaponsUsed.forEach(weaponName => {
+                    const weapon = WEAPONS.find(w => w.name === weaponName);
+                    if (weapon) {
+                        rarities.add(weapon.rarity);
+                    }
+                });
+                return rarities.size >= 5;
             }
 
             return false;
@@ -653,6 +699,82 @@ const AchievementSystem = {
         this.checkAchievements();
     },
 
+    // 当玩家使用幸运药水连续击杀敌人时调用
+    onLuckyKillStreak: function() {
+        const currentTime = Date.now();
+        // 如果上次幸运击杀在3秒内，则增加连续计数
+        if (currentTime - this.tempStats.lastLuckyKillTime < 3000) {
+            this.tempStats.consecutiveLuckyKills++;
+        } else {
+            this.tempStats.consecutiveLuckyKills = 1;
+        }
+        this.tempStats.lastLuckyKillTime = currentTime;
+
+        this.checkAchievements();
+    },
+
+    // 当玩家击败Boss时调用
+    onBossDefeat: function() {
+        const currentTime = Date.now();
+        // 如果上次击败Boss在5分钟内，则增加连续计数
+        if (currentTime - this.tempStats.lastBossKillTime < 300000) { // 5分钟
+            this.tempStats.bossKillStreak++;
+        } else {
+            this.tempStats.bossKillStreak = 1;
+        }
+        this.tempStats.lastBossKillTime = currentTime;
+
+        this.checkAchievements();
+    },
+
+    // 当玩家使用传说武器击杀敌人时调用
+    onLegendaryWeaponKill: function() {
+        this.tempStats.legendaryWeaponKills++;
+        this.checkAchievements();
+    },
+
+    // 当玩家使用不同类型技能时调用
+    onSpecificSkillUsed: function(skillKey) {
+        if (this.tempStats.skillsUsedByType[skillKey] !== undefined) {
+            this.tempStats.skillsUsedByType[skillKey]++;
+            this.tempStats.skillsUsed++; // 同时增加总技能使用数
+        }
+        this.checkAchievements();
+    },
+
+    // 当玩家使用不同类型药水时调用
+    onSpecificPotionUsed: function(potionType) {
+        // 添加到最近使用的药水类型列表
+        this.tempStats.lastPotionTypes.push(potionType);
+        if (this.tempStats.lastPotionTypes.length > 3) {
+            this.tempStats.lastPotionTypes.shift(); // 只保留最近3个
+
+            // 检查是否连续使用了三种不同类型的药水
+            if (new Set(this.tempStats.lastPotionTypes).size === 3) {
+                this.tempStats.elementalAdept = true;
+            }
+        }
+
+        this.checkAchievements();
+    },
+
+    // 当游戏开始时调用（用于追踪速通成就）
+    onGameStart: function() {
+        this.tempStats.speedRunStartTime = Date.now();
+        this.checkAchievements();
+    },
+
+    // 当游戏通关时调用
+    onGameWin: function() {
+        this.tempStats.firstWinCompleted = true;
+        // 检查速通成就
+        const timeElapsed = (Date.now() - this.tempStats.speedRunStartTime) / 60000; // 转换为分钟
+        if (timeElapsed <= 30) {
+            this.tempStats.speedRunComplete = true;
+        }
+        this.checkAchievements();
+    },
+
     // 重置临时统计数据（通常在游戏重启时）
     resetTempStats: function() {
         this.tempStats = {
@@ -668,7 +790,21 @@ const AchievementSystem = {
             oneHitBossKill: false,
             triplePhoenix: 0,
             neverTookFullDamage: false,
-            berserkLegend: 0
+            berserkLegend: 0,
+
+            // 新增追踪项
+            consecutiveLuckyKills: 0,
+            lastLuckyKillTime: 0,
+            bossKillStreak: 0,
+            lastBossKillTime: 0,
+            legendaryWeaponKills: 0,
+            lastWeaponChangeTime: 0,
+            skillsUsedByType: { Q: 0, W: 0, E: 0, R: 0 },
+            lastPotionTypes: [],
+            speedRunStartTime: 0,
+            firstWinCompleted: false,
+            speedRunComplete: false,
+            elementalAdept: false,
         };
     }
 };
@@ -879,6 +1015,7 @@ function useSkill(skillKey) {
 
         // 通知成就系统使用了技能
         AchievementSystem.onSkillUsed();
+        AchievementSystem.onSpecificSkillUsed(skillKey);
 
         skillCooldowns[skillKey] = skill.cooldown;
         return true;
@@ -1456,13 +1593,10 @@ const ENEMY_TYPES = {
     TROLL: { name: '巨魔', speed: 0.6, hp: 3.5, damage: 1.8, size: 2.4, behavior: 'melee' }, // 超高血量中伤害
     LICH: { name: '巫妖王', speed: 0.3, hp: 2.8, damage: 3.0, size: 2.0, behavior: 'ranged' }, // 高血高伤害远程
 
-    // 新增敌人类型 (第三波)
-    ANGEL: { name: '天使', speed: 0.8, hp: 3.0, damage: 2.8, size: 2.2, behavior: 'ranged' }, // 高血高伤神圣单位
-    PIRATE: { name: '海盗', speed: 1.4, hp: 1.6, damage: 2.2, size: 1.4, behavior: 'melee' }, // 中速高伤近战
-    NINJA: { name: '忍者', speed: 2.3, hp: 0.6, damage: 2.8, size: 0.8, behavior: 'melee' }, // 极速高伤低血
-    CYBORG: { name: '机械战士', speed: 1.1, hp: 2.5, damage: 2.0, size: 1.8, behavior: 'ranged' }, // 机械单位，远程攻击
-    ELF: { name: '精灵', speed: 1.6, hp: 1.2, damage: 2.4, size: 1.0, behavior: 'ranged' }, // 精灵射手，高攻速
-    DRUID: { name: '德鲁伊', speed: 0.9, hp: 2.2, damage: 2.1, size: 1.5, behavior: 'mixed' }, // 混合型敌人，可近可远
+    // 新增敌人类型 (第四波)
+    DEMIGOD: { name: '半神', speed: 0.5, hp: 5.0, damage: 4.0, size: 3.0, behavior: 'mixed' }, // 极高血量极高伤害的顶级敌人
+    PLANET: { name: '行星守护者', speed: 0.1, hp: 8.0, damage: 2.5, size: 4.0, behavior: 'ranged' }, // 巨大型敌人，极难击败
+    COSMOS: { name: '宇宙意志', speed: 0.3, hp: 6.0, damage: 3.5, size: 3.5, behavior: 'mixed' }, // 全能型终极敌人
 };
 
 class Enemy {
@@ -1524,8 +1658,14 @@ class Enemy {
                 type = 'SHADOW'; // 新增暗影刺客敌人
             } else if (rand < 0.9996) {
                 type = 'BOSS';
+            } else if (rand < 0.9997) {
+                type = 'DEMIGOD'; // 半神级敌人，极高难度
             } else if (rand < 0.9998) {
                 type = 'DEMON'; // 小恶魔
+            } else if (rand < 0.9999) {
+                type = 'PLANET'; // 行星级敌人
+            } else if (rand < 0.99995) {
+                type = 'COSMOS'; // 宇宙级敌人
             } else {
                 type = 'ELEMENTAL'; // 元素生物
             }
@@ -1543,9 +1683,9 @@ class Enemy {
         this.x = Math.random() < 0.5 ? -this.size : canvas.width + this.size;
         this.y = randomInt(0, canvas.height);
         this.speed = randomFloat(0.5 + this.config.speed, 1.5 + this.config.speed + level * 0.1);
-        this.hp = Math.floor((15 + level * 6) * this.config.hp); // 调整基础血量，使游戏整体难度更平衡
+        this.hp = Math.floor((12 + level * 5) * this.config.hp); // 调整基础血量，使游戏整体难度更平衡
         this.maxHp = this.hp;
-        this.damage = Math.floor((3 + level * 1.2) * this.config.damage); // 调整基础伤害，使游戏整体难度更平衡
+        this.damage = Math.floor((2.5 + level * 1.0) * this.config.damage); // 调整基础伤害，使游戏整体难度更平衡
         this.color = this.getEnemyColor();
         this.weapon = generateWeapon();
 
@@ -2829,6 +2969,8 @@ function attackEnemies() {
                 // Boss敌人额外音效
                 if (enemy.type === 'BOSS') {
                     AudioManager.playSound('victory');
+                    // 通知成就系统击败了Boss
+                    AchievementSystem.onBossDefeat();
                 }
 
                 // 增加得分
@@ -2880,6 +3022,13 @@ function attackEnemies() {
                 // 如果使用了幸运药水并且击杀敌人，记录幸运击杀
                 if (usedLuck) {
                     AchievementSystem.onLuckyKill();
+                    AchievementSystem.onLuckyKillStreak();
+                }
+
+                // 如果使用传说及以上级别的武器击杀敌人，记录传奇武器击杀
+                if (gameState.player.weapon &&
+                    (gameState.player.weapon.rarity === 'legendary' || gameState.player.weapon.rarity === 'mythic')) {
+                    AchievementSystem.onLegendaryWeaponKill();
                 }
             } else {
                 // 只是击中敌人但未杀死
@@ -3500,6 +3649,8 @@ function initGame() {
     } else {
         // 如果是全新游戏，重置成就系统临时状态
         AchievementSystem.resetTempStats();
+        // 通知成就系统新游戏开始
+        AchievementSystem.onGameStart();
 
         // 初始化教程
         TutorialSystem.init();
@@ -3583,6 +3734,9 @@ function winGame() {
 
     gameState.isPlaying = false;
     gameState.isGameOver = true;
+
+    // 通知成就系统游戏通关
+    AchievementSystem.onGameWin();
 
     // 检查成就
     AchievementSystem.checkAchievements();
