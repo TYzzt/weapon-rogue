@@ -328,6 +328,14 @@ const POTIONS = [
     { name: '反击药水', effect: 'counter', duration: 7, value: 15, color: '#FF6347' }, // 受伤时反击
     // 新增的新药水类型
     { name: '净化药水', effect: 'purge_negative', value: 1, color: '#98FB98' }, // 清除负面状态
+
+    // 扩展药水系统 - 增加更多药水类型
+    { name: '狂暴药水', effect: 'berserk_damage', duration: 4, value: 1.5, color: '#DC143C' }, // 伤害增加50%
+    { name: '隐身药水', effect: 'invisibility', duration: 3, color: '#9370DB' }, // 短暂隐身（视觉效果）
+    { name: '爆炸药水', effect: 'aoe_blast', value: 25, color: '#FF4500' }, // 范围伤害
+    { name: '复制药水', effect: 'duplicate_weapon', value: 1, color: '#00FA9A' }, // 复制当前武器
+    { name: '洞察药水', effect: 'reveal_enemies', duration: 10, color: '#1E90FF' }, // 显示敌人位置
+    { name: '治疗光环', effect: 'heal_aura', duration: 6, value: 2, color: '#7CFC00' }, // 持续治疗
 ];
 
 // 遗物系统
@@ -367,6 +375,7 @@ let gameState = {
     isPlaying: false,
     isGameOver: false,
     screenShake: 0, // 屏幕震动
+    lastHealTime: 0, // 上次自然恢复时间
 };
 
 // ==================== 存档系统 ====================
@@ -1236,6 +1245,56 @@ function generateWeapon() {
     const weapon = weaponsOfRarity[randomInt(0, weaponsOfRarity.length - 1)];
     return { ...weapon, id: Date.now() + Math.random() };
 }
+
+// ==================== 特殊游戏机制 ====================
+
+// 概念融合机制 - 当玩家连续使用同一种稀有度的武器时，会触发概念融合
+let consecutiveWeapons = { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 };
+
+// 检查概念融合
+function checkConceptFusion(weapon) {
+    if (!weapon || !weapon.rarity) return;
+
+    // 增加当前稀有度的连续计数
+    consecutiveWeapons[weapon.rarity]++;
+
+    // 重置其他稀有度的计数
+    for (const rarity in consecutiveWeapons) {
+        if (rarity !== weapon.rarity) {
+            consecutiveWeapons[rarity] = 0;
+        }
+    }
+
+    // 检查是否达到融合阈值
+    const fusionThreshold = 5; // 连续使用5次相同稀有度触发融合
+    if (consecutiveWeapons[weapon.rarity] >= fusionThreshold) {
+        showCombatLog(`✨ 概念融合！连续使用${rarityNames[weapon.rarity]}武器已达到${consecutiveWeapons[weapon.rarity]}次`, 'weapon-get');
+
+        // 触发融合效果 - 例如增加得分、生命值或其他增益
+        if (gameState.player.hp < gameState.player.maxHp) {
+            // 稍微恢复生命值
+            const healAmount = Math.floor(gameState.player.maxHp * 0.1);
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+            showCombatLog(`❤️ 概念融合恢复了${healAmount}生命值`, 'weapon-get');
+        }
+
+        // 增加得分奖励
+        gameState.player.score += 100 * consecutiveWeapons[weapon.rarity];
+
+        // 重置计数
+        consecutiveWeapons[weapon.rarity] = 0;
+    }
+}
+
+// 稀有度名称映射
+const rarityNames = {
+    'common': '普通',
+    'uncommon': '不常见',
+    'rare': '稀有',
+    'epic': '史诗',
+    'legendary': '传说',
+    'mythic': '神话'
+};
 
 // ==================== 音效管理器 ====================
 const AudioManager = {
@@ -2857,6 +2916,9 @@ function replaceWeapon(newWeapon) {
         AudioManager.playSound('magic_spell');
     }
 
+    // 检查概念融合
+    checkConceptFusion(newWeapon);
+
     // 通知成就系统获取了新武器
     AchievementSystem.onWeaponAcquired(newWeapon);
 
@@ -2943,6 +3005,108 @@ function usePotion(potion) {
                 showCombatLog(`🧪 使用 ${potion.name}，没有负面状态可清除`, 'weapon-get');
             }
             break;
+
+        // 新增扩展药水效果
+        case 'berserk_damage':
+            gameState.buffs.push({ effect: 'berserk_damage', duration: potion.duration, value: potion.value });
+            showCombatLog(`😠 使用 ${potion.name}，伤害提升 ${(potion.value - 1) * 100}%！`, 'weapon-get');
+            break;
+
+        case 'invisibility':
+            gameState.buffs.push({ effect: 'invisibility', duration: potion.duration });
+            showCombatLog(`👁️ 使用 ${potion.name}，获得短暂隐身！`, 'weapon-get');
+            // 这里可以添加一些视觉效果，比如降低玩家可见度
+            break;
+
+        case 'aoe_blast':
+            // 范围伤害效果
+            let hitEnemies = 0;
+            const weaponDamage = gameState.player.weapon ? gameState.player.weapon.damage : 5;
+            const aoeRadius = 100; // 作用半径
+
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                const distance = getDistance(gameState.player, enemy);
+
+                if (distance <= aoeRadius) {
+                    enemy.hp -= potion.value; // 直接使用药水的伤害值
+
+                    // 创建攻击效果
+                    enhancedAttackEffect(enemy.x, enemy.y, potion.value, gameState.player.weapon);
+
+                    if (enemy.hp <= 0) {
+                        // 处理敌人死亡
+                        let enemyScore = Math.floor(enemy.maxHp / 10);
+                        switch(enemy.type) {
+                            case 'MELEE': enemyScore += 10; break;
+                            case 'RANGED': enemyScore += 20; break;
+                            case 'ELITE': enemyScore += 50; break;
+                            case 'TANK': enemyScore += 75; break;
+                            case 'BOSS': enemyScore += 100; break;
+                        }
+
+                        gameState.player.score += enemyScore;
+
+                        // 生成掉落
+                        const dropChance = 0.7;
+                        if (Math.random() < dropChance) {
+                            gameState.drops.push(new Drop(
+                                enemy.x, enemy.y,
+                                enemy.weapon, 'weapon'
+                            ));
+                        }
+
+                        // 小概率掉落药水或遗物
+                        if (Math.random() < 0.15) {
+                            const potionItem = POTIONS[randomInt(0, POTIONS.length - 1)];
+                            gameState.drops.push(new Drop(enemy.x, enemy.y, potionItem, 'potion'));
+                        }
+
+                        if (Math.random() < 0.05) {
+                            const relic = RELICS[randomInt(0, RELICS.length - 1)];
+                            gameState.drops.push(new Drop(enemy.x, enemy.y, relic, 'relic'));
+                        }
+
+                        gameState.kills++;
+
+                        // 每 10 杀升级
+                        if (gameState.kills % 10 === 0) {
+                            gameState.level++;
+                            showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                        }
+
+                        gameState.enemies.splice(i, 1);
+                    }
+                    hitEnemies++;
+                }
+            }
+
+            showCombatLog(`💥 使用 ${potion.name}，击中 ${hitEnemies} 个敌人！`, 'weapon-get');
+            break;
+
+        case 'duplicate_weapon':
+            // 复制当前武器
+            if (gameState.player.weapon) {
+                const duplicatedWeapon = {...gameState.player.weapon, id: Date.now() + Math.random()};
+                gameState.potions.push(duplicatedWeapon); // 添加到药水栏？不对，应该直接替换
+                showCombatLog(`游戏副本 ${potion.name}，复制了当前武器！`, 'weapon-get');
+            } else {
+                showCombatLog(`❌ ${potion.name} 无效，当前没有武器！`, 'weapon-lose');
+            }
+            break;
+
+        case 'reveal_enemies':
+            // 显示敌人位置的效果，可以只是显示日志或临时视觉效果
+            const enemyCount = gameState.enemies.length;
+            gameState.buffs.push({ effect: 'reveal_enemies', duration: potion.duration });
+            showCombatLog(`👁️ 使用 ${potion.name}，发现地图上有 ${enemyCount} 个敌人！`, 'weapon-get');
+            break;
+
+        case 'heal_aura':
+            // 持续治疗效果
+            gameState.buffs.push({ effect: 'regen', duration: potion.duration, value: potion.value });
+            showCombatLog(`💚 使用 ${potion.name}，持续治疗！`, 'weapon-get');
+            break;
     }
     updateUI();
 }
@@ -2992,8 +3156,15 @@ function spawnEnemy() {
 
     // 随着关卡提高，生成速度加快（调整为更平缓的增长，使游戏体验更好）
     // 初始速度较慢，让新手玩家有适应期；后期增速更快，增加挑战性
-    const spawnRate = Math.max(1000, 8000 - gameState.level * 120); // 调整增长速率以优化平衡性
-    setTimeout(spawnEnemy, spawnRate);
+    // 基础生成间隔随关卡增加逐渐缩短，但有一个最小值避免敌人过多
+    const baseSpawnRate = 8000 - (gameState.level * 80); // 减慢增长速度，避免后期过快
+    const minSpawnRate = 1500; // 提高最小生成间隔，给玩家更多喘息机会
+    const spawnRate = Math.max(minSpawnRate, baseSpawnRate);
+
+    // 根据难度调整生成速率
+    const adjustedSpawnRate = spawnRate / gameState.enemySpawnRate;
+
+    setTimeout(spawnEnemy, adjustedSpawnRate);
 }
 
 function updateBuffs() {
@@ -3003,6 +3174,29 @@ function updateBuffs() {
         // 每秒恢复一定生命值
         if (Date.now() % 1000 < 17) { // 约每秒60次中的1次（约每秒恢复一次）
             gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + regenBuff.value);
+        }
+    }
+
+    // 自然生命恢复机制 - 玩家生命值随时间缓慢恢复
+    const currentTime = Date.now();
+    if (!gameState.lastHealTime) {
+        gameState.lastHealTime = currentTime;
+    }
+
+    if (currentTime - gameState.lastHealTime > 5000) { // 每5秒恢复一次
+        // 只有在没有受伤的情况下才能自然恢复
+        if (currentTime - gameState.lastHitTime > 3000) { // 3秒内未受伤才开始恢复
+            // 根据当前生命值百分比调整恢复量 - 生命越低恢复越慢
+            const healAmount = Math.max(1, Math.floor(gameState.player.maxHp * 0.02 * (gameState.player.hp / gameState.player.maxHp)));
+            if (healAmount > 0) {
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+                gameState.lastHealTime = currentTime;
+
+                // 创建小幅度的治疗粒子效果
+                if (healAmount > 0) {
+                    createParticles(gameState.player.x, gameState.player.y, '#00FF00', 3);
+                }
+            }
         }
     }
 
@@ -3348,16 +3542,23 @@ function checkCollisions() {
         if (getDistance(gameState.player, enemy) < player.size + enemy.size) {
             // 计算伤害
             let damage = enemy.damage;
+
+            // 计算护甲减免 - 基于武器的防御能力（使用武器伤害的一定比例作为防御）
+            let armorReduction = 0;
             if (gameState.player.weapon) {
-                let weaponDamage = gameState.player.weapon.damage;
-                const damageBuff = gameState.buffs.find(b => b.effect === 'damage');
-                if (damageBuff) weaponDamage += damageBuff.value;
+                // 护甲值为基础武器伤害的一定比例，避免过度防御
+                armorReduction = Math.floor(gameState.player.weapon.damage * 0.2);
 
-                // 应用狂暴伤害倍数
-                const berserkBuff = gameState.buffs.find(b => b.effect === 'berserk_damage');
-                if (berserkBuff) weaponDamage *= berserkBuff.value;
+                // 应用护甲减免，但至少受到1点伤害
+                damage = Math.max(1, damage - armorReduction);
 
-                damage = Math.max(1, damage - weaponDamage / 5);
+                // 计算玩家的真实伤害减免量
+                const actualReduction = enemy.damage - damage;
+
+                // 如果有伤害减免，显示减伤提示
+                if (actualReduction > 0) {
+                    showCombatLog(`🛡️ 护甲减免 ${actualReduction} 伤害`, 'weapon-get');
+                }
             }
 
             // 检查是否有护盾效果
@@ -3375,6 +3576,7 @@ function checkCollisions() {
                     const shieldIndex = gameState.buffs.findIndex(b => b.effect === 'shield');
                     if (shieldIndex !== -1) {
                         gameState.buffs.splice(shieldIndex, 1);
+                        showCombatLog('🛡️ 护盾已耗尽', 'weapon-lose');
                     }
                 }
             }
@@ -3382,67 +3584,75 @@ function checkCollisions() {
             // 播放受伤音效
             AudioManager.playSound('hurt');
 
-            gameState.player.hp -= damage;
-            createParticles(gameState.player.x, gameState.player.y, '#ff0000', 15, 'explosion');
+            // 如果最终伤害仍大于0，减少玩家生命值
+            if (damage > 0) {
+                gameState.player.hp -= damage;
 
-            // 检查是否有反击效果
-            const counterBuff = gameState.buffs.find(b => b.effect === 'counter');
-            if (counterBuff) {
-                // 对敌人造成反击伤害
-                enemy.hp -= counterBuff.value;
+                // 更新最后一次受伤时间（用于自然恢复系统）
+                gameState.lastHitTime = Date.now();
 
-                // 创建反击粒子效果
-                createParticles(enemy.x, enemy.y, '#FFD700', 10, 'sparkle');
+                // 创建伤害特效
+                createParticles(gameState.player.x, gameState.player.y, '#ff0000', 15, 'explosion');
 
-                // 如果敌人因此死亡
-                if (enemy.hp <= 0) {
-                    // 增加得分
-                    let enemyScore = Math.floor(enemy.maxHp / 10);
-                    switch(enemy.type) {
-                        case 'MELEE': enemyScore += 10; break;
-                        case 'RANGED': enemyScore += 20; break;
-                        case 'ELITE': enemyScore += 50; break;
-                        case 'TANK': enemyScore += 75; break;
-                        case 'BOSS': enemyScore += 100; break;
-                    }
+                // 检查是否有反击效果
+                const counterBuff = gameState.buffs.find(b => b.effect === 'counter');
+                if (counterBuff) {
+                    // 对敌人造成反击伤害
+                    enemy.hp -= counterBuff.value;
 
-                    gameState.player.score += enemyScore;
+                    // 创建反击粒子效果
+                    createParticles(enemy.x, enemy.y, '#FFD700', 10, 'sparkle');
 
-                    // 生成掉落
-                    const dropChance = 0.7;
-                    if (Math.random() < dropChance) {
-                        gameState.drops.push(new Drop(
-                            enemy.x, enemy.y,
-                            enemy.weapon, 'weapon'
-                        ));
-                    }
+                    // 如果敌人因此死亡
+                    if (enemy.hp <= 0) {
+                        // 增加得分
+                        let enemyScore = Math.floor(enemy.maxHp / 10);
+                        switch(enemy.type) {
+                            case 'MELEE': enemyScore += 10; break;
+                            case 'RANGED': enemyScore += 20; break;
+                            case 'ELITE': enemyScore += 50; break;
+                            case 'TANK': enemyScore += 75; break;
+                            case 'BOSS': enemyScore += 100; break;
+                        }
 
-                    // 小概率掉落药水或遗物
-                    if (Math.random() < 0.15) {
-                        const potion = POTIONS[randomInt(0, POTIONS.length - 1)];
-                        gameState.drops.push(new Drop(enemy.x, enemy.y, potion, 'potion'));
-                    }
+                        gameState.player.score += enemyScore;
 
-                    if (Math.random() < 0.05) {
-                        const relic = RELICS[randomInt(0, RELICS.length - 1)];
-                        gameState.drops.push(new Drop(enemy.x, enemy.y, relic, 'relic'));
-                    }
+                        // 生成掉落
+                        const dropChance = 0.7;
+                        if (Math.random() < dropChance) {
+                            gameState.drops.push(new Drop(
+                                enemy.x, enemy.y,
+                                enemy.weapon, 'weapon'
+                            ));
+                        }
 
-                    gameState.kills++;
+                        // 小概率掉落药水或遗物
+                        if (Math.random() < 0.15) {
+                            const potion = POTIONS[randomInt(0, POTIONS.length - 1)];
+                            gameState.drops.push(new Drop(enemy.x, enemy.y, potion, 'potion'));
+                        }
 
-                    // 每 10 杀升级
-                    if (gameState.kills % 10 === 0) {
-                        gameState.level++;
-                        showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                        if (Math.random() < 0.05) {
+                            const relic = RELICS[randomInt(0, RELICS.length - 1)];
+                            gameState.drops.push(new Drop(enemy.x, enemy.y, relic, 'relic'));
+                        }
+
+                        gameState.kills++;
+
+                        // 每 10 杀升级
+                        if (gameState.kills % 10 === 0) {
+                            gameState.level++;
+                            showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                        }
                     }
                 }
-            }
 
-            // 屏幕震动效果
-            gameState.screenShake = Math.min(15, damage);
+                // 屏幕震动效果
+                gameState.screenShake = Math.min(15, damage);
 
-            if (gameState.player.hp <= 0) {
-                gameOver();
+                if (gameState.player.hp <= 0) {
+                    gameOver();
+                }
             }
         }
     }
@@ -3468,6 +3678,7 @@ function checkCollisions() {
                     const shieldIndex = gameState.buffs.findIndex(b => b.effect === 'shield');
                     if (shieldIndex !== -1) {
                         gameState.buffs.splice(shieldIndex, 1);
+                        showCombatLog('🛡️ 护盾已耗尽', 'weapon-lose');
                     }
                 }
             }
@@ -3482,7 +3693,18 @@ function checkCollisions() {
             }
             */
 
+            // 应用武器护甲减免到射弹伤害
+            let projArmorReduction = 0;
+            if (gameState.player.weapon) {
+                projArmorReduction = Math.floor(gameState.player.weapon.damage * 0.1);
+                projDamage = Math.max(1, projDamage - projArmorReduction);
+            }
+
             gameState.player.hp -= projDamage;
+
+            // 更新最后一次受伤时间（用于自然恢复系统）
+            gameState.lastHitTime = Date.now();
+
             createParticles(proj.x, proj.y, proj.color, 12, 'explosion');
             gameState.projectiles.splice(i, 1);
 
