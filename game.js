@@ -774,7 +774,17 @@ function useSkill(skillKey) {
                         gameState.kills++;
                         if (gameState.kills % 10 === 0) {
                             gameState.level++;
-                            showCombatLog(`🎉 升级到第 ${gameState.level} 关！`, 'weapon-get');
+                            showCombatLog(t('levelUp').replace('%d', gameState.level), 'weapon-get');
+
+                            // 增强的升级视觉效果
+                            createRainbowEffect(player.x, player.y, 30); // 彩虹庆祝效果
+                            createLaserEffect(player.x, player.y, '#FFD700'); // 金色激光
+                            for (let i = 0; i < 5; i++) {
+                                setTimeout(() => {
+                                    createTwinkleEffect(player.x, player.y, '#FFD700', 10);
+                                }, i * 200);
+                            }
+
                             AudioManager.playSound('level_up');
                         }
 
@@ -785,10 +795,10 @@ function useSkill(skillKey) {
             }
 
             if (hitEnemies > 0) {
-                showCombatLog(`🌀 ${skill.name} 击中 ${hitEnemies} 个敌人!`, 'weapon-get');
+                showCombatLog(t('skillAOE').replace('%s', skill.name).replace('%d', hitEnemies), 'weapon-get');
                 success = true;
             } else {
-                showCombatLog(`🌀 ${skill.name} 没有击中任何敌人`, 'weapon-lose');
+                showCombatLog(t('skillNoHit').replace('%s', skill.name), 'weapon-lose');
             }
             break;
 
@@ -796,8 +806,14 @@ function useSkill(skillKey) {
             // 治疗光环
             const healAmount = Math.floor(gameState.player.maxHp * 0.3);
             gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+
+            // 增强的治疗特效
             createParticles(gameState.player.x, gameState.player.y, '#00FF00', 20);
-            showCombatLog(`💚 ${skill.name} 恢复 ${healAmount} 生命!`, 'weapon-get');
+            createPulseEffect(gameState.player.x, gameState.player.y, '#00FF00');
+            createTwinkleEffect(gameState.player.x, gameState.player.y, '#00FF00', 15);
+            createRippleEffect(gameState.player.x, gameState.player.y, '#00FF77');
+
+            showCombatLog(t('skillHeal').replace('%s', skill.name).replace('%d', healAmount), 'weapon-get');
             success = true;
             break;
 
@@ -817,8 +833,17 @@ function useSkill(skillKey) {
             // 播放传送音效
             AudioManager.playSound('teleport');
 
+            // 增强的传送特效
             createParticles(gameState.player.x, gameState.player.y, '#8A2BE2', 15);
-            showCombatLog(`✨ ${skill.name} 成功传送!`, 'weapon-get');
+            createLaserEffect(gameState.player.x, gameState.player.y, '#8A2BE2');
+            createTwinkleEffect(gameState.player.x, gameState.player.y, '#9370DB', 10);
+
+            // 原位置留下的残影特效
+            createRippleEffect(gameState.player.x - Math.cos(angle) * teleportDistance,
+                              gameState.player.y - Math.sin(angle) * teleportDistance,
+                              '#8A2BE2');
+
+            showCombatLog(t('skillTeleport').replace('%s', skill.name), 'weapon-get');
             success = true;
             break;
 
@@ -834,7 +859,13 @@ function useSkill(skillKey) {
             AudioManager.playSound('magic_spell');
 
             createParticles(gameState.player.x, gameState.player.y, '#FF0000', 25);
-            showCombatLog(`😠 ${skill.name} 开启，伤害翻倍!`, 'weapon-get');
+
+            // 添加额外的狂暴特效
+            createRippleEffect(gameState.player.x, gameState.player.y, '#FF0000');
+            createLaserEffect(gameState.player.x, gameState.player.y, '#FF4500');
+            createRainbowEffect(gameState.player.x, gameState.player.y, 15);
+
+            showCombatLog(t('skillBerserk').replace('%s', skill.name), 'weapon-get');
             success = true;
             break;
     }
@@ -1839,7 +1870,7 @@ class Particle {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.type = type; // 'standard', 'sparkle', 'smoke', 'explosion', 'magic', 'impact', 'beam', 'comet', 'pulse'
+        this.type = type; // 'standard', 'sparkle', 'smoke', 'explosion', 'magic', 'impact', 'beam', 'comet', 'pulse', 'ripple', 'laser', 'rainbow', 'twinkle'
 
         switch(type) {
             case 'sparkle':
@@ -1918,6 +1949,48 @@ class Particle {
                 this.originalSize = this.size; // 保存原始大小
                 this.pulseSpeed = randomFloat(0.2, 0.5); // 脉冲速度
                 this.pulsePhase = randomFloat(0, Math.PI * 2); // 脉冲相位
+                break;
+            case 'ripple': // 波纹效果
+                this.size = randomInt(10, 20);
+                this.speedX = 0;
+                this.speedY = 0;
+                this.life = 1;
+                this.decay = randomFloat(0.01, 0.03);
+                this.gravity = 0;
+                this.originalSize = this.size; // 保存原始大小
+                this.expandSpeed = randomFloat(1.5, 2.5); // 扩散速度
+                break;
+            case 'laser': // 激光效果
+                this.size = randomInt(1, 2);
+                this.speedX = randomFloat(-0.5, 0.5);
+                this.speedY = randomFloat(-0.5, 0.5);
+                this.life = 1;
+                this.decay = randomFloat(0.02, 0.05);
+                this.gravity = 0;
+                this.length = randomInt(30, 60); // 激光长度
+                this.angle = Math.atan2(this.speedY, this.speedX);
+                this.laserWidth = randomInt(3, 6); // 激光宽度
+                this.oscillation = randomFloat(0.1, 0.3); // 震荡效果
+                break;
+            case 'rainbow': // 彩虹效果
+                this.size = randomInt(3, 7);
+                this.speedX = randomFloat(-3, 3);
+                this.speedY = randomFloat(-3, 3);
+                this.life = 1;
+                this.decay = randomFloat(0.01, 0.02);
+                this.gravity = 0;
+                this.hue = randomInt(0, 360); // 初始色调
+                this.colorShift = randomFloat(0.5, 2); // 色调变化速度
+                break;
+            case 'twinkle': // 闪烁效果
+                this.size = randomInt(1, 3);
+                this.speedX = 0;
+                this.speedY = 0;
+                this.life = 1;
+                this.decay = randomFloat(0.01, 0.03);
+                this.gravity = 0;
+                this.twinkleSpeed = randomFloat(0.05, 0.1); // 闪烁速度
+                this.twinklePhase = randomFloat(0, Math.PI * 2); // 闪烁相位
                 break;
             case 'standard':
             default:
@@ -2109,6 +2182,94 @@ class Particle {
                 ctx.arc(this.x, this.y, pulseSize, 0, Math.PI * 2);
                 ctx.fill();
                 break;
+            case 'ripple': // 波纹效果
+                // 计算波纹半径
+                const rippleRadius = this.originalSize + (1 - this.life) * this.expandSpeed * 50;
+
+                // 创建波纹效果
+                const rippleGradient = ctx.createRadialGradient(
+                    this.x, this.y, this.originalSize * 0.3,
+                    this.x, this.y, rippleRadius
+                );
+                rippleGradient.addColorStop(0, lightenColor(this.color, 70));
+                rippleGradient.addColorStop(0.7, this.color);
+                rippleGradient.addColorStop(0.8, darkenColor(this.color, 30));
+                rippleGradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = rippleGradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, rippleRadius, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'laser': // 激光效果
+                // 保存当前状态
+                ctx.save();
+
+                // 移动到粒子位置并旋转
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // 计算振荡偏移
+                const oscillationOffset = Math.sin(Date.now() / 100 * this.oscillation) * 2;
+
+                // 创建激光渐变
+                const laserGradient = ctx.createLinearGradient(0, 0, this.length, 0);
+                laserGradient.addColorStop(0, lightenColor(this.color, 80));
+                laserGradient.addColorStop(0.3, this.color);
+                laserGradient.addColorStop(0.7, darkenColor(this.color, 20));
+                laserGradient.addColorStop(1, 'transparent');
+
+                // 绘制激光主体
+                ctx.fillStyle = laserGradient;
+                ctx.beginPath();
+                ctx.rect(0, -this.laserWidth/2 + oscillationOffset, this.length, this.laserWidth);
+                ctx.fill();
+
+                // 添加激光中心亮线
+                ctx.fillStyle = lightenColor(this.color, 50);
+                ctx.fillRect(0, -1, this.length, 2);
+
+                // 恢复状态
+                ctx.restore();
+                break;
+            case 'rainbow': // 彩虹效果
+                // 根据生命周期更新色调
+                const currentHue = (this.hue + this.life * 100 * this.colorShift) % 360;
+                const rainbowColor = `hsl(${currentHue}, 100%, 60%)`;
+
+                // 绘制彩色粒子
+                ctx.fillStyle = rainbowColor;
+                ctx.globalAlpha = this.life;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 添加发光效果
+                ctx.shadowColor = rainbowColor;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                break;
+            case 'twinkle': // 闪烁效果
+                // 计算闪烁强度
+                const twinkleIntensity = Math.abs(Math.sin(Date.now() / 1000 * this.twinkleSpeed + this.twinklePhase));
+                const twinkleSize = this.size + twinkleIntensity * 3;
+
+                // 绘制闪烁粒子
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life * twinkleIntensity;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, twinkleSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 添加闪烁光晕
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                break;
             case 'standard':
             default:
                 ctx.fillStyle = this.color;
@@ -2193,15 +2354,18 @@ function createWeaponGetEffect(x, y, weapon) {
     switch(weapon.rarity) {
         case 'rare':
             createParticles(x, y, '#4A90E2', 10, 'sparkle'); // 蓝色稀有特效
+            createRippleEffect(x, y, '#4A90E2'); // 蓝色波纹特效
             break;
         case 'epic':
             createParticles(x, y, '#9b5de5', 15, 'magic'); // 紫色史诗特效
             createParticles(x, y, '#9b5de5', 8, 'beam');   // 紫色光束
+            createLaserEffect(x, y, '#9b5de5'); // 紫色激光
             break;
         case 'legendary':
             createParticles(x, y, '#FFD700', 20, 'sparkle'); // 金色传说特效
             createParticles(x, y, '#FFA500', 15, 'magic');   // 橙色魔法
             createParticles(x, y, '#FF69B4', 10, 'pulse');   // 粉色脉冲
+            createRainbowEffect(x, y, 15); // 彩虹效果
             shakeScreen(10, 200); // 轻微屏幕震动
             break;
         case 'mythic':
@@ -2209,8 +2373,12 @@ function createWeaponGetEffect(x, y, weapon) {
             createParticles(x, y, '#00FFFF', 20, 'magic');   // 青色魔法
             createParticles(x, y, '#FFFF00', 15, 'beam');    // 黄色光束
             createParticles(x, y, '#00FF00', 10, 'pulse');   // 绿色脉冲
+            createRainbowEffect(x, y, 20); // 强化彩虹效果
+            createTwinkleEffect(x, y, '#FFFFFF', 15); // 白色闪烁
             shakeScreen(15, 300); // 中等屏幕震动
             break;
+        default: // common and uncommon
+            createTwinkleEffect(x, y, color, 5); // 普通物品添加闪烁效果
     }
 }
 
@@ -2259,6 +2427,33 @@ function enhancedAttackEffect(x, y, damage, weapon) {
 function createPulseEffect(x, y, color) {
     // 创建脉冲环形效果
     createParticles(x, y, color, 1, 'pulse');
+}
+
+// 创建波纹效果
+function createRippleEffect(x, y, color) {
+    createParticles(x, y, color, 1, 'ripple');
+}
+
+// 创建激光效果
+function createLaserEffect(x, y, color) {
+    createParticles(x, y, color, 5, 'laser');
+}
+
+// 创建彩虹效果
+function createRainbowEffect(x, y, count = 10) {
+    for (let i = 0; i < count; i++) {
+        // 随机色调，产生彩虹效果
+        const hue = Math.floor(Math.random() * 360);
+        const color = `hsl(${hue}, 100%, 60%)`;
+        createParticles(x, y, color, 1, 'rainbow');
+    }
+}
+
+// 创建闪烁效果
+function createTwinkleEffect(x, y, color, count = 8) {
+    for (let i = 0; i < count; i++) {
+        createParticles(x, y, color, 1, 'twinkle');
+    }
 }
 
 // 增强的敌人死亡效果
@@ -3568,3 +3763,136 @@ if (document.getElementById('achievements-btn')) {
 // 初始绘制
 ctx.fillStyle = '#1a1a2e';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// ==================== 游戏控制器支持 ====================
+
+// 游戏控制器相关变量
+let gamepads = {};
+let controllerConnected = false;
+let controllerVibrationSupported = false;
+
+// 连接控制器
+window.addEventListener('gamepadconnected', (e) => {
+    console.log('游戏控制器已连接:', e.gamepad);
+    gamepads[e.gamepad.index] = e.gamepad;
+    controllerConnected = true;
+
+    // 尝试启用震动支持
+    if ('vibrationActuator' in e.gamepad && e.gamepad.vibrationActuator) {
+        controllerVibrationSupported = true;
+        console.log('震动支持已启用');
+    }
+
+    showCombatLog('🎮 游戏控制器已连接', 'weapon-get');
+});
+
+// 断开控制器
+window.addEventListener('gamepaddisconnected', (e) => {
+    console.log('游戏控制器已断开:', e.gamepad);
+    delete gamepads[e.gamepad.index];
+    controllerConnected = Object.keys(gamepads).length > 0;
+
+    showCombatLog('🎮 游戏控制器已断开', 'weapon-lose');
+});
+
+// 获取活动的游戏手柄
+function getActiveGamepad() {
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) {
+            return gamepads[i];
+        }
+    }
+    return null;
+}
+
+// 游戏控制器更新循环
+function updateGamepadInput() {
+    if (!controllerConnected) return;
+
+    const gamepad = getActiveGamepad();
+    if (!gamepad) return;
+
+    // 获取左摇杆的值 (用于移动)
+    const leftStickX = gamepad.axes[0]; // 左右
+    const leftStickY = gamepad.axes[1]; // 上下
+
+    // 获取右摇杆的值 (用于瞄准)
+    const rightStickX = gamepad.axes[2]; // 左右
+    const rightStickY = gamepad.axes[3]; // 上下
+
+    // 设置移动阈值（避免轻微漂移）
+    const moveThreshold = 0.1;
+    if (Math.abs(leftStickX) > moveThreshold || Math.abs(leftStickY) > moveThreshold) {
+        // 使用摇杆控制玩家移动
+        player.targetX = gameState.player.x + leftStickX * 5;
+        player.targetY = gameState.player.y + leftStickY * 5;
+
+        // 确保玩家不会移出边界
+        player.targetX = Math.max(player.size, Math.min(canvas.width - player.size, player.targetX));
+        player.targetY = Math.max(player.size, Math.min(canvas.height - player.size, player.targetY));
+    }
+
+    // 如果右摇杆被使用，则用作瞄准方向
+    const aimThreshold = 0.1;
+    if (Math.abs(rightStickX) > aimThreshold || Math.abs(rightStickY) > aimThreshold) {
+        // 使用右摇杆方向代替鼠标位置
+        const angle = Math.atan2(rightStickY, rightStickX);
+        mouseX = gameState.player.x + Math.cos(angle) * 100; // 假设固定距离
+        mouseY = gameState.player.y + Math.sin(angle) * 100;
+    }
+
+    // 检查按钮状态 (A, B, X, Y 对应 0-3号按钮)
+    if (gamepad.buttons[0] && gamepad.buttons[0].pressed) { // A键 - 技能Q
+        useSkill('Q');
+    }
+    if (gamepad.buttons[1] && gamepad.buttons[1].pressed) { // B键 - 技能W
+        useSkill('W');
+    }
+    if (gamepad.buttons[2] && gamepad.buttons[2].pressed) { // X键 - 技能E
+        useSkill('E');
+    }
+    if (gamepad.buttons[3] && gamepad.buttons[3].pressed) { // Y键 - 技能R
+        useSkill('R');
+    }
+
+    // 检查肩键 (LB, RB 对应 4, 5号按钮)
+    if (gamepad.buttons[4] && gamepad.buttons[4].pressed) { // LB键 - 可以用作其他功能
+        // 暂时留空，可扩展功能
+    }
+    if (gamepad.buttons[5] && gamepad.buttons[5].pressed) { // RB键 - 可以用作其他功能
+        // 暂时留空，可扩展功能
+    }
+
+    // 检查扳机键 (LT, RT 对应 6, 7号按钮)
+    if (gamepad.buttons[6] && gamepad.buttons[6].pressed) { // LT键
+        // 可以用来切换某种模式或功能
+    }
+    if (gamepad.buttons[7] && gamepad.buttons[7].pressed) { // RT键
+        // 可以用来快速使用某个物品
+    }
+
+    // 开始/选择按钮 (8, 9号按钮)
+    if (gamepad.buttons[8] && gamepad.buttons[8].pressed) { // Back/View键
+        // 可以映射到暂停菜单
+        if (gameState.isPlaying && !document.getElementById('pause-menu').classList.contains('hidden')) {
+            document.getElementById('pause-menu').classList.remove('hidden');
+        }
+    }
+    if (gamepad.buttons[9] && gamepad.buttons[9].pressed) { // Start/Menu键
+        // 可以映射到暂停菜单
+        togglePauseMenu();
+    }
+}
+
+// 在游戏循环中调用控制器更新
+const originalGameLoop = gameLoop;
+gameLoop = function() {
+    if (!gameState.isPlaying) return;
+
+    // 更新控制器输入
+    updateGamepadInput();
+
+    // 调用原始游戏循环
+    originalGameLoop();
+};
