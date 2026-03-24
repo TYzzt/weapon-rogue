@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rogue游戏 - 重构版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #eee;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+        }
+
+        #gameCanvas {
+            background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+            border: 3px solid #4a4a6a;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(100, 100, 255, 0.3);
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        #stats {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #4a4a6a;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        #start-screen, #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 16px;
+            border: 3px solid #4a4a6a;
+            text-align: center;
+            z-index: 100;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #4a4a6a;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui-overlay">
+            <div id="stats">
+                <div>❤️ 生命：<span id="hp">100</span></div>
+                <div>⚔️ 武器：<span id="weapon">无</span></div>
+                <div>🏆 关卡：<span id="level">1</span></div>
+                <div>💀 击杀：<span id="kills">0</span></div>
+                <div>⭐ 连击：<span id="combo">0</span></div>
+            </div>
+        </div>
+        <div id="controls">
+            <div>Q/W/E/R - 技能</div>
+            <div>点击 - 攻击</div>
+        </div>
+        <div id="game-over" class="hidden">
+            <h2>游戏结束</h2>
+            <p>你到达了第 <span id="final-level">0</span> 关</p>
+            <p>击败了 <span id="final-kills">0</span> 个敌人</p>
+            <p>最高连击 <span id="final-combo">0</span></p>
+            <button id="restart-btn">重新开始</button>
+        </div>
+        <div id="start-screen">
+            <h1>🗡️ Rogue游戏 - 重构版</h1>
+            <p class="description">
+                经过重构，解决了模块依赖和命名冲突问题<br>
+                性能优化，更流畅的游戏体验<br><br>
+                使用鼠标控制角色移动，点击攻击敌人！
+            </p>
+            <button id="start-btn">开始游戏</button>
+        </div>
+    </div>
+
+    <!-- 冲突解决器和统一游戏引擎 - 必须最先加载 -->
+    <script src="./conflict-resolver.js"></script>
+    <script src="./game-engine.js"></script>
+    <script src="./engine-adapter.js"></script>
+
+    <!-- 模块整合器 -->
+    <script src="./module-integrator.js"></script>
+
+    <!-- 性能优化器 -->
+    <script src="./performance-optimizer-full.js"></script>
+
+    <!-- 统一存档系统 -->
+    <script src="./unified-save-system.js"></script>
+
+    <!-- 统一成就系统 -->
+    <script src="./unified-achievement-system.js"></script>
+
+    <!-- 统一音频系统 -->
+    <script src="./unified-audio-system.js"></script>
+
+    <!-- 统一菜单系统 -->
+    <script src="./unified-menu-system.js"></script>
+
+    <!-- 游戏核心 -->
+    <script src="./game-core.js"></script>
+
+    <!-- 游戏模块 -->
+    <script src="./game-modules.js"></script>
+
+    <!-- 集成游戏系统 -->
+    <script src="./integrated-game-system.js"></script>
+
+    <!-- 性能优化模块 -->
+    <script src="./performance-optimizer.js"></script>
+
+    <!-- 主游戏逻辑 -->
+    <script src="./game-main.js"></script>
+
+    <script>
+        // 获取画布和上下文
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 获取UI元素
+        const hpDisplay = document.getElementById('hp');
+        const weaponDisplay = document.getElementById('weapon');
+        const levelDisplay = document.getElementById('level');
+        const killsDisplay = document.getElementById('kills');
+        const comboDisplay = document.getElementById('combo');
+        const finalLevelDisplay = document.getElementById('final-level');
+        const finalKillsDisplay = document.getElementById('final-kills');
+        const finalComboDisplay = document.getElementById('final-combo');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // 初始化鼠标位置跟踪
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const gameState = window.GameSystem.getState();
+            gameState.mouseX = e.clientX - rect.left;
+            gameState.mouseY = e.clientY - rect.top;
+
+            // 移动玩家朝向鼠标位置
+            if (gameState.player.isPlaying && !gameState.player.isGameOver) {
+                const dx = gameState.mouseX - gameState.player.x;
+                const dy = gameState.mouseY - gameState.player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > 0) {
+                    const moveDistance = Math.min(gameState.player.speed, distance);
+                    gameState.player.x += (dx / distance) * moveDistance;
+                    gameState.player.y += (dy / distance) * moveDistance;
+
+                    // 确保玩家在画布范围内
+                    gameState.player.x = Math.max(gameState.player.size/2,
+                                                Math.min(canvas.width - gameState.player.size/2,
+                                                       gameState.player.x));
+                    gameState.player.y = Math.max(gameState.player.size/2,
+                                                Math.min(canvas.height - gameState.player.size/2,
+                                                       gameState.player.y));
+                }
+            }
+        });
+
+        // 点击事件用于攻击
+        canvas.addEventListener('click', () => {
+            if (!window.GameSystem.getState().player.isPlaying || window.GameSystem.getState().player.isGameOver) {
+                return;
+            }
+
+            // 攻击附近的敌人
+            const gameState = window.GameSystem.getState();
+            const attackRadius = 50; // 攻击半径
+
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                const dx = gameState.player.x - enemy.x;
+                const dy = gameState.player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= attackRadius) {
+                    // 击败敌人
+                    gameState.enemies.splice(i, 1);
+                    gameState.kills++;
+
+                    // 触发成就检查
+                    const achievementModule = window.GameSystem.getModule('achievements');
+                    if (achievementModule) {
+                        achievementModule.checkAchievements(gameState);
+                    }
+
+                    // 更新分数
+                    gameState.score += 10;
+                    gameState.currentCombo++;
+                    if (gameState.currentCombo > gameState.maxCombo) {
+                        gameState.maxCombo = gameState.currentCombo;
+                    }
+
+                    break; // 一次点击只攻击一个敌人
+                }
+            }
+        });
+
+        // 键盘事件处理技能
+        document.addEventListener('keydown', (e) => {
+            if (!window.GameSystem.getState().player.isPlaying || window.GameSystem.getState().player.isGameOver) {
+                return;
+            }
+
+            const gameState = window.GameSystem.getState();
+
+            switch(e.key.toLowerCase()) {
+                case 'q':
+                    console.log('使用Q技能');
+                    gameState.skillsUsed.Q++;
+                    break;
+                case 'w':
+                    console.log('使用W技能');
+                    gameState.skillsUsed.W++;
+                    break;
+                case 'e':
+                    console.log('使用E技能');
+                    gameState.skillsUsed.E++;
+                    break;
+                case 'r':
+                    console.log('使用R技能');
+                    gameState.skillsUsed.R++;
+                    break;
+            }
+        });
+
+        // 点击开始游戏
+        startBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+
+            // 使用新的模块化系统启动游戏
+            const coreModule = window.GameSystem.getModule('core');
+            if (coreModule && typeof coreModule.startGame === 'function') {
+                coreModule.startGame();
+            } else {
+                // Fallback to global function if module not found
+                if (window.startGame) {
+                    window.startGame();
+                }
+            }
+        });
+
+        // 重新开始
+        restartBtn.addEventListener('click', () => {
+            // 重置游戏状态到初始值
+            const initialState = {
+                player: {
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    size: 30,
+                    speed: 5,
+                    hp: 100,
+                    maxHp: 100,
+                    weapon: null,
+                    isPlaying: true,
+                    isGameOver: false,
+                    score: 0,
+                    maxCombo: 0,
+                    currentCombo: 0,
+                    relics: [],
+                    skillsUsed: { Q: 0, W: 0, E: 0, R: 0 }
+                },
+                level: 1,
+                kills: 0,
+                enemies: [],
+                items: [],
+                mouseX: canvas.width / 2,
+                mouseY: canvas.height / 2,
+                enemySpawnTimer: 0,
+                enemySpawnRate: 2000,
+                combatLog: [],
+                startTime: null,
+                sessionTime: 0,
+                highestLevel: 1,
+                totalKills: 0,
+                totalGames: 1,
+                winCount: 0,
+                highScores: [],
+                weaponStats: {},
+                totalPlayTime: 0,
+                gamesPlayed: 0,
+                totalDamageDealt: 0,
+                totalDamageTaken: 0,
+                achievementCount: 0,
+                regionsDiscovered: 0,
+                modesAttempted: 0,
+                secretFound: false,
+                easterEggsFound: 0,
+                collectedCommonWeapons: 0,
+                legendaryWeaponsObtained: 0,
+                mythicWeaponsObtained: 0,
+                rarestWeaponObtained: { rarity: 0 },
+                currentKillStreak: 0,
+                maxSingleHitDamage: 0,
+                homeEnemySurge: false,
+                officeEnemySurge: false,
+                quantumReality: false,
+                toolEmpowerment: 1.0
+            };
+
+            Object.assign(window.GameSystem.getState(), initialState);
+
+            gameOverScreen.classList.add('hidden');
+
+            const coreModule = window.GameSystem.getModule('core');
+            if (coreModule && typeof coreModule.startGame === 'function') {
+                coreModule.startGame();
+            } else {
+                // Fallback to global function if module not found
+                if (window.startGame) {
+                    window.startGame();
+                }
+            }
+        });
+
+        // 游戏主循环 - 由模块系统处理
+
+        // 定期更新UI显示
+        function updateUI() {
+            if (window.GameSystem) {
+                const gameState = window.GameSystem.getState();
+
+                // 更新显示
+                hpDisplay.textContent = Math.max(0, Math.floor(gameState.player.hp));
+                levelDisplay.textContent = gameState.level;
+                killsDisplay.textContent = gameState.kills;
+                comboDisplay.textContent = gameState.currentCombo;
+
+                // 武器显示
+                if (gameState.player.weapon) {
+                    weaponDisplay.textContent = gameState.player.weapon.name || '未知武器';
+                } else {
+                    weaponDisplay.textContent = '无';
+                }
+
+                // 检查游戏是否结束
+                if (gameState.player.isGameOver) {
+                    finalLevelDisplay.textContent = gameState.level;
+                    finalKillsDisplay.textContent = gameState.kills;
+                    finalComboDisplay.textContent = gameState.maxCombo;
+                    gameOverScreen.classList.remove('hidden');
+                }
+            }
+
+            requestAnimationFrame(updateUI);
+        }
+
+        // 启动UI更新
+        updateUI();
+    </script>
+</body>
+</html>
