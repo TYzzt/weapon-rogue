@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rogue游戏 - 重构版</title>
+    <title>Rogue游戏 - 优化版</title>
     <style>
         * {
             margin: 0;
@@ -123,53 +123,18 @@
             <button id="restart-btn">重新开始</button>
         </div>
         <div id="start-screen">
-            <h1>🗡️ Rogue游戏 - 重构版</h1>
+            <h1>🗡️ Rogue游戏 - 优化版</h1>
             <p class="description">
-                经过重构，解决了模块依赖和命名冲突问题<br>
-                性能优化，更流畅的游戏体验<br><br>
+                性能优化版本<br>
+                更快的加载速度，更流畅的游戏体验<br><br>
                 使用鼠标控制角色移动，点击攻击敌人！
             </p>
             <button id="start-btn">开始游戏</button>
         </div>
     </div>
 
-    <!-- 冲突解决器和统一游戏引擎 - 必须最先加载 -->
-    <script src="./conflict-resolver.js"></script>
-    <script src="./game-engine.js"></script>
-    <script src="./engine-adapter.js"></script>
-
-    <!-- 模块整合器 -->
-    <script src="./module-integrator.js"></script>
-
-    <!-- 性能优化器 -->
-    <script src="./performance-optimizer-full.js"></script>
-
-    <!-- 统一存档系统 -->
-    <script src="./unified-save-system.js"></script>
-
-    <!-- 统一成就系统 -->
-    <script src="./unified-achievement-system.js"></script>
-
-    <!-- 统一音频系统 -->
-    <script src="./unified-audio-system.js"></script>
-
-    <!-- 统一菜单系统 -->
-    <script src="./unified-menu-system.js"></script>
-
-    <!-- 游戏核心 -->
-    <script src="./game-core.js"></script>
-
-    <!-- 游戏模块 -->
-    <script src="./game-modules.js"></script>
-
-    <!-- 集成游戏系统 -->
-    <script src="./integrated-game-system.js"></script>
-
-    <!-- 性能优化模块 -->
-    <script src="./performance-optimizer.js"></script>
-
-    <!-- 主游戏逻辑 -->
-    <script src="./game-main.js"></script>
+    <!-- 精简版游戏系统，整合核心功能 -->
+    <script src="./optimized-game-core.js"></script>
 
     <script>
         // 获取画布和上下文
@@ -193,7 +158,7 @@
         // 初始化鼠标位置跟踪
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const gameState = window.GameSystem.getState();
+            const gameState = window.OptimizedGameSystem.getState();
             gameState.mouseX = e.clientX - rect.left;
             gameState.mouseY = e.clientY - rect.top;
 
@@ -221,12 +186,13 @@
 
         // 点击事件用于攻击
         canvas.addEventListener('click', () => {
-            if (!window.GameSystem.getState().player.isPlaying || window.GameSystem.getState().player.isGameOver) {
+            if (!window.OptimizedGameSystem.getState().player.isPlaying ||
+                window.OptimizedGameSystem.getState().player.isGameOver) {
                 return;
             }
 
             // 攻击附近的敌人
-            const gameState = window.GameSystem.getState();
+            const gameState = window.OptimizedGameSystem.getState();
             const attackRadius = 50; // 攻击半径
 
             for (let i = gameState.enemies.length - 1; i >= 0; i--) {
@@ -241,9 +207,9 @@
                     gameState.kills++;
 
                     // 触发成就检查
-                    const achievementModule = window.GameSystem.getModule('achievements');
+                    const achievementModule = window.OptimizedGameSystem.getModule('achievements');
                     if (achievementModule) {
-                        achievementModule.checkAchievements(gameState);
+                        achievementModule.checkAchievements();
                     }
 
                     // 更新分数
@@ -260,11 +226,12 @@
 
         // 键盘事件处理技能
         document.addEventListener('keydown', (e) => {
-            if (!window.GameSystem.getState().player.isPlaying || window.GameSystem.getState().player.isGameOver) {
+            if (!window.OptimizedGameSystem.getState().player.isPlaying ||
+                window.OptimizedGameSystem.getState().player.isGameOver) {
                 return;
             }
 
-            const gameState = window.GameSystem.getState();
+            const gameState = window.OptimizedGameSystem.getState();
 
             switch(e.key.toLowerCase()) {
                 case 'q':
@@ -290,15 +257,11 @@
         startBtn.addEventListener('click', () => {
             startScreen.classList.add('hidden');
 
-            // 使用新的模块化系统启动游戏
-            const coreModule = window.GameSystem.getModule('core');
+            // 使用优化的游戏系统启动游戏
+            const coreModule = window.OptimizedGameSystem.getModule('core');
             if (coreModule && typeof coreModule.startGame === 'function') {
                 coreModule.startGame();
-            } else {
-                // Fallback to global function if module not found
-                if (window.startGame) {
-                    window.startGame();
-                }
+                coreModule.startGameLoop();
             }
         });
 
@@ -332,55 +295,24 @@
                 enemySpawnRate: 2000,
                 combatLog: [],
                 startTime: null,
-                sessionTime: 0,
-                highestLevel: 1,
-                totalKills: 0,
-                totalGames: 1,
-                winCount: 0,
-                highScores: [],
-                weaponStats: {},
-                totalPlayTime: 0,
-                gamesPlayed: 0,
-                totalDamageDealt: 0,
-                totalDamageTaken: 0,
-                achievementCount: 0,
-                regionsDiscovered: 0,
-                modesAttempted: 0,
-                secretFound: false,
-                easterEggsFound: 0,
-                collectedCommonWeapons: 0,
-                legendaryWeaponsObtained: 0,
-                mythicWeaponsObtained: 0,
-                rarestWeaponObtained: { rarity: 0 },
-                currentKillStreak: 0,
-                maxSingleHitDamage: 0,
-                homeEnemySurge: false,
-                officeEnemySurge: false,
-                quantumReality: false,
-                toolEmpowerment: 1.0
+                sessionTime: 0
             };
 
-            Object.assign(window.GameSystem.getState(), initialState);
+            Object.assign(window.OptimizedGameSystem.getState(), initialState);
 
             gameOverScreen.classList.add('hidden');
 
-            const coreModule = window.GameSystem.getModule('core');
+            const coreModule = window.OptimizedGameSystem.getModule('core');
             if (coreModule && typeof coreModule.startGame === 'function') {
                 coreModule.startGame();
-            } else {
-                // Fallback to global function if module not found
-                if (window.startGame) {
-                    window.startGame();
-                }
+                coreModule.startGameLoop();
             }
         });
 
-        // 游戏主循环 - 由模块系统处理
-
         // 定期更新UI显示
         function updateUI() {
-            if (window.GameSystem) {
-                const gameState = window.GameSystem.getState();
+            if (window.OptimizedGameSystem) {
+                const gameState = window.OptimizedGameSystem.getState();
 
                 // 更新显示
                 hpDisplay.textContent = Math.max(0, Math.floor(gameState.player.hp));
@@ -409,6 +341,8 @@
 
         // 启动UI更新
         updateUI();
+
+        console.log("🎯 优化版游戏已准备就绪");
     </script>
 </body>
 </html>
