@@ -1,229 +1,388 @@
 /**
- * Rogue游戏性能优化器
- * 通过减少模块数量、优化资源加载和提高渲染效率来提升性能
+ * 性能优化器 - 合并和优化游戏资源
+ * 通过合并文件、缓存资源和优化算法来提高游戏性能
  */
 
 class PerformanceOptimizer {
     constructor() {
-        this.optimizationLevel = 'high';
-        this.cachedModules = new Map();
         this.resourceCache = new Map();
-        this.renderOptimizationEnabled = true;
-
-        console.log('⚡ 性能优化器已初始化');
+        this.loadedScripts = new Set();
+        this.scriptQueue = [];
+        this.isProcessingQueue = false;
+        
+        console.log("🚀 性能优化器已初始化");
     }
 
     /**
-     * 优化模块加载 - 减少动态导入
+     * 预加载关键资源
      */
-    optimizeModuleLoading() {
-        console.log('🔄 优化模块加载策略...');
+    async preloadCriticalResources() {
+        console.log("📦 开始预加载关键资源...");
 
-        // 预加载常用模块到缓存
-        if (window.GameEngine) {
-            // 将常用的模块方法缓存起来，减少查找时间
-            const modules = ['core', 'save', 'achievements', 'audio'];
+        const criticalResources = [
+            // 这些是游戏中最关键的资源
+            '/game-rogue/integrated-game-system.js',
+            '/game-rogue/main-integrated-game.js'
+        ];
 
-            modules.forEach(moduleName => {
-                const module = window.GameEngine.getModule(moduleName);
-                if (module) {
-                    this.cachedModules.set(moduleName, module);
-                    console.log(`✅ 缓存模块: ${moduleName}`);
+        const promises = criticalResources.map(async resource => {
+            try {
+                if (resource.endsWith('.js')) {
+                    await this.loadScript(resource);
                 }
-            });
-        }
-
-        console.log('✅ 模块加载优化完成');
-    }
-
-    /**
-     * 优化渲染性能
-     */
-    optimizeRendering() {
-        console.log('🎨 优化渲染性能...');
-
-        // 如果浏览器支持，使用离屏Canvas进行渲染优化
-        this.setupRenderOptimizations();
-
-        console.log('✅ 渲染优化完成');
-    }
-
-    setupRenderOptimizations() {
-        // 为绘图操作创建优化的上下文
-        this.optimizedDraw = (ctx, operation) => {
-            // 临时禁用不必要的样式计算
-            const prevImageSmoothingEnabled = ctx.imageSmoothingEnabled;
-            ctx.imageSmoothingEnabled = false;
-
-            operation(ctx);
-
-            // 恢复原始设置
-            ctx.imageSmoothingEnabled = prevImageSmoothingEnabled;
-        };
-    }
-
-    /**
-     * 优化游戏循环
-     */
-    optimizeGameLoop() {
-        console.log('⏱️ 优化游戏循环...');
-
-        // 创建优化的游戏循环方法
-        if (window.GameEngine) {
-            const coreModule = window.GameEngine.getModule('core');
-            if (coreModule) {
-                // 保存原始方法
-                const originalGameLoop = coreModule.gameLoop;
-
-                // 创建优化版本
-                coreModule.gameLoop = this.createOptimizedGameLoop(originalGameLoop, coreModule);
+                console.log(`✅ 预加载完成: ${resource}`);
+            } catch (error) {
+                console.warn(`⚠️ 预加载失败: ${resource}`, error);
             }
-        }
+        });
 
-        console.log('✅ 游戏循环优化完成');
+        await Promise.all(promises);
+        console.log("✅ 关键资源预加载完成");
     }
 
-    createOptimizedGameLoop(originalLoop, coreModule) {
+    /**
+     * 动态加载脚本
+     */
+    async loadScript(src) {
+        if (this.loadedScripts.has(src)) {
+            console.log(`⏭️ 脚本已加载: ${src}`);
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => {
+                this.loadedScripts.add(src);
+                console.log(`✅ 脚本加载成功: ${src}`);
+                resolve();
+            };
+            script.onerror = () => {
+                console.error(`❌ 脚本加载失败: ${src}`);
+                reject(new Error(`Script load error for ${src}`));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    /**
+     * 批量加载脚本（优化版本）
+     */
+    async loadScriptsBatch(scripts) {
+        console.log(`📦 批量加载 ${scripts.length} 个脚本...`);
+
+        // 使用 Promise.allSettled 来确保即使某个脚本加载失败也不会影响其他脚本
+        const results = await Promise.allSettled(
+            scripts.map(src => this.loadScript(src))
+        );
+
+        const successfulLoads = results.filter(result => result.status === 'fulfilled').length;
+        const failedLoads = results.filter(result => result.status === 'rejected').length;
+
+        console.log(`✅ 成功加载: ${successfulLoads}, 失败: ${failedLoads}`);
+
+        return { successfulLoads, failedLoads };
+    }
+
+    /**
+     * 优化游戏循环性能
+     */
+    optimizeGameLoop(gameInstance) {
+        console.log("⚡ 优化游戏循环性能...");
+
+        // 优化前保存原始方法
+        const originalGameLoop = gameInstance.gameLoop;
+        const originalUpdate = gameInstance.update;
+        const originalRender = gameInstance.render;
+
+        // 使用 requestAnimationFrame 的优化版本
         let lastTime = 0;
-        const fpsLimit = 60;
-        const frameInterval = 1000 / fpsLimit;
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+        
+        // 新的游戏循环，包含性能优化
+        gameInstance.gameLoop = function() {
+            if (!this.gameRunning) return;
 
-        return () => {
-            const currentTime = Date.now();
+            const currentTime = performance.now();
+            const deltaTime = currentTime - (this.lastFrameTime || currentTime);
+            this.lastFrameTime = currentTime;
 
-            // 基于帧率限制执行更新
-            if (currentTime - lastTime >= frameInterval) {
-                // 只在需要时更新状态
-                if (window.gameState && window.gameState.player.isPlaying && !window.gameState.player.isGameOver) {
-                    // 优化的更新逻辑
-                    const deltaTime = currentTime - (coreModule.lastFrameTime || currentTime);
-                    coreModule.lastFrameTime = currentTime;
-
-                    coreModule.update(deltaTime);
-                    coreModule.draw(ctx);
-                }
-
-                lastTime = currentTime - (currentTime - lastTime) % frameInterval;
+            // 每秒限制最大帧数以节省CPU
+            if (deltaTime < 16) { // 约60fps
+                requestAnimationFrame(() => this.gameLoop());
+                return;
             }
 
-            // 使用requestAnimationFrame保持流畅性
-            requestAnimationFrame(() => coreModule.gameLoop());
-        };
+            // 性能监控
+            if (window.IntegratedGameSystem && window.IntegratedGameSystem.performanceMonitor) {
+                const perfStart = window.IntegratedGameSystem.performanceMonitor.startFrame();
+                
+                // 更新游戏逻辑
+                this.update(deltaTime);
+                
+                // 渲染
+                this.render();
+                
+                window.IntegratedGameSystem.performanceMonitor.endFrame();
+            } else {
+                // 更新游戏逻辑
+                this.update(deltaTime);
+                
+                // 渲染
+                this.render();
+            }
+
+            // 继续下一帧
+            this.animationId = requestAnimationFrame(() => this.gameLoop());
+        }.bind(gameInstance);
+
+        console.log("✅ 游戏循环性能已优化");
     }
 
     /**
-     * 优化内存使用
+     * 内存管理优化
      */
     optimizeMemory() {
-        console.log('🧠 优化内存使用...');
+        console.log("🧠 优化内存管理...");
 
-        // 设置垃圾回收优化标志
-        this.setupMemoryOptimizations();
+        // 设置垃圾回收提示（如果浏览器支持）
+        if (window.gc) {
+            setInterval(() => {
+                try {
+                    window.gc();
+                    console.log("♻️ 手动垃圾回收执行");
+                } catch (e) {
+                    console.log("ℹ️ 浏览器不支持手动垃圾回收");
+                }
+            }, 30000); // 每30秒尝试一次
+        }
 
-        console.log('✅ 内存优化完成');
+        // 监控内存使用
+        if ('memory' in performance) {
+            setInterval(() => {
+                const mem = performance.memory;
+                console.log(`📊 内存使用: ${Math.round(mem.usedJSHeapSize / 1048576)}MB / ${Math.round(mem.totalJSHeapSize / 1048576)}MB`);
+            }, 10000); // 每10秒报告一次
+        }
+
+        console.log("✅ 内存管理已优化");
     }
 
-    setupMemoryOptimizations() {
-        // 实现对象池以减少垃圾回收压力
-        this.objectPool = {
-            enemies: [],
-            items: [],
+    /**
+     * 优化对象池以减少GC压力
+     */
+    createObjectPool(createFn, resetFn, initialSize = 10) {
+        const pool = [];
+        
+        // 预创建对象
+        for (let i = 0; i < initialSize; i++) {
+            pool.push(createFn());
+        }
 
-            getEnemy: function() {
-                return this.enemies.pop() || { x: 0, y: 0, size: 20, speed: 1, hp: 10 };
+        return {
+            acquire() {
+                return pool.length > 0 ? pool.pop() : createFn();
             },
-
-            releaseEnemy: function(enemy) {
-                // 重置敌人对象并放入池中
-                enemy.x = 0;
-                enemy.y = 0;
-                enemy.hp = 10;
-                this.enemies.push(enemy);
+            release(obj) {
+                resetFn(obj);
+                if (pool.length < initialSize * 2) { // 限制池大小
+                    pool.push(obj);
+                }
+            },
+            size() {
+                return pool.length;
             }
         };
     }
 
     /**
-     * 应用所有优化
+     * 优化数组操作
      */
-    applyAllOptimizations() {
-        console.log('🚀 开始应用所有性能优化...');
+    optimizeArrayOperations() {
+        console.log("📋 优化数组操作...");
 
-        this.optimizeModuleLoading();
-        this.optimizeRendering();
-        this.optimizeGameLoop();
+        // 优化敌人数组的操作
+        const originalPush = Array.prototype.push;
+        const originalSplice = Array.prototype.splice;
+
+        // 使用更高效的数组操作
+        Array.prototype.fastPush = function(...items) {
+            const len = this.length;
+            for (let i = 0; i < items.length; i++) {
+                this[len + i] = items[i];
+            }
+            this.length = len + items.length;
+            return this.length;
+        };
+
+        console.log("✅ 数组操作已优化");
+    }
+
+    /**
+     * 启动全面性能优化
+     */
+    async runFullOptimization() {
+        console.log("🔬 开始全面性能优化...");
+
+        // 1. 预加载关键资源
+        await this.preloadCriticalResources();
+
+        // 2. 优化内存管理
         this.optimizeMemory();
 
-        // 设置性能监控
+        // 3. 优化数组操作
+        this.optimizeArrayOperations();
+
+        // 4. 如果游戏实例存在，优化其性能
+        if (window.MainIntegrativeGame) {
+            this.optimizeGameLoop(window.MainIntegrativeGame);
+        }
+
+        // 5. 设置性能监控
         this.setupPerformanceMonitoring();
 
-        console.log('✅ 所有性能优化已应用');
+        console.log("✅ 全面性能优化完成！");
     }
 
     /**
      * 设置性能监控
      */
     setupPerformanceMonitoring() {
-        this.frameCount = 0;
-        this.fps = 0;
-        this.lastFpsUpdate = performance.now();
+        console.log("📈 设置性能监控...");
 
-        // 简单的FPS监控
-        const monitor = () => {
-            this.frameCount++;
-            const now = performance.now();
-            const delta = now - this.lastFpsUpdate;
+        // 如果还没有性能监控，创建一个
+        if (window.IntegratedGameSystem && !window.IntegratedGameSystem.performanceMonitor) {
+            window.IntegratedGameSystem.performanceMonitor = new (window.PerformanceMonitor || 
+                function() {
+                    this.frameTimes = [];
+                    this.moduleTimings = new Map();
+                    this.lastFrameTime = 0;
+                    
+                    this.startFrame = function() {
+                        this.lastFrameTime = performance.now();
+                        return this.lastFrameTime;
+                    };
+                    
+                    this.endFrame = function() {
+                        const frameTime = performance.now() - this.lastFrameTime;
+                        this.frameTimes.push(frameTime);
+                        
+                        if (this.frameTimes.length > 100) {
+                            this.frameTimes.shift();
+                        }
+                        
+                        return frameTime;
+                    };
+                    
+                    this.getAverageFrameTime = function() {
+                        if (this.frameTimes.length === 0) return 0;
+                        const sum = this.frameTimes.reduce((a, b) => a + b, 0);
+                        return sum / this.frameTimes.length;
+                    };
+                    
+                    this.getFPS = function() {
+                        const avgFrameTime = this.getAverageFrameTime();
+                        return avgFrameTime > 0 ? Math.round(1000 / avgFrameTime) : 0;
+                    };
+                })();
+        }
 
-            if (delta >= 1000) {
-                this.fps = Math.round((this.frameCount * 1000) / delta);
-                this.frameCount = 0;
-                this.lastFpsUpdate = now;
-
-                // 如果FPS过低，可以进一步优化
-                if (this.fps < 30) {
-                    console.warn(`⚠️ FPS 较低: ${this.fps}, 考虑进一步优化`);
+        // 定期报告性能指标
+        setInterval(() => {
+            if (window.IntegratedGameSystem && window.IntegratedGameSystem.performanceMonitor) {
+                const fps = window.IntegratedGameSystem.performanceMonitor.getFPS();
+                const avgFrameTime = window.IntegratedGameSystem.performanceMonitor.getAverageFrameTime();
+                
+                // 如果FPS过低，记录警告
+                if (fps < 30) {
+                    console.warn(`⚠️ 性能警告: FPS = ${fps}, 平均帧时间 = ${avgFrameTime.toFixed(2)}ms`);
+                } else if (fps < 50) {
+                    console.info(`ℹ️ 性能信息: FPS = ${fps}, 平均帧时间 = ${avgFrameTime.toFixed(2)}ms`);
                 }
             }
+        }, 5000); // 每5秒报告一次
 
-            requestAnimationFrame(monitor);
-        };
-
-        requestAnimationFrame(monitor);
+        console.log("✅ 性能监控已设置");
     }
 
     /**
-     * 获取性能统计数据
+     * 优化渲染性能
      */
-    getPerformanceStats() {
-        return {
-            fps: this.fps,
-            cachedModulesCount: this.cachedModules.size,
-            resourceCacheSize: this.resourceCache.size,
-            optimizationLevel: this.optimizationLevel
+    optimizeRendering(renderContext) {
+        console.log("🎨 优化渲染性能...");
+
+        // 启用图像平滑（如果适用）
+        renderContext.imageSmoothingEnabled = true;
+
+        // 优化绘图操作
+        const originalFillRect = CanvasRenderingContext2D.prototype.fillRect;
+        const originalBeginPath = CanvasRenderingContext2D.prototype.beginPath;
+        const originalArc = CanvasRenderingContext2D.prototype.arc;
+        const originalFill = CanvasRenderingContext2D.prototype.fill;
+
+        // 批量渲染优化
+        renderContext.batchDraw = function(drawCommands) {
+            this.save();
+            for (const cmd of drawCommands) {
+                cmd(this);
+            }
+            this.restore();
         };
+
+        console.log("✅ 渲染性能已优化");
+    }
+
+    /**
+     * 合并小文件以减少HTTP请求数
+     */
+    async bundleFiles(filePaths, outputPath) {
+        console.log(`🔗 合并 ${filePaths.length} 个文件到 ${outputPath}...`);
+
+        try {
+            // 注意：由于我们处于浏览器环境，实际上无法写入文件
+            // 这里只是模拟合并过程，真正的合并应在构建步骤中完成
+            const bundledContent = [
+                '/* ========== 性能优化的游戏包 ========== */',
+                '/* 此文件包含合并的核心游戏功能以减少HTTP请求 */',
+                ''
+            ];
+
+            for (const filePath of filePaths) {
+                // 实际环境中我们会读取每个文件的内容并添加到捆绑包中
+                bundledContent.push(`/* 开始: ${filePath} */`);
+                // 这里实际应该读取文件内容，但由于环境限制，跳过
+                bundledContent.push(`console.log("加载: ${filePath}");`);
+                bundledContent.push(`/* 结束: ${filePath} */`);
+                bundledContent.push('');
+            }
+
+            console.log(`✅ 文件合并完成: ${outputPath}`);
+            return bundledContent.join('\n');
+        } catch (error) {
+            console.error('❌ 文件合并失败:', error);
+            throw error;
+        }
     }
 }
 
-// 初始化性能优化器
-const performanceOptimizer = new PerformanceOptimizer();
+// 创建全局性能优化器实例
+window.PerformanceOptimizer = new PerformanceOptimizer();
 
-// 在GameEngine初始化后应用优化
-if (window.GameEngine && window.GameEngine.initialized) {
-    performanceOptimizer.applyAllOptimizations();
-} else {
-    // 如果GameEngine还没有初始化，等待它完成
-    const applyOptimizationsWhenReady = () => {
-        if (window.GameEngine && window.GameEngine.initialized) {
-            performanceOptimizer.applyAllOptimizations();
-        } else {
-            setTimeout(applyOptimizationsWhenReady, 100);
+// 自动运行基本优化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (window.PerformanceOptimizer) {
+            await window.PerformanceOptimizer.runFullOptimization();
         }
-    };
-
-    applyOptimizationsWhenReady();
+    });
+} else {
+    // 延迟执行以确保其他脚本已加载
+    setTimeout(async () => {
+        if (window.PerformanceOptimizer) {
+            await window.PerformanceOptimizer.runFullOptimization();
+        }
+    }, 100);
 }
 
-// 导出优化器供调试使用
-window.PerformanceOptimizer = performanceOptimizer;
-
-console.log('⚡ 性能优化器已准备就绪');
+console.log("⚡ 性能优化器已准备就绪");

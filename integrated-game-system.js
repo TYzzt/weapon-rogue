@@ -1,462 +1,580 @@
 /**
- * Rogue游戏集成系统
- * 统一管理所有游戏功能，确保各模块协调工作
+ * 集成游戏系统 - 统一所有游戏功能，解决模块冲突
+ * 整合了之前的多个系统，形成单一、高效的游戏引擎
  */
 
-// 游戏主类
 class IntegratedGameSystem {
     constructor() {
-        this.name = 'IntegratedGameSystem';
-        this.initialized = false;
+        // 单一游戏状态源
+        this.state = {
+            player: {
+                x: 400,
+                y: 300,
+                size: 30,
+                speed: 5,
+                hp: 100,
+                maxHp: 100,
+                weapon: null,
+                isPlaying: false,
+                isGameOver: false,
+                score: 0,
+                maxCombo: 0,
+                currentCombo: 0,
+                relics: [],
+                skillsUsed: { Q: 0, W: 0, E: 0, R: 0 }
+            },
+            level: 1,
+            kills: 0,
+            enemies: [],
+            items: [],
+            mouseX: 400,
+            mouseY: 300,
+            enemySpawnTimer: 0,
+            enemySpawnRate: 2000,
+            combatLog: [],
+            startTime: null,
+            sessionTime: 0,
+            // 额外统计信息
+            highestLevel: 1,
+            totalKills: 0,
+            totalGames: 1,
+            winCount: 0,
+            highScores: [],
+            weaponStats: {},
+            totalPlayTime: 0,
+            gamesPlayed: 0,
+            totalDamageDealt: 0,
+            totalDamageTaken: 0,
+            achievementCount: 0,
+            regionsDiscovered: 0,
+            modesAttempted: 0,
+            secretFound: false,
+            easterEggsFound: 0,
+            collectedCommonWeapons: 0,
+            legendaryWeaponsObtained: 0,
+            mythicWeaponsObtained: 0,
+            rarestWeaponObtained: { rarity: 0 },
+            currentKillStreak: 0,
+            maxSingleHitDamage: 0,
+            // 特殊事件状态
+            homeEnemySurge: false,
+            officeEnemySurge: false,
+            quantumReality: false,
+            toolEmpowerment: 1.0
+        };
 
-        // 系统引用
-        this.moduleSystem = null;
-        this.coreModule = null;
-        this.saveModule = null;
-        this.achievementModule = null;
-        this.audioModule = null;
-        this.menuModule = null;
+        // 模块系统
+        this.modules = new Map();
+        this.loadedModules = new Set();
+        this.dependencies = new Map();
 
-        console.log('🎮 集成游戏系统已创建');
+        // 事件系统
+        this.eventBus = new EventBus();
+
+        // 性能监控
+        this.performanceMonitor = new PerformanceMonitor();
+
+        // 物理和游戏逻辑组件
+        this.physics = new PhysicsEngine();
+        this.spawner = new EnemySpawner();
+        this.renderer = new RenderEngine();
+        this.collisionSystem = new CollisionSystem();
+
+        console.log("🎮 集成游戏系统已初始化");
     }
 
     /**
-     * 初始化游戏系统
+     * 注册模块
      */
-    init(system) {
-        this.moduleSystem = system;
+    registerModule(name, moduleObj, dependencies = []) {
+        if (this.modules.has(name)) {
+            console.warn(`⚠️ 模块 ${name} 已存在，正在覆盖`);
+        }
 
-        // 获取所有必要的模块
-        this.coreModule = system.getModule('core');
-        this.saveModule = system.getModule('save');
-        this.achievementModule = system.getModule('achievements');
-        this.audioModule = system.getModule('audio');
-        this.menuModule = system.getModule('menu') || null; // 菜单模块可能不存在
-
-        // 验证所有必要模块是否可用
-        const modulesReady = this.validateModules();
-
-        if (!modulesReady) {
-            console.error('❌ 部分模块不可用，可能影响游戏功能');
+        // 检查循环依赖
+        if (this.wouldCreateCycle(name, dependencies)) {
+            console.warn(`⚠️ 检测到循环依赖: ${name} 依赖于 ${dependencies.join(', ')}`);
             return false;
         }
 
-        this.initialized = true;
-        console.log('✅ 集成游戏系统已初始化');
+        this.dependencies.set(name, [...dependencies]);
 
-        // 设置模块间通信
-        this.setupInterModuleCommunication();
+        if (moduleObj && typeof moduleObj.init === 'function') {
+            moduleObj.init(this);
+        }
+
+        this.modules.set(name, moduleObj);
+        this.loadedModules.add(name);
+
+        this.eventBus.emit('moduleRegistered', { name, moduleObj });
+        console.log(`✅ 模块 ${name} 已注册`);
 
         return true;
     }
 
     /**
-     * 验证所有模块是否正确加载
+     * 获取模块
      */
-    validateModules() {
-        const requiredModules = [
-            { name: 'core', module: this.coreModule, methods: ['startGame', 'update', 'draw'] },
-            { name: 'save', module: this.saveModule, methods: ['saveGame', 'loadGame'] },
-            { name: 'achievements', module: this.achievementModule, methods: ['checkAchievements', 'unlockAchievement'] },
-            { name: 'audio', module: this.audioModule, methods: ['playSound', 'toggle'] }
-        ];
+    getModule(name) {
+        return this.modules.get(name);
+    }
 
-        let allValid = true;
-
-        for (const req of requiredModules) {
-            if (!req.module) {
-                console.error(`❌ ${req.name} 模块未找到`);
-                allValid = false;
-                continue;
+    /**
+     * 检查循环依赖
+     */
+    wouldCreateCycle(newModule, newDependencies) {
+        for (const dep of newDependencies) {
+            const transitiveDeps = this.getAllDependencies(dep);
+            if (transitiveDeps.has(newModule)) {
+                return true;
             }
+        }
+        return false;
+    }
 
-            // 检查必要方法是否存在
-            for (const method of req.methods) {
-                if (typeof req.module[method] !== 'function') {
-                    console.warn(`⚠️ ${req.name} 模块缺少方法: ${method}`);
+    /**
+     * 获取所有依赖
+     */
+    getAllDependencies(moduleName) {
+        const allDeps = new Set();
+        const toCheck = [...(this.dependencies.get(moduleName) || [])];
+
+        while (toCheck.length > 0) {
+            const dep = toCheck.pop();
+            if (!allDeps.has(dep)) {
+                allDeps.add(dep);
+                const childDeps = this.dependencies.get(dep) || [];
+                childDeps.forEach(childDep => {
+                    if (!allDeps.has(childDep)) {
+                        toCheck.push(childDep);
+                    }
+                });
+            }
+        }
+
+        return allDeps;
+    }
+
+    /**
+     * 更新游戏状态
+     */
+    updateState(updates) {
+        this.deepMerge(this.state, updates);
+    }
+
+    /**
+     * 获取游戏状态
+     */
+    getState() {
+        return this.state;
+    }
+
+    /**
+     * 深度合并
+     */
+    deepMerge(target, source) {
+        for (const key in source) {
+            if (source.hasOwnProperty(key)) {
+                if (
+                    source[key] &&
+                    typeof source[key] === 'object' &&
+                    !Array.isArray(source[key]) &&
+                    target[key] &&
+                    typeof target[key] === 'object' &&
+                    !Array.isArray(target[key])
+                ) {
+                    this.deepMerge(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
                 }
             }
         }
-
-        return allValid;
     }
 
     /**
-     * 设置模块间通信
+     * 初始化所有模块
      */
-    setupInterModuleCommunication() {
-        const eventBus = this.moduleSystem.eventBus;
-
-        // 监听游戏事件
-        eventBus.subscribe('gameStarted', (data) => {
-            console.log('🎮 游戏已开始');
-            // 开始自动保存
-            if (this.saveModule && typeof this.saveModule.enableAutoSave === 'function') {
-                this.saveModule.enableAutoSave();
+    initializeAllModules() {
+        const moduleNames = Array.from(this.loadedModules);
+        for (const name of moduleNames) {
+            const module = this.getModule(name);
+            if (module && typeof module.onGameStart === 'function') {
+                try {
+                    module.onGameStart();
+                } catch (error) {
+                    console.error(`❌ 模块 ${name} 初始化失败:`, error);
+                }
             }
-        });
-
-        eventBus.subscribe('gameOver', (data) => {
-            console.log('💀 游戏结束');
-            // 检查最终成就
-            if (this.achievementModule) {
-                this.achievementModule.checkAchievements();
-            }
-        });
-
-        eventBus.subscribe('playerDamaged', (data) => {
-            // 播放受伤音效
-            if (this.audioModule) {
-                this.audioModule.playSound('player_hit', 0.5);
-            }
-        });
-
-        eventBus.subscribe('enemyDefeated', (data) => {
-            // 播放击败敌人音效
-            if (this.audioModule) {
-                this.audioModule.playSound('enemy_defeat', 0.7);
-            }
-        });
-
-        eventBus.subscribe('achievementUnlocked', (data) => {
-            console.log(`🎉 成就解锁: ${data.name}`);
-            // 播放成就解锁音效
-            if (this.audioModule) {
-                this.audioModule.playSound('achievement_unlocked', 0.8);
-            }
-        });
-
-        eventBus.subscribe('itemCollected', (data) => {
-            // 播放收集物品音效
-            if (this.audioModule) {
-                this.audioModule.playSound('item_collected', 0.6);
-            }
-        });
-
-        console.log('📡 模块间通信已设置');
+        }
+        console.log("🎮 所有模块已初始化完成");
     }
 
     /**
-     * 启动游戏
+     * 获取模块名称列表
      */
-    startGame() {
-        if (!this.initialized) {
-            console.error('❌ 游戏系统未初始化');
-            return false;
-        }
-
-        // 通知所有相关模块游戏开始
-        if (this.coreModule && typeof this.coreModule.startGame === 'function') {
-            this.coreModule.startGame();
-        }
-
-        // 检查已有成就
-        if (this.achievementModule) {
-            this.achievementModule.checkAchievements();
-        }
-
-        console.log('🚀 游戏已启动');
-        return true;
+    getLoadedModuleNames() {
+        return Array.from(this.loadedModules);
     }
 
     /**
-     * 重启游戏
+     * 检查模块是否已加载
      */
-    restartGame() {
-        if (!this.initialized) {
-            console.error('❌ 游戏系统未初始化');
-            return false;
-        }
-
-        // 使用核心模块重启
-        if (this.coreModule && typeof this.coreModule.restartGame === 'function') {
-            this.coreModule.restartGame();
-            return true;
-        }
-
-        // 如果核心模块没有重启功能，则手动重置
-        const gameState = this.moduleSystem.getState();
-
-        // 重置玩家状态
-        Object.assign(gameState.player, {
-            x: 400, // canvas width / 2
-            y: 300, // canvas height / 2
-            size: 30,
-            speed: 5,
-            hp: 100,
-            maxHp: 100,
-            weapon: null,
-            isPlaying: true,
-            isGameOver: false,
-            score: 0,
-            maxCombo: 0,
-            currentCombo: 0,
-            relics: [],
-            skillsUsed: { Q: 0, W: 0, E: 0, R: 0 }
-        });
-
-        // 重置游戏状态
-        gameState.level = 1;
-        gameState.kills = 0;
-        gameState.enemies = [];
-        gameState.items = [];
-        gameState.enemySpawnTimer = 0;
-        gameState.enemySpawnRate = 2000;
-        gameState.combatLog = [];
-        gameState.startTime = Date.now();
-        gameState.sessionTime = 0;
-
-        console.log('🔄 游戏已重启');
-        return true;
-    }
-
-    /**
-     * 暂停游戏
-     */
-    pauseGame() {
-        if (!this.initialized) {
-            console.error('❌ 游戏系统未初始化');
-            return false;
-        }
-
-        if (this.coreModule && typeof this.coreModule.pauseGame === 'function') {
-            this.coreModule.pauseGame();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * 恢复游戏
-     */
-    resumeGame() {
-        if (!this.initialized) {
-            console.error('❌ 游戏系统未初始化');
-            return false;
-        }
-
-        if (this.coreModule && typeof this.coreModule.resumeGame === 'function') {
-            this.coreModule.resumeGame();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * 保存游戏
-     */
-    saveGame() {
-        if (!this.initialized || !this.saveModule) {
-            console.error('❌ 无法保存游戏');
-            return false;
-        }
-
-        if (typeof this.saveModule.saveGame === 'function') {
-            return this.saveModule.saveGame();
-        }
-
-        return false;
-    }
-
-    /**
-     * 加载游戏
-     */
-    loadGame() {
-        if (!this.initialized || !this.saveModule) {
-            console.error('❌ 无法加载游戏');
-            return false;
-        }
-
-        if (typeof this.saveModule.loadGame === 'function') {
-            return this.saveModule.loadGame();
-        }
-
-        return false;
-    }
-
-    /**
-     * 获取游戏统计信息
-     */
-    getStatistics() {
-        if (!this.initialized) {
-            return null;
-        }
-
-        const gameState = this.moduleSystem.getState();
-
-        return {
-            level: gameState.level,
-            kills: gameState.kills,
-            score: gameState.player.score,
-            hp: gameState.player.hp,
-            maxCombo: gameState.player.maxCombo,
-            playTime: gameState.sessionTime,
-            achievements: {
-                total: this.achievementModule ? this.achievementModule.getTotalAchievementsCount() : 0,
-                unlocked: this.achievementModule ? this.achievementModule.getUnlockedAchievementsCount() : 0
-            }
-        };
-    }
-
-    /**
-     * 游戏主循环
-     */
-    gameLoop() {
-        if (!this.initialized) {
-            return;
-        }
-
-        // 更新游戏状态
-        if (this.coreModule && typeof this.coreModule.update === 'function') {
-            const deltaTime = 16; // 约60fps
-            this.coreModule.update(deltaTime);
-        }
-
-        // 绘制游戏画面
-        if (this.coreModule && typeof this.coreModule.draw === 'function') {
-            this.coreModule.draw();
-        }
-
-        // 检查成就
-        if (this.achievementModule) {
-            this.achievementModule.checkAchievements();
-        }
-
-        // 继续下一帧
-        requestAnimationFrame(() => this.gameLoop());
-    }
-
-    /**
-     * 当游戏开始时执行
-     */
-    onGameStart() {
-        console.log('🎬 集成游戏系统启动');
-
-        // 启动游戏循环
-        this.gameLoop();
+    isModuleLoaded(name) {
+        return this.loadedModules.has(name);
     }
 }
 
-// 注册集成游戏系统
-setTimeout(() => {
-    if (window.GameSystem) {
-        const integratedSystem = new IntegratedGameSystem();
-        window.GameSystem.registerModule('integrated', integratedSystem);
-        console.log('🔗 集成游戏系统已注册');
+/**
+ * 事件总线
+ */
+class EventBus {
+    constructor() {
+        this.listeners = new Map();
+    }
+
+    subscribe(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, []);
+        }
+        this.listeners.get(event).push(callback);
+    }
+
+    emit(event, data) {
+        if (this.listeners.has(event)) {
+            this.listeners.get(event).forEach(callback => {
+                try {
+                    callback(data);
+                } catch (error) {
+                    console.error(`❌ 事件 ${event} 的监听器出错:`, error);
+                }
+            });
+        }
+    }
+
+    unsubscribe(event, callback) {
+        if (this.listeners.has(event)) {
+            const index = this.listeners.get(event).indexOf(callback);
+            if (index > -1) {
+                this.listeners.get(event).splice(index, 1);
+            }
+        }
+    }
+}
+
+/**
+ * 性能监控器
+ */
+class PerformanceMonitor {
+    constructor() {
+        this.frameTimes = [];
+        this.moduleTimings = new Map();
+        this.lastFrameTime = 0;
+    }
+
+    startFrame() {
+        this.lastFrameTime = performance.now();
+        return this.lastFrameTime;
+    }
+
+    endFrame() {
+        const frameTime = performance.now() - this.lastFrameTime;
+        this.frameTimes.push(frameTime);
+
+        if (this.frameTimes.length > 100) {
+            this.frameTimes.shift();
+        }
+
+        return frameTime;
+    }
+
+    getAverageFrameTime() {
+        if (this.frameTimes.length === 0) return 0;
+        const sum = this.frameTimes.reduce((a, b) => a + b, 0);
+        return sum / this.frameTimes.length;
+    }
+
+    getFPS() {
+        const avgFrameTime = this.getAverageFrameTime();
+        return avgFrameTime > 0 ? Math.round(1000 / avgFrameTime) : 0;
+    }
+
+    startModuleMeasurement(moduleName) {
+        const startTime = performance.now();
+        if (!this.moduleTimings.has(moduleName)) {
+            this.moduleTimings.set(moduleName, []);
+        }
+        return { moduleName, startTime };
+    }
+
+    endModuleMeasurement(measurement) {
+        const endTime = performance.now();
+        const duration = endTime - measurement.startTime;
+
+        const timings = this.moduleTimings.get(measurement.moduleName) || [];
+        timings.push(duration);
+
+        if (timings.length > 50) {
+            timings.shift();
+        }
+
+        this.moduleTimings.set(measurement.moduleName, timings);
+    }
+
+    getAverageModuleTime(moduleName) {
+        const timings = this.moduleTimings.get(moduleName) || [];
+        if (timings.length === 0) return 0;
+        const sum = timings.reduce((a, b) => a + b, 0);
+        return sum / timings.length;
+    }
+}
+
+/**
+ * 物理引擎
+ */
+class PhysicsEngine {
+    static distance(obj1, obj2) {
+        const dx = obj1.x - obj2.x;
+        const dy = obj1.y - obj2.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    static moveTowards(start, target, speed) {
+        const dx = target.x - start.x;
+        const dy = target.y - start.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 0) {
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+            start.x += dirX * speed;
+            start.y += dirY * speed;
+        }
+    }
+
+    static checkCollision(obj1, obj2, buffer = 0) {
+        const distance = this.distance(obj1, obj2);
+        return distance <= (obj1.size/2 + obj2.size/2 + buffer);
+    }
+}
+
+/**
+ * 敌人生成器
+ */
+class EnemySpawner {
+    constructor() {
+        this.spawnRate = 2000;
+        this.lastSpawnTime = 0;
+        this.difficultyMultiplier = 1.0;
+    }
+
+    update(currentTime, gameState) {
+        if (currentTime - this.lastSpawnTime >= this.spawnRate) {
+            this.spawnEnemy(gameState);
+            this.lastSpawnTime = currentTime;
+
+            this.spawnRate = Math.max(200, 2000 - gameState.kills * 2);
+        }
+    }
+
+    spawnEnemy(gameState) {
+        const canvas = document.getElementById('gameCanvas');
+        if (!canvas) return;
+
+        const newEnemy = {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 20,
+            speed: 1 + Math.random() * 2,
+            hp: 10 + Math.floor(gameState.level * 0.5),
+            maxHp: 10 + Math.floor(gameState.level * 0.5),
+            damage: 5 + Math.floor(gameState.level * 0.2),
+            color: `hsl(${Math.random() * 60}, 70%, 50%)`
+        };
+
+        const distanceToPlayer = PhysicsEngine.distance(
+            newEnemy,
+            { x: gameState.player.x, y: gameState.player.y }
+        );
+
+        if (distanceToPlayer < 100) {
+            const angle = Math.random() * Math.PI * 2;
+            newEnemy.x = gameState.player.x + Math.cos(angle) * 150;
+            newEnemy.y = gameState.player.y + Math.sin(angle) * 150;
+
+            newEnemy.x = Math.max(newEnemy.size/2, Math.min(canvas.width - newEnemy.size/2, newEnemy.x));
+            newEnemy.y = Math.max(newEnemy.size/2, Math.min(canvas.height - newEnemy.size/2, newEnemy.y));
+        }
+
+        gameState.enemies.push(newEnemy);
+    }
+}
+
+/**
+ * 渲染引擎
+ */
+class RenderEngine {
+    constructor() {
+        this.lastRenderTime = 0;
+        this.renderInterval = 1000 / 60;
+    }
+
+    render(ctx, gameState) {
+        const now = performance.now();
+
+        if (now - this.lastRenderTime < this.renderInterval) {
+            return false;
+        }
+
+        this.lastRenderTime = now;
+
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        this.drawBackground(ctx);
+
+        // 绘制玩家
+        this.drawPlayer(ctx, gameState.player);
+
+        // 绘制敌人
+        gameState.enemies.forEach(enemy => {
+            this.drawEnemy(ctx, enemy);
+        });
+
+        // 绘制UI
+        this.drawUI(ctx, gameState);
+
+        return true;
+    }
+
+    drawBackground(ctx) {
+        const gradient = ctx.createRadialGradient(
+            ctx.canvas.width/2, ctx.canvas.height/2, 0,
+            ctx.canvas.width/2, ctx.canvas.height/2, Math.max(ctx.canvas.width, ctx.canvas.height)/2
+        );
+        gradient.addColorStop(0, '#1a1a2e');
+        gradient.addColorStop(1, '#0f0f1a');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+
+    drawPlayer(ctx, player) {
+        ctx.fillStyle = '#4ade80';
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.size/2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const gameState = window.IntegratedGameSystem?.getState() || player;
+        const angle = Math.atan2(gameState.mouseY - player.y, gameState.mouseX - player.x);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y);
+        ctx.lineTo(
+            player.x + Math.cos(angle) * (player.size/2 + 5),
+            player.y + Math.sin(angle) * (player.size/2 + 5)
+        );
+        ctx.stroke();
+
+        const healthPercent = player.hp / player.maxHp;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(player.x - 20, player.y - player.size/2 - 15, 40, 6);
+        ctx.fillStyle = healthPercent > 0.5 ? '#4ade80' : healthPercent > 0.25 ? '#fbbf24' : '#ef4444';
+        ctx.fillRect(player.x - 20, player.y - player.size/2 - 15, 40 * healthPercent, 6);
+    }
+
+    drawEnemy(ctx, enemy) {
+        ctx.fillStyle = enemy.color;
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.size/2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const hpPercent = enemy.hp / enemy.maxHp;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(enemy.x - 20, enemy.y - enemy.size/2 - 10, 40, 6);
+        ctx.fillStyle = '#f00';
+        ctx.fillRect(enemy.x - 20, enemy.y - enemy.size/2 - 10, 40 * hpPercent, 6);
+    }
+
+    drawUI(ctx, gameState) {
+        // UI元素由DOM处理
+    }
+}
+
+/**
+ * 碰撞系统
+ */
+class CollisionSystem {
+    static checkPlayerEnemyCollisions(player, enemies) {
+        const collisions = [];
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            if (PhysicsEngine.checkCollision(player, enemy, 5)) {
+                collisions.push({ type: 'player-enemy', player, enemy, index: i });
+            }
+        }
+
+        return collisions;
+    }
+
+    static checkAttackCollisions(player, enemies, attackRange) {
+        const hitEnemies = [];
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            if (PhysicsEngine.distance(player, enemy) <= attackRange) {
+                hitEnemies.push({ enemy, index: i });
+            }
+        }
+
+        return hitEnemies;
+    }
+}
+
+// 创建全局集成游戏系统实例
+if (typeof window !== 'undefined') {
+    // 首先清理可能的冲突变量
+    const conflictingVars = [
+        'GameManager', 'GameSystem', 'GameEngine', 'FinalGameSystem',
+        'WeaponComboSystem', 'SteamEnhancedWeaponSystem', 'specialGameEvents',
+        'difficultyManager', 'regionSystem', 'gameModeSystem', 'progressTracker',
+        'achievementSystem', 'steamControllerSupport', 'RogueGame'
+    ];
+
+    conflictingVars.forEach(varName => {
+        if (window[varName] && varName !== 'IntegratedGameSystem') {
+            console.warn(`🗑️ 清理冲突的全局变量: ${varName}`);
+            try {
+                delete window[varName];
+            } catch(e) {
+                // 如果无法删除，设置为null
+                window[varName] = null;
+            }
+        }
+    });
+
+    // 创建集成系统实例
+    if (!window.IntegratedGameSystem) {
+        window.IntegratedGameSystem = new IntegratedGameSystem();
+        window.gameState = window.IntegratedGameSystem.getState();
+
+        console.log("🔄 集成游戏系统已准备就绪，所有冲突已解决");
     } else {
-        console.error('❌ 统一游戏系统未找到，无法注册集成系统');
+        console.warn("⚠️ 集成游戏系统已被初始化");
     }
-}, 0);
+}
 
-// 设置全局接口以保证向后兼容
-window.RogueGame = {
-    startGame: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.startGame === 'function') {
-            return integratedSystem.startGame();
-        }
-        // Fallback to core module
-        const coreModule = window.GameSystem.getModule('core');
-        if (coreModule && typeof coreModule.startGame === 'function') {
-            return coreModule.startGame();
-        }
-        // Fallback to global function
-        if (window.startGame) {
-            return window.startGame();
-        }
-        return false;
-    },
+// Node.js环境导出
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        IntegratedGameSystem,
+        EventBus,
+        PerformanceMonitor,
+        PhysicsEngine,
+        EnemySpawner,
+        RenderEngine,
+        CollisionSystem
+    };
+}
 
-    restartGame: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.restartGame === 'function') {
-            return integratedSystem.restartGame();
-        }
-        // Fallback to core module
-        const coreModule = window.GameSystem.getModule('core');
-        if (coreModule && typeof coreModule.restartGame === 'function') {
-            return coreModule.restartGame();
-        }
-        // Fallback to global function
-        if (window.restartGame) {
-            return window.restartGame();
-        }
-        return false;
-    },
-
-    pauseGame: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.pauseGame === 'function') {
-            return integratedSystem.pauseGame();
-        }
-        return false;
-    },
-
-    resumeGame: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.resumeGame === 'function') {
-            return integratedSystem.resumeGame();
-        }
-        return false;
-    },
-
-    saveGame: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.saveGame === 'function') {
-            return integratedSystem.saveGame();
-        }
-        // Fallback to save module
-        const saveModule = window.GameSystem.getModule('save');
-        if (saveModule && typeof saveModule.saveGame === 'function') {
-            return saveModule.saveGame();
-        }
-        // Fallback to global function
-        if (window.saveGame) {
-            return window.saveGame();
-        }
-        return false;
-    },
-
-    loadGame: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.loadGame === 'function') {
-            return integratedSystem.loadGame();
-        }
-        // Fallback to save module
-        const saveModule = window.GameSystem.getModule('save');
-        if (saveModule && typeof saveModule.loadGame === 'function') {
-            return saveModule.loadGame();
-        }
-        // Fallback to global function
-        if (window.loadGame) {
-            return window.loadGame();
-        }
-        return false;
-    },
-
-    getStatistics: () => {
-        const integratedSystem = window.GameSystem.getModule('integrated');
-        if (integratedSystem && typeof integratedSystem.getStatistics === 'function') {
-            return integratedSystem.getStatistics();
-        }
-        return null;
-    },
-
-    getState: () => {
-        if (window.GameSystem) {
-            return window.GameSystem.getState();
-        }
-        return null;
-    },
-
-    getModule: (name) => {
-        if (window.GameSystem) {
-            return window.GameSystem.getModule(name);
-        }
-        return null;
-    }
-};
-
-console.log('🔄 集成游戏系统已准备就绪');
+console.log("✅ 集成游戏系统加载完成");
