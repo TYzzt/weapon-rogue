@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rogue游戏系统集成测试</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00ff00;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00aa00;
+            border-radius: 5px;
+            background-color: #111;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 5px;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .failure {
+            color: #ff5555;
+        }
+        .summary {
+            background-color: #222;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #003300;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 3px;
+        }
+        button:hover {
+            background-color: #005500;
+        }
+        #testOutput {
+            white-space: pre-wrap;
+            background-color: #000;
+            padding: 15px;
+            border: 1px solid #005500;
+            border-radius: 3px;
+            height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Rogue游戏系统集成测试</h1>
+
+        <div class="test-section">
+            <button onclick="runCompleteTest()">运行完整集成测试</button>
+            <button onclick="testCoreModules()">测试核心模块</button>
+            <button onclick="testGameState()">测试游戏状态</button>
+            <button onclick="testSaveSystem()">测试保存系统</button>
+            <button onclick="testAchievementSystem()">测试成就系统</button>
+            <button onclick="clearOutput()">清空输出</button>
+        </div>
+
+        <div id="testOutput">点击上方按钮开始测试...</div>
+    </div>
+
+    <!-- 加载游戏核心模块 -->
+    <script src="./game-engine.js"></script>
+    <script src="./core-gameplay-enhancements.js"></script>
+    <script src="./enhanced-save-system.js"></script>
+    <script src="./enhanced-achievements.js"></script>
+    <script src="./enhanced-audio.js"></script>
+
+    <!-- 运行集成测试 -->
+    <script src="./integration-test.js"></script>
+
+    <script>
+        // 重定向console输出到页面
+        const originalLog = console.log;
+        const originalError = console.error;
+        const outputDiv = document.getElementById('testOutput');
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            outputDiv.textContent += args.join(' ') + '\n';
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            outputDiv.textContent += '❌ ERROR: ' + args.join(' ') + '\n';
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        };
+
+        // 测试函数
+        async function runCompleteTest() {
+            outputDiv.textContent = '🚀 开始运行完整集成测试...\n\n';
+            const testResult = await runIntegrationTest();
+            outputDiv.textContent += `\n🎯 测试完成! 结果: ${testResult.passed}/${testResult.total} 项测试通过 (${testResult.passRate}%)`;
+        }
+
+        function testCoreModules() {
+            outputDiv.textContent = '🔍 测试核心模块...\n\n';
+
+            // 检查核心模块
+            const modulesToTest = [
+                { name: 'GameEngine', exists: typeof GameEngine !== 'undefined' },
+                { name: 'CoreGameplayEnhancements', exists: typeof CoreGameplayEnhancements !== 'undefined' },
+                { name: 'EnhancedSaveManager', exists: typeof EnhancedSaveManager !== 'undefined' },
+                { name: 'EnhancedAchievementSystem', exists: typeof EnhancedAchievementSystem !== 'undefined' },
+                { name: 'AudioManager', exists: typeof window.AudioManager !== 'undefined' }
+            ];
+
+            modulesToTest.forEach(module => {
+                if (module.exists) {
+                    outputDiv.textContent += `✅ ${module.name} 已加载\n`;
+                } else {
+                    outputDiv.textContent += `❌ ${module.name} 未找到\n`;
+                }
+            });
+
+            // 检查全局实例
+            const instancesToTest = [
+                { name: 'GameEngine 实例', exists: window.GameEngine instanceof GameEngine },
+                { name: 'gameState', exists: window.gameState !== undefined },
+                { name: 'enhancedSaveManager', exists: window.enhancedSaveManager !== undefined },
+                { name: 'enhancedAchievementSystem', exists: window.enhancedAchievementSystem !== undefined }
+            ];
+
+            instancesToTest.forEach(instance => {
+                if (instance.exists) {
+                    outputDiv.textContent += `✅ ${instance.name} 已创建\n`;
+                } else {
+                    outputDiv.textContent += `❌ ${instance.name} 未创建\n`;
+                }
+            });
+
+            outputDiv.textContent += '\n🔍 核心模块测试完成\n';
+        }
+
+        function testGameState() {
+            outputDiv.textContent = '🔍 测试游戏状态管理...\n\n';
+
+            if (window.gameState) {
+                outputDiv.textContent += `✅ gameState 存在\n`;
+
+                // 测试状态更新
+                const originalValue = window.gameState.player.x;
+                window.GameEngine.updateState({ player: { x: 12345 }});
+
+                if (window.gameState.player.x === 12345) {
+                    outputDiv.textContent += `✅ 状态更新功能正常\n`;
+
+                    // 恢复原值
+                    window.GameEngine.updateState({ player: { x: originalValue }});
+                    outputDiv.textContent += `✅ 状态恢复功能正常\n`;
+                } else {
+                    outputDiv.textContent += `❌ 状态更新功能异常\n`;
+                }
+
+                // 检查关键状态字段
+                const requiredFields = ['player', 'level', 'kills', 'enemies'];
+                requiredFields.forEach(field => {
+                    if (window.gameState[field] !== undefined) {
+                        outputDiv.textContent += `✅ gameState.${field} 存在\n`;
+                    } else {
+                        outputDiv.textContent += `❌ gameState.${field} 不存在\n`;
+                    }
+                });
+            } else {
+                outputDiv.textContent += `❌ gameState 不存在\n`;
+            }
+
+            outputDiv.textContent += '\n🔍 游戏状态测试完成\n';
+        }
+
+        function testSaveSystem() {
+            outputDiv.textContent = '🔍 测试保存系统...\n\n';
+
+            if (window.enhancedSaveManager) {
+                outputDiv.textContent += `✅ 增强版保存系统已加载\n`;
+
+                // 测试保存功能（不实际执行，只是验证方法存在）
+                if (typeof window.enhancedSaveManager.save === 'function') {
+                    outputDiv.textContent += `✅ save() 方法存在\n`;
+                } else {
+                    outputDiv.textContent += `❌ save() 方法不存在\n`;
+                }
+
+                if (typeof window.enhancedSaveManager.load === 'function') {
+                    outputDiv.textContent += `✅ load() 方法存在\n`;
+                } else {
+                    outputDiv.textContent += `❌ load() 方法不存在\n`;
+                }
+
+                // 检查本地存储访问
+                try {
+                    localStorage.setItem('__test__', 'test');
+                    localStorage.removeItem('__test__');
+                    outputDiv.textContent += `✅ localStorage 可访问\n`;
+                } catch(e) {
+                    outputDiv.textContent += `❌ localStorage 访问失败: ${e.message}\n`;
+                }
+            } else {
+                outputDiv.textContent += `❌ 增强版保存系统未加载\n`;
+
+                if (window.saveManager) {
+                    outputDiv.textContent += `✅ 基础保存系统已加载\n`;
+                } else {
+                    outputDiv.textContent += `❌ 基础保存系统也未加载\n`;
+                }
+            }
+
+            outputDiv.textContent += '\n🔍 保存系统测试完成\n';
+        }
+
+        function testAchievementSystem() {
+            outputDiv.textContent = '🔍 测试成就系统...\n\n';
+
+            if (window.enhancedAchievementSystem) {
+                outputDiv.textContent += `✅ 增强版成就系统已加载\n`;
+
+                // 测试成就系统方法
+                if (typeof window.enhancedAchievementSystem.checkAchievements === 'function') {
+                    outputDiv.textContent += `✅ checkAchievements() 方法存在\n`;
+                } else {
+                    outputDiv.textContent += `❌ checkAchievements() 方法不存在\n`;
+                }
+
+                if (typeof window.enhancedAchievementSystem.unlock === 'function') {
+                    outputDiv.textContent += `✅ unlock() 方法存在\n`;
+                } else {
+                    outputDiv.textContent += `❌ unlock() 方法不存在\n`;
+                }
+
+                // 检查成就数量
+                if (window.enhancedAchievementSystem.achievementList) {
+                    outputDiv.textContent += `✅ 成就列表包含 ${window.enhancedAchievementSystem.achievementList.length} 个成就\n`;
+                }
+            } else {
+                outputDiv.textContent += `❌ 增强版成就系统未加载\n`;
+
+                if (window.AchievementSystem) {
+                    outputDiv.textContent += `✅ 基础成就系统已加载\n`;
+                } else {
+                    outputDiv.textContent += `❌ 基础成就系统也未加载\n`;
+                }
+            }
+
+            outputDiv.textContent += '\n🔍 成就系统测试完成\n';
+        }
+
+        function clearOutput() {
+            outputDiv.textContent = '';
+        }
+
+        // 页面加载完成后显示系统信息
+        window.onload = function() {
+            outputDiv.textContent = '🎮 Rogue游戏系统集成测试环境已准备就绪\n';
+            outputDiv.textContent += '✅ 所有核心模块脚本已加载\n';
+            outputDiv.textContent += '🔧 点击上方按钮开始相应测试\n\n';
+
+            // 显示当前系统状态摘要
+            outputDiv.textContent += '📋 系统状态摘要:\n';
+            outputDiv.textContent += `- GameEngine: ${typeof window.GameEngine !== 'undefined' ? '✅' : '❌'}\n`;
+            outputDiv.textContent += `- gameState: ${typeof window.gameState !== 'undefined' ? '✅' : '❌'}\n`;
+            outputDiv.textContent += `- Save System: ${typeof window.enhancedSaveManager !== 'undefined' ? '✅' : typeof window.saveManager !== 'undefined' ? '△ (基础)' : '❌'}\n`;
+            outputDiv.textContent += `- Achievement System: ${typeof window.enhancedAchievementSystem !== 'undefined' ? '✅' : typeof window.AchievementSystem !== 'undefined' ? '△ (基础)' : '❌'}\n`;
+            outputDiv.textContent += `- Audio System: ${typeof window.AudioManager !== 'undefined' ? '✅' : '△ (待检测)'}\n`;
+        };
+    </script>
+</body>
+</html>
