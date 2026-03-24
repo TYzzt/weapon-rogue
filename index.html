@@ -136,11 +136,29 @@
     <!-- 统一模块系统 -->
     <script src="./unified-module-system.js"></script>
 
+    <!-- 统一存档系统 -->
+    <script src="./unified-save-system.js"></script>
+
+    <!-- 统一成就系统 -->
+    <script src="./unified-achievement-system.js"></script>
+
+    <!-- 统一音频系统 -->
+    <script src="./unified-audio-system.js"></script>
+
+    <!-- 统一菜单系统 -->
+    <script src="./unified-menu-system.js"></script>
+
     <!-- 游戏核心 -->
     <script src="./game-core.js"></script>
 
     <!-- 游戏模块 -->
     <script src="./game-modules.js"></script>
+
+    <!-- 集成游戏系统 -->
+    <script src="./integrated-game-system.js"></script>
+
+    <!-- 性能优化模块 -->
+    <script src="./performance-optimizer.js"></script>
 
     <!-- 主游戏逻辑 -->
     <script src="./game-main.js"></script>
@@ -167,7 +185,7 @@
         // 初始化鼠标位置跟踪
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const gameState = window.RogueGame.getState();
+            const gameState = window.GameSystem.getState();
             gameState.mouseX = e.clientX - rect.left;
             gameState.mouseY = e.clientY - rect.top;
 
@@ -195,12 +213,12 @@
 
         // 点击事件用于攻击
         canvas.addEventListener('click', () => {
-            if (!window.RogueGame.getState().player.isPlaying || window.RogueGame.getState().player.isGameOver) {
+            if (!window.GameSystem.getState().player.isPlaying || window.GameSystem.getState().player.isGameOver) {
                 return;
             }
 
             // 攻击附近的敌人
-            const gameState = window.RogueGame.getState();
+            const gameState = window.GameSystem.getState();
             const attackRadius = 50; // 攻击半径
 
             for (let i = gameState.enemies.length - 1; i >= 0; i--) {
@@ -215,7 +233,7 @@
                     gameState.kills++;
 
                     // 触发成就检查
-                    const achievementModule = window.RogueGame.getModule('achievements');
+                    const achievementModule = window.GameSystem.getModule('achievements');
                     if (achievementModule) {
                         achievementModule.checkAchievements(gameState);
                     }
@@ -234,11 +252,11 @@
 
         // 键盘事件处理技能
         document.addEventListener('keydown', (e) => {
-            if (!window.RogueGame.getState().player.isPlaying || window.RogueGame.getState().player.isGameOver) {
+            if (!window.GameSystem.getState().player.isPlaying || window.GameSystem.getState().player.isGameOver) {
                 return;
             }
 
-            const gameState = window.RogueGame.getState();
+            const gameState = window.GameSystem.getState();
 
             switch(e.key.toLowerCase()) {
                 case 'q':
@@ -265,8 +283,14 @@
             startScreen.classList.add('hidden');
 
             // 使用新的模块化系统启动游戏
-            if (window.RogueGame) {
-                window.RogueGame.startGame();
+            const coreModule = window.GameSystem.getModule('core');
+            if (coreModule && typeof coreModule.startGame === 'function') {
+                coreModule.startGame();
+            } else {
+                // Fallback to global function if module not found
+                if (window.startGame) {
+                    window.startGame();
+                }
             }
         });
 
@@ -328,12 +352,18 @@
                 toolEmpowerment: 1.0
             };
 
-            Object.assign(window.RogueGame.getState(), initialState);
+            Object.assign(window.GameSystem.getState(), initialState);
 
             gameOverScreen.classList.add('hidden');
 
-            if (window.RogueGame) {
-                window.RogueGame.startGame();
+            const coreModule = window.GameSystem.getModule('core');
+            if (coreModule && typeof coreModule.startGame === 'function') {
+                coreModule.startGame();
+            } else {
+                // Fallback to global function if module not found
+                if (window.startGame) {
+                    window.startGame();
+                }
             }
         });
 
@@ -341,8 +371,8 @@
 
         // 定期更新UI显示
         function updateUI() {
-            if (window.RogueGame) {
-                const gameState = window.RogueGame.getState();
+            if (window.GameSystem) {
+                const gameState = window.GameSystem.getState();
 
                 // 更新显示
                 hpDisplay.textContent = Math.max(0, Math.floor(gameState.player.hp));
